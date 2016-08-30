@@ -2,7 +2,8 @@ package helpers
 
 import (
 	"bytes"
-	"io"
+	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 
@@ -25,13 +26,20 @@ var sshConfig = &ssh.ClientConfig{
 func Deploy(repo string) (string, error) {
 	// "repo" will eventually allow for running just one update, but for now we're running updates on all the containers
 
-	devices, err := GetDevices()
+	allDevices, err := GetDevices()
 	if err != nil {
 		return "", err
 	}
 
-	for device := range devices {
+	for i := range allDevices {
+		log.Printf("%+v", allDevices[i])
 
+		response, err := SendCommand(allDevices[i].Address)
+		if err != nil {
+			return "", err
+		}
+
+		log.Println(response)
 	}
 
 	return "Deployment started", nil
@@ -43,16 +51,16 @@ func GetDevices() ([]device, error) {
 		return []device{}, err
 	}
 
-	defer response.Body.Close()
-	_, err = io.Copy(os.Stdout, response.Body)
+	allDevices := []device{}
+	err = json.NewDecoder(response.Body).Decode(&allDevices)
 	if err != nil {
 		return []device{}, err
 	}
 
-	return []device{}, nil
+	return allDevices, nil
 }
 
-func SendCommand(cmd, hostname string) (string, error) {
+func SendCommand(hostname string) (string, error) {
 	connection, err := ssh.Dial("tcp", hostname+":22", sshConfig)
 	if err != nil {
 		return "", err
@@ -68,12 +76,17 @@ func SendCommand(cmd, hostname string) (string, error) {
 	var stdoutBuf bytes.Buffer
 	session.Stdout = &stdoutBuf
 
-	err = session.Run("/usr/bin/scp deploy.sh")
+	err = session.Run("cd /home/aveng")
 	if err != nil {
 		return "", err
 	}
 
-	session.Run(cmd)
+	err = session.Run("/usr/bin/scp -t ./deploy.sh")
+	if err != nil {
+		return "", err
+	}
+
+	session.Run("./deploy.sh")
 
 	return hostname + ": " + stdoutBuf.String(), nil
 }
