@@ -1,11 +1,12 @@
 package helpers
 
 import (
-	"bytes"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/tmc/scp"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -34,12 +35,10 @@ func Deploy(repo string) (string, error) {
 	for i := range allDevices {
 		log.Printf("%+v", allDevices[i])
 
-		response, err := SendCommand(allDevices[i].Address)
+		err := SendCommand(allDevices[i].Address)
 		if err != nil {
 			return "", err
 		}
-
-		log.Println(response)
 	}
 
 	return "Deployment started", nil
@@ -60,33 +59,37 @@ func GetDevices() ([]device, error) {
 	return allDevices, nil
 }
 
-func SendCommand(hostname string) (string, error) {
+func SendCommand(hostname string) error {
 	connection, err := ssh.Dial("tcp", hostname+":22", sshConfig)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	session, err := connection.NewSession()
+	defer connection.Close()
+
+	sessionSCP, err := connection.NewSession()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	defer session.Close()
+	defer sessionSCP.Close()
 
-	var stdoutBuf bytes.Buffer
-	session.Stdout = &stdoutBuf
-
-	err = session.Run("cd /home/aveng")
+	err = scp.CopyPath("deploy.sh", "/tmp", sessionSCP)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	err = session.Run("/usr/bin/scp -t ./deploy.sh")
+	sessionDeploy, err := connection.NewSession()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	session.Run("./deploy.sh")
+	defer sessionDeploy.Close()
 
-	return hostname + ": " + stdoutBuf.String(), nil
+	err = sessionDeploy.Start("export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") + " && /tmp/deploy.sh")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
