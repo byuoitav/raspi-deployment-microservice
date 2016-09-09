@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/byuoitav/hateoas"
 	"github.com/byuoitav/raspi-deployment-microservice/handlers"
 	"github.com/byuoitav/wso2jwt"
 	"github.com/jessemillar/health"
@@ -12,11 +13,17 @@ import (
 )
 
 func main() {
+	err := hateoas.Load("https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/swagger.json")
+	if err != nil {
+		log.Fatalln("Could not load Swagger file. Error: " + err.Error())
+	}
+
 	port := ":8008"
 	router := echo.New()
 	router.Pre(middleware.RemoveTrailingSlash())
 	router.Use(middleware.CORS())
 
+	router.Get("/", hateoas.RootResponse)
 	router.Get("/health", health.Check)
 
 	router.Get("/webhook", handlers.Webhook, wso2jwt.ValidateJWT())
