@@ -2,8 +2,8 @@
 
 # Sets up local AV API Docker containers on a Raspberry Pi touchpanel
 
-body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date --rfc-3339=ns)"\",\"action\":\"deployment_started\"}"
-curl -H "Content-Type: application/json" -X POST -d $body $ELK_ADDRESS
+body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date -u +"%Y-%m-%dT%H:%M:%SZ")"\",\"action\":\"deployment_started\"}"
+curl -H "Content-Type: application/json" -X POST -d "$body" $ELK_ADDRESS
 
 docker pull byuoitav/rpi-av-api:latest
 docker kill av-api
@@ -35,5 +35,5 @@ docker kill raspi-tp
 docker rm raspi-tp
 docker run --net="host" -e PI_TOUCHPANEL="true" --restart=always -d --name raspi-tp -p 8888:8888 byuoitav/raspi-tp:latest
 
-body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date --rfc-3339=ns)"\",\"action\":\"deployment_finished\"}"
-curl -H "Content-Type: application/json" -X POST -d $body $ELK_ADDRESS
+body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date -u +"%Y-%m-%dT%H:%M:%SZ")"\",\"action\":\"deployment_finished\"}"
+curl -H "Content-Type: application/json" -X POST -d "$body" $ELK_ADDRESS
