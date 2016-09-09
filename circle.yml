@@ -1,0 +1,19 @@
+machine:
+  services:
+    - docker
+
+test:
+  post:
+    - ./coverage.sh
+    - bash <(curl -s https://codecov.io/bash)
+
+deployment:
+  production:
+    branch: master
+    commands:
+      - docker build -t byuoitav/raspi-deployment-microservice:$CIRCLE_SHA1 .
+      - docker build -t byuoitav/raspi-deployment-microservice:latest .
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      - docker push byuoitav/raspi-deployment-microservice:$CIRCLE_SHA1
+      - docker push byuoitav/raspi-deployment-microservice:latest
+      - ./deploy.sh $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1

@@ -74,7 +74,7 @@ func SendCommand(hostname string) error {
 
 	defer sessionSCP.Close()
 
-	err = scp.CopyPath("deploy.sh", "/tmp", sessionSCP)
+	err = scp.CopyPath("update.sh", "/tmp", sessionSCP)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func SendCommand(hostname string) error {
 
 	log.Print(os.Getenv("ELK_ADDRESS"))
 
-	err = sessionDeploy.Start("export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") + " && /tmp/deploy.sh")
+	err = sessionDeploy.Start("export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") + " && /tmp/update.sh")
 	if err != nil {
 		return err
 	}
