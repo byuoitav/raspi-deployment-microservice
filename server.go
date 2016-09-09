@@ -18,7 +18,7 @@ func main() {
 
 	router.Get("/health", health.Check)
 
-	router.Post("/webhook", handlers.Webhook)
+	router.Get("/webhook", handlers.Webhook)
 
 	log.Println("The Raspberry Pi Deployment microservice is listening on " + port)
 	server := fasthttp.New(port)

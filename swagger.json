@@ -1,0 +1,130 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "0.1",
+        "title": "Raspi Deployment Microservice",
+        "description": "An automated way to keep Pi touchpanels up to date",
+        "license": {
+            "name": "Apache 2.0"
+        }
+    },
+    "host": "api.byu.edu:443",
+    "basePath": "/byuoitav-raspi-deployment-microservice/0.1",
+    "schemes": [
+        "https"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/health": {
+            "get": {
+                "summary": "Check Service Health",
+                "description": "Returns information about the microservice's health.",
+                "tags": [
+                    "Health"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A health response",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Response"
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/responses/500"
+                    },
+                    "503": {
+                        "$ref": "#/responses/503"
+                    },
+                    "default": {
+                        "$ref": "#/responses/default"
+                    }
+                }
+            }
+        },
+        "/webhook": {
+            "get": {
+                "summary": "Deploy Updates",
+                "description": "Fire off a deployment.",
+                "tags": [
+                    "Deployment"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Endpoint information",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Response"
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/responses/500"
+                    },
+                    "503": {
+                        "$ref": "#/responses/503"
+                    },
+                    "default": {
+                        "$ref": "#/responses/default"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "description": "A human-readable message about what just happened"
+                }
+            }
+        },
+        "Error": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "responses": {
+        "401": {
+            "description": "You are not authorized to make that request",
+            "schema": {
+                "$ref": "#/definitions/Error"
+            }
+        },
+        "500": {
+            "description": "There was a problem with the server on our end",
+            "schema": {
+                "$ref": "#/definitions/Error"
+            }
+        },
+        "503": {
+            "description": "The server is overloaded, is under maintenance, or is otherwise unavailable",
+            "schema": {
+                "$ref": "#/definitions/Error"
+            }
+        },
+        "default": {
+            "description": "Unexpected error",
+            "schema": {
+                "$ref": "#/definitions/Error"
+            }
+        }
+    }
+}
