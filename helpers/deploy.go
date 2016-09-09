@@ -86,6 +86,8 @@ func SendCommand(hostname string) error {
 
 	defer sessionDeploy.Close()
 
+	log.Print(os.Getenv("ELK_ADDRESS"))
+
 	err = sessionDeploy.Start("export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") + " && /tmp/deploy.sh")
 	if err != nil {
 		return err
