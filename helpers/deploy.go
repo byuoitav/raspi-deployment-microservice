@@ -45,7 +45,7 @@ func Deploy(repo string) (string, error) {
 }
 
 func GetDevices() ([]device, error) {
-	response, err := http.Get("http://localhost:8006/devices/roles/ControlProcessor/types/pi")
+	response, err := http.Get(os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS") + "/devices/roles/ControlProcessor/types/pi")
 	if err != nil {
 		return []device{}, err
 	}
