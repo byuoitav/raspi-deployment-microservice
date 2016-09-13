@@ -5,7 +5,6 @@ import (
 
 	"github.com/byuoitav/hateoas"
 	"github.com/byuoitav/raspi-deployment-microservice/handlers"
-	"github.com/byuoitav/wso2jwt"
 	"github.com/jessemillar/health"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/fasthttp"
@@ -26,7 +25,7 @@ func main() {
 	router.Get("/", hateoas.RootResponse)
 	router.Get("/health", health.Check)
 
-	router.Get("/webhook", handlers.Webhook, wso2jwt.ValidateJWT())
+	router.Get("/webhook", handlers.Webhook)
 
 	log.Println("The Raspberry Pi Deployment microservice is listening on " + port)
 	server := fasthttp.New(port)
