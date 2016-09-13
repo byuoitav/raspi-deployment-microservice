@@ -24,9 +24,7 @@ var sshConfig = &ssh.ClientConfig{
 	},
 }
 
-func Deploy(repo string) (string, error) {
-	// "repo" will eventually allow for running just one update, but for now we're running updates on all the containers
-
+func Deploy() (string, error) {
 	allDevices, err := GetDevices()
 	if err != nil {
 		return "", err

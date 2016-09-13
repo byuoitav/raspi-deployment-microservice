@@ -8,18 +8,8 @@ import (
 	"github.com/labstack/echo"
 )
 
-type circlePayload struct {
-	Name string `json:"reponame"`
-}
-
 func Webhook(context echo.Context) error {
-	repo := circlePayload{}
-	err := context.Bind(&repo)
-	if err != nil {
-		return jsonresp.New(context, http.StatusBadRequest, err.Error())
-	}
-
-	response, err := helpers.Deploy(repo.Name)
+	response, err := helpers.Deploy()
 	if err != nil {
 		return jsonresp.New(context, http.StatusBadRequest, err.Error())
 	}
