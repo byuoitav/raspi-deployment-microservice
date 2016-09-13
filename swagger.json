@@ -86,7 +86,7 @@
         "Response": {
             "type": "object",
             "properties": {
-                "message": {
+                "response": {
                     "type": "string",
                     "description": "A human-readable message about what just happened"
                 }
