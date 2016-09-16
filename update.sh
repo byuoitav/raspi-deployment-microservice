@@ -19,7 +19,7 @@ docker run --net="host" -e LOCAL_ENVIRONMENT="true" -d --restart=always --name t
 docker pull byuoitav/rpi-pjlink-microservice:latest
 docker kill pjlink-service
 docker rm pjlink-service
-docker run --net="host" -e LOCAL_ENVIRONMENT="true" -d --restart=always --name pjlink-service -p 8005:8005 byuoitav/rpi-pjlink-microservice:latest
+docker run --net="host" -e LOCAL_ENVIRONMENT="true" -d -e PJLINK_PORT=$PJLINK_PORT -e PJLINK_PASS=$PJLINK_PASS --restart=always --name pjlink-service -p 8005:8005 byuoitav/rpi-pjlink-microservice:latest
 
 docker pull byuoitav/rpi-configuration-database-microservice:latest
 docker kill configuration-database-microservice
