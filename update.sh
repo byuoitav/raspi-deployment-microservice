@@ -2,6 +2,7 @@
 
 # Sets up local AV API Docker containers on a Raspberry Pi touchpanel
 
+# Report update start to Elastic
 body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date -u +"%Y-%m-%dT%H:%M:%SZ")"\",\"action\":\"deployment_started\"}"
 curl -H "Content-Type: application/json" -X POST -d "$body" $ELK_ADDRESS >> /tmp/curl.log
 
@@ -35,5 +36,9 @@ docker kill raspi-tp
 docker rm raspi-tp
 docker run --net="host" -e PI_TOUCHPANEL="true" --restart=always -d --name raspi-tp -p 8888:8888 byuoitav/raspi-tp:latest
 
+# Kill old Docker images to save disk space
+docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
+
+# Report update finish to Elastic
 body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date -u +"%Y-%m-%dT%H:%M:%SZ")"\",\"action\":\"deployment_finished\"}"
 curl -H "Content-Type: application/json" -X POST -d "$body" $ELK_ADDRESS >> /tmp/curl.log
