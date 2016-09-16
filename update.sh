@@ -9,7 +9,7 @@ curl -H "Content-Type: application/json" -X POST -d "$body" $ELK_ADDRESS >> /tmp
 docker pull byuoitav/rpi-av-api:latest
 docker kill av-api
 docker rm av-api
-docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e EMS_API_USERNAME=$EMS_API_USERNAME -e EMS_API_PASSWORD=$EMS_API_PASSWORD -d --restart=always --name av-api -p 8000:8000 byuoitav/rpi-av-api:latest
+docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS -e EMS_API_USERNAME=$EMS_API_USERNAME -e EMS_API_PASSWORD=$EMS_API_PASSWORD -d --restart=always --name av-api -p 8000:8000 byuoitav/rpi-av-api:latest
 
 docker pull byuoitav/rpi-telnet-microservice:latest
 docker kill telnet-microservice
