@@ -2,6 +2,11 @@
 
 # Sets up local AV API Docker containers on a Raspberry Pi touchpanel
 
+dockerVolume="/home/aveng/docker/data"
+
+mkdir -p $dockerVolume
+mysqldump -u $CONFIGURATION_DATABASE_USERNAME -p"$CONFIGURATION_DATABASE_PASSWORD" -h $CONFIGURATION_DATABASE_HOST $CONFIGURATION_DATABASE_NAME > $dockerVolume/configuration.db
+
 # Report update start to Elastic
 body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date -u +"%Y-%m-%dT%H:%M:%SZ")"\",\"action\":\"deployment_started\"}"
 curl -H "Content-Type: application/json" -X POST -d "$body" $ELK_ADDRESS >> /tmp/curl.log
@@ -24,7 +29,7 @@ docker run --net="host" -e LOCAL_ENVIRONMENT="true" -d -e PJLINK_PORT=$PJLINK_PO
 docker pull byuoitav/raspi-database:latest
 docker kill raspi-database
 docker rm raspi-database
-docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name raspi-database -p 3306:3306 byuoitav/raspi-database:latest
+docker run --net="host" -e LOCAL_ENVIRONMENT="true" -v $dockerVolume -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name raspi-database -p 3306:3306 byuoitav/raspi-database:latest
 
 docker pull byuoitav/rpi-configuration-database-microservice:latest
 docker kill configuration-database-microservice
