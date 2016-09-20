@@ -2,6 +2,11 @@
 
 # Sets up local AV API Docker containers on a Raspberry Pi touchpanel
 
+# Kill all Docker containers and images so we don't fill up space
+docker kill $(docker ps -a -q)
+docker rm $(docker ps -a -q)
+docker rmi $(docker images -q)
+
 dockerVolume="/home/aveng/docker/data"
 
 mkdir -p $dockerVolume
@@ -45,9 +50,6 @@ docker pull byuoitav/raspi-tp:latest
 docker kill raspi-tp
 docker rm raspi-tp
 docker run --net="host" -e LOCAL_ENVIRONMENT="true" --restart=always -d --name raspi-tp -p 8888:8888 byuoitav/raspi-tp:latest
-
-# Kill old Docker images to save disk space
-docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
 
 # Report update finish to Elastic
 body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date -u +"%Y-%m-%dT%H:%M:%SZ")"\",\"action\":\"deployment_finished\"}"
