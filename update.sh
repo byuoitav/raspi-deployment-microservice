@@ -21,10 +21,15 @@ docker kill pjlink-service
 docker rm pjlink-service
 docker run --net="host" -e LOCAL_ENVIRONMENT="true" -d -e PJLINK_PORT=$PJLINK_PORT -e PJLINK_PASS=$PJLINK_PASS --restart=always --name pjlink-service -p 8005:8005 byuoitav/rpi-pjlink-microservice:latest
 
+docker pull byuoitav/rpi-database:latest
+docker kill rpi-database
+docker rm rpi-database
+docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name raspi-database -p 3306:3306 byuoitav/rpi-database:latest
+
 docker pull byuoitav/rpi-configuration-database-microservice:latest
 docker kill configuration-database-microservice
 docker rm configuration-database-microservice
-docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name configuration-database-microservice -p 8006:8006 byuoitav/rpi-configuration-database-microservice:latest
+docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST="localhost" -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name configuration-database-microservice -p 8006:8006 byuoitav/rpi-configuration-database-microservice:latest
 
 docker pull byuoitav/rpi-sony-control-microservice:latest
 docker kill sony-control-microservice
