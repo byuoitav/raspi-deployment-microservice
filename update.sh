@@ -32,7 +32,7 @@ docker run --net="host" -e LOCAL_ENVIRONMENT="true" -v $dockerVolume -e CONFIGUR
 mysql -u root -ppassword configuration < $dockerVolume/configuration.db
 
 docker pull byuoitav/rpi-configuration-database-microservice:latest
-docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST="localhost" -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name configuration-database-microservice -p 8006:8006 byuoitav/rpi-configuration-database-microservice:latest
+docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name configuration-database-microservice -p 8006:8006 byuoitav/rpi-configuration-database-microservice:latest
 
 docker pull byuoitav/rpi-sony-control-microservice:latest
 docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e SONY_TV_PSK=$SONY_TV_PSK -d --restart=always --name sony-control-microservice -p 8007:8007 byuoitav/rpi-sony-control-microservice:latest
