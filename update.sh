@@ -5,7 +5,7 @@
 # Kill all Docker containers and images so we don't fill up space
 docker kill $(docker ps -a -q)
 docker rm $(docker ps -a -q)
-docker rmi $(docker images -q)
+#docker rmi $(docker images -q)
 
 dockerVolume="/home/aveng/docker/data"
 
