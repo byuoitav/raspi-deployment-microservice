@@ -6,12 +6,14 @@ apt-get -y dist-upgrade
 apt-get -y autoremove
 apt-get -y autoclean
 
+apt-get install -y xinit
 apt-get install -y awesome
 apt-get install -y chromium-browser
 
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/xinitrc > ~/.xinitrc
 chmod +x ~/.xinitrc
 
+mkdir ~/.config/
 cp -r /etc/xdg/awesome/ ~/.config/awesome/
 
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/rc.lua > ~/.config/awesome/rc.lua
