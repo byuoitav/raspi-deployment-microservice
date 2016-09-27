@@ -62,20 +62,22 @@ func SendCommand(hostname string) error {
 	if err != nil {
 		return err
 	}
-
+	log.Printf("TCP connection established.")
 	defer connection.Close()
 
 	sessionSCP, err := connection.NewSession()
 	if err != nil {
 		return err
 	}
-
+	log.Printf("SSH session established.")
 	defer sessionSCP.Close()
 
 	err = scp.CopyPath("update.sh", "/tmp", sessionSCP)
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Copied update.sh to the /tmp directory.")
 
 	sessionDeploy, err := connection.NewSession()
 	if err != nil {
@@ -86,10 +88,15 @@ func SendCommand(hostname string) error {
 
 	log.Print(os.Getenv("ELK_ADDRESS"))
 
-	err = sessionDeploy.Start("export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") + " && /tmp/update.sh")
+	err = sessionDeploy.Start(
+		"export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") +
+			" && export CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=" + os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS") +
+			" && /tmp/update.sh")
 	if err != nil {
 		return err
 	}
+
+	log.Print("Done.")
 
 	return nil
 }
