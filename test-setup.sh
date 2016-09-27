@@ -10,9 +10,11 @@ apt-get install -y awesome
 apt-get install -y chromium-browser
 
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/xinitrc > ~/.xinitrc
+chmod +x ~/.xinitrc
 
 cp -r /etc/xdg/awesome/ ~/.config/awesome/
 
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/rc.lua > ~/.config/awesome/rc.lua
+chmod +x ~/.config/awesome/rc.lua
 
 startx
