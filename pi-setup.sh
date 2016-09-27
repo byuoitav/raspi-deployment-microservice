@@ -6,8 +6,8 @@ apt-get -y dist-upgrade
 apt-get -y autoremove
 apt-get -y autoclean
 
-apt-get install -y xinit
-apt-get install -y awesome
+apt-get install -y xorg
+apt-get install -y openbox
 apt-get install -y chromium-browser
 
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/xinitrc > ~/.xinitrc
