@@ -7,9 +7,9 @@ docker kill $(docker ps -a -q)
 docker rm $(docker ps -a -q)
 #docker rmi $(docker images -q)
 
-dockerVolume="/home/aveng/docker/data"
+#dockerVolume="/home/aveng/docker/data"
 
-mkdir -p $dockerVolume
+#mkdir -p $dockerVolume
 
 # Report update start to Elastic
 body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date -u +"%Y-%m-%dT%H:%M:%SZ")"\",\"action\":\"deployment_started\"}"
@@ -24,12 +24,12 @@ docker run --net="host" -e LOCAL_ENVIRONMENT="true" -d --restart=always --name t
 docker pull byuoitav/rpi-pjlink-microservice:latest
 docker run --net="host" -e LOCAL_ENVIRONMENT="true" -d -e PJLINK_PORT=$PJLINK_PORT -e PJLINK_PASS=$PJLINK_PASS --restart=always --name pjlink-service -p 8005:8005 byuoitav/rpi-pjlink-microservice:latest
 
-mysqldump -u $CONFIGURATION_DATABASE_USERNAME -p"$CONFIGURATION_DATABASE_PASSWORD" -h $CONFIGURATION_DATABASE_HOST $CONFIGURATION_DATABASE_NAME > $dockerVolume/configuration.db
+#mysqldump -u $CONFIGURATION_DATABASE_USERNAME -p"$CONFIGURATION_DATABASE_PASSWORD" -h $CONFIGURATION_DATABASE_HOST $CONFIGURATION_DATABASE_NAME > $dockerVolume/configuration.db
 
-docker pull byuoitav/raspi-database:latest
-docker run --net="host" -e LOCAL_ENVIRONMENT="true" -v $dockerVolume -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name raspi-database -p 3306:3306 byuoitav/raspi-database:latest
+#docker pull byuoitav/raspi-database:latest
+#docker run --net="host" -e LOCAL_ENVIRONMENT="true" -v $dockerVolume -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name raspi-database -p 3306:3306 byuoitav/raspi-database:latest
 
-mysql -u root -ppassword configuration < $dockerVolume/configuration.db
+#mysql -u root -ppassword configuration < $dockerVolume/configuration.db
 
 docker pull byuoitav/rpi-configuration-database-microservice:latest
 docker run --net="host" -e LOCAL_ENVIRONMENT="true" -e CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME -e CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD -e CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST -e CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT -e CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME -d --restart=always --name configuration-database-microservice -p 8006:8006 byuoitav/rpi-configuration-database-microservice:latest
