@@ -451,4 +451,4 @@ client.connect_signal("focus", function(c) c.border_color = beautiful.border_foc
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
 
-awful.util.spawn("WEBKIT_DISABLE_TBS=1 epiphany-browser -a --profile /home/pi/.config  http://localhost:8888")
+awful.util.spawn("epiphany-browser -a --profile /home/pi/.config  http://localhost:8888")
