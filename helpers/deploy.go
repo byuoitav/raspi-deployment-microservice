@@ -1,10 +1,12 @@
 package helpers
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/tmc/scp"
 
@@ -15,6 +17,12 @@ type device struct {
 	Name    string `json:"name"`
 	Address string `json:"address"`
 	Type    string `json:"type"`
+}
+
+type elkReport struct {
+	Hostname  string `json:"hostname"`
+	Timestamp string `json:"timestamp"`
+	Action    string `json:"action"`
 }
 
 var sshConfig = &ssh.ClientConfig{
@@ -35,10 +43,24 @@ func Deploy() (string, error) {
 
 		err := SendCommand(allDevices[i].Address)
 		if err != nil {
-			return "", err
+			log.Printf("Error updating %s at %s", allDevices[i].Name, allDevices[i].Address)
+			log.Printf("Sending error to %s\n", os.Getenv("ELK_ADDRESS"))
+
+			report := elkReport{Hostname: allDevices[i].Address, Timestamp: time.Now().Format(time.RFC3339), Action: "Deployment failed to start: " + err.Error()}
+			data, err := json.Marshal(&report)
+
+			if err != nil {
+				log.Printf("Error sending error report.")
+				continue
+			}
+			_, err = http.Post(os.Getenv("ELK_ADDRESS"), "application/json", bytes.NewBuffer(data))
+			if err != nil {
+				log.Printf("Error sending error report: %s.", err.Error())
+			}
+			continue
 		}
 	}
-
+	log.Printf("Deployment finished.")
 	return "Deployment started", nil
 }
 
@@ -85,8 +107,6 @@ func SendCommand(hostname string) error {
 	}
 
 	defer sessionDeploy.Close()
-
-	log.Print(os.Getenv("ELK_ADDRESS"))
 
 	err = sessionDeploy.Start(
 		"export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") +
