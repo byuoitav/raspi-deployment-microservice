@@ -44,6 +44,7 @@ func Deploy() (string, error) {
 		err := SendCommand(allDevices[i].Address)
 		if err != nil {
 			log.Printf("Error updating %s at %s", allDevices[i].Name, allDevices[i].Address)
+
 			log.Printf("Sending error to %s\n", os.Getenv("ELK_ADDRESS"))
 
 			report := elkReport{Hostname: allDevices[i].Address, Timestamp: time.Now().Format(time.RFC3339), Action: "Deployment failed to start: " + err.Error()}
