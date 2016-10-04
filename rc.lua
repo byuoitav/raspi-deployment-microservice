@@ -451,4 +451,4 @@ client.connect_signal("focus", function(c) c.border_color = beautiful.border_foc
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
 
-awful.util.spawn("epiphany-browser -a --profile /home/pi/.config  http://localhost:8888")
+awful.util.spawn_with_shell("chromium-browser --kiosk http://localhost:8888")
