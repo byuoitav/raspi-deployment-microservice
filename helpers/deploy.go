@@ -111,7 +111,6 @@ func SendCommand(hostname string) error {
 
 	err = sessionDeploy.Start(
 		"export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") +
-			" && export CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=" + os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS") +
 			" && /tmp/update.sh")
 	if err != nil {
 		return err
