@@ -35,7 +35,7 @@ systemctl enable docker.service
 
 # Enable autologin
 mkdir -pv /etc/systemd/system/getty@tty1.service.d/
-curl https://github.com/byuoitav/raspi-deployment-microservice/blob/master/autologin.conf > /etc/systemd/system/getty@tty1.service.d/autologin.conf
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/autologin.conf > /etc/systemd/system/getty@tty1.service.d/autologin.conf
 systemctl enable getty@tty1.service
 
 # Make X start on login
