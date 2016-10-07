@@ -16,15 +16,15 @@ apt-get install -y awesome
 apt-get install -y chromium-browser
 
 # Make `startx` result in starting the Awesome window manager
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/xinitrc > ~/.xinitrc
-chmod +x ~/.xinitrc
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/xinitrc > /home/pi/.xinitrc
+chmod +x /home/pi/.xinitrc
 
 # Copy the default Awesome config
-mkdir ~/.config/
-cp -r /etc/xdg/awesome/ ~/.config/awesome/
+mkdir /home/pi/.config/
+cp -r /etc/xdg/awesome/ /home/pi/.config/awesome/
 
 # Make Awesome start Chromium on boot
-echo "\nawful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:8888')\n" >> ~/.config/awesome/rc.lua
+echo "\nawful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:8888')\n" >> /home/pi/.config/awesome/rc.lua
 
 # Install an ARM-specific Docker version
 curl -sSL http://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb > /tmp/docker-hypriot_1.10.3-1_armhf.deb
@@ -39,6 +39,6 @@ curl https://github.com/byuoitav/raspi-deployment-microservice/blob/master/autol
 systemctl enable getty@tty1.service
 
 # Make X start on login
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/bash_profile > ~/.bash_profile
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/bash_profile > /home/pi/.bash_profile
 
 reboot
