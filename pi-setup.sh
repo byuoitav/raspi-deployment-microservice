@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Set the proper keyboard layout
+setxkbmap us
+
 # Update everything
 apt-get update
 apt-get -y upgrade
