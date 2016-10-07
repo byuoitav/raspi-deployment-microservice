@@ -24,7 +24,7 @@ mkdir /home/pi/.config/
 cp -r /etc/xdg/awesome/ /home/pi/.config/awesome/
 
 # Make Awesome start Chromium on boot
-echo "\nawful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:8888')\n" >> /home/pi/.config/awesome/rc.lua
+echo "awful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:8888')" >> /home/pi/.config/awesome/rc.lua
 
 # Install an ARM-specific Docker version
 curl -sSL http://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb > /tmp/docker-hypriot_1.10.3-1_armhf.deb
