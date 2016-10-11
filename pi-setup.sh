@@ -42,5 +42,6 @@ systemctl enable getty@tty1.service
 # Make X start on login
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/bash_profile > /home/pi/.bash_profile
 chown pi /home/pi/.bash_profile
+chgrp pi /home/pi/.bash_profile
 
 reboot
