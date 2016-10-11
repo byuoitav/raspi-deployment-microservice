@@ -25,7 +25,6 @@ mkdir /home/pi/.config
 cp -r /etc/xdg/awesome/ /home/pi/.config/awesome/
 
 # Make Awesome start Chromium on boot
-echo "rm -rf /home/pi/.cache" >> /home/pi/.config/awesome/rc.lua
 echo "awful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:8888')" >> /home/pi/.config/awesome/rc.lua
 
 # Install an ARM-specific Docker version
