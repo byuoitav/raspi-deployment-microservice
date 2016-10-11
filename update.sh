@@ -43,3 +43,6 @@ docker run --net="host" -e LOCAL_ENVIRONMENT="true" --restart=always -d --name r
 # Report update finish to Elastic
 body="{\"hostname\":\""$(hostname)"\",\"timestamp\":\""$(date -u +"%Y-%m-%dT%H:%M:%SZ")"\",\"action\":\"deployment_finished\"}"
 curl -H "Content-Type: application/json" -X POST -d "$body" $ELK_ADDRESS >> /tmp/curl.log
+
+#start the DB
+docker run --name configDB -v /data/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=damntheyanks -p 3306:3306 -d hypriot/rpi-mysql
