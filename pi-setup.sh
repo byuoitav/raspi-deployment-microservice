@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Set the proper keyboard layout
-setxkbmap us
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/keyboard > /etc/default/keyboard
 
 # Update everything
 apt-get update
