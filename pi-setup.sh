@@ -29,7 +29,7 @@ echo "awful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:888
 
 # Install an ARM-specific Docker version
 curl -sSL http://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb > /tmp/docker-hypriot_1.10.3-1_armhf.deb
-dpkg -i /tmp/docker-hypriot_1.10.3-1_armhf.deb
+sudo sh -c "dpkg -i /tmp/docker-hypriot_1.10.3-1_armhf.deb"
 rm -f /tmp/docker-hypriot_1.10.3-1_armhf.deb
 usermod -aG docker pi
 sudo sh -c "systemctl enable docker.service"
