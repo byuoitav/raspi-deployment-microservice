@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# This script is used to install and set up dependencies on a newly wiped/installed Raspberry Pi
+# Run with `sudo ./pi-setup.sh`
+# The script assumes the username of the autologin user is "pi"
+
 # Set the proper keyboard layout
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard
 
