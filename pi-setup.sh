@@ -18,13 +18,15 @@ apt-get install -y chromium-browser
 # Make `startx` result in starting the Awesome window manager
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/xinitrc > /home/pi/.xinitrc
 chmod +x /home/pi/.xinitrc
+chown pi /home/pi/.xinitrc
+chgrp pi /home/pi/.xinitrc
 
 # Copy the default Awesome config
 rm -rf /home/pi/.config
 mkdir /home/pi/.config
 cp -r /etc/xdg/awesome/ /home/pi/.config/awesome/
-chown -R pi /home/pi/.config/awesome/
-chgrp -R pi /home/pi/.config/awesome/
+chown -R pi /home/pi/.config
+chgrp -R pi /home/pi/.config
 
 # Make Awesome start Chromium on boot
 echo "awful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:8888')" >> /home/pi/.config/awesome/rc.lua
