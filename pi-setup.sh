@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 
-# Set the proper keyboard layout
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/keyboard > /etc/default/keyboard
+# This script is used to install and set up dependencies on a newly wiped/installed Raspberry Pi
+# Run with `./pi-setup.sh`
+# The script assumes the username of the autologin user is "pi"
 
-# Update everything
-apt-get update
-apt-get -y upgrade
-apt-get -y dist-upgrade
-apt-get -y autoremove
-apt-get -y autoclean
+# Set the proper keyboard layout, update everything, enable autologin, and install our GUI dependencies
+sudo sh -c "curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard; apt-get update; apt-get -y upgrade; apt-get -y dist-upgrade; apt-get -y autoremove; apt-get -y autoclean; apt-get -y install xorg awesome chromium-browser; mkdir -pv /etc/systemd/system/getty@tty1.service.d/; curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/autologin.conf > /etc/systemd/system/getty@tty1.service.d/autologin.conf; systemctl enable getty@tty1.service; usermod -aG sudo pi"
 
-# Install frontend pieces
-apt-get install -y xorg
-apt-get install -y awesome
-apt-get install -y chromium-browser
+# Install docker-compose
+curl -L https://github.com/docker/compose/releases/download/1.9.0-rc3/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+# Download and run Docker containers
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml > docker-compose.yml
+docker-compose up -d
 
 # Make `startx` result in starting the Awesome window manager
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/xinitrc > /home/pi/.xinitrc
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/xinitrc > /home/pi/.xinitrc
 chmod +x /home/pi/.xinitrc
 
 # Copy the default Awesome config
@@ -31,17 +31,10 @@ echo "awful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:888
 curl -sSL http://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb > /tmp/docker-hypriot_1.10.3-1_armhf.deb
 dpkg -i /tmp/docker-hypriot_1.10.3-1_armhf.deb
 rm -f /tmp/docker-hypriot_1.10.3-1_armhf.deb
-sh -c 'usermod -aG docker $SUDO_USER'
-systemctl enable docker.service
-
-# Enable autologin
-mkdir -pv /etc/systemd/system/getty@tty1.service.d/
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/autologin.conf > /etc/systemd/system/getty@tty1.service.d/autologin.conf
-systemctl enable getty@tty1.service
+usermod -aG docker pi
+sudo sh -c "systemctl enable docker.service"
 
 # Make X start on login
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/bash_profile > /home/pi/.bash_profile
-chown pi /home/pi/.bash_profile
-chgrp pi /home/pi/.bash_profile
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/bash_profile > /home/pi/.bash_profile
 
-reboot
+sudo sh -c "reboot"
