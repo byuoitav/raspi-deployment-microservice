@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
 # This script is used to install and set up dependencies on a newly wiped/installed Raspberry Pi
-# Run with `./pi-setup.sh`
+# For clean execution, run this script inside of the /tmp directory with `./pi-setup.sh`
 # The script assumes the username of the autologin user is "pi"
 
-# Set the proper keyboard layout, update everything, enable autologin, and install our GUI dependencies
-sudo sh -c "curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard; apt-get update; apt-get -y upgrade; apt-get -y dist-upgrade; apt-get -y autoremove; apt-get -y autoclean; apt-get -y install xorg awesome chromium-browser; mkdir -pv /etc/systemd/system/getty@tty1.service.d/; curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/autologin.conf > /etc/systemd/system/getty@tty1.service.d/autologin.conf; systemctl enable getty@tty1.service; usermod -aG sudo pi"
+# Run the `sudo.sh` code block to install necessary packages and commands
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/scripts/sudo.sh > sudo.sh
+chmod +x sudo.sh
+sudo sh -c "bash sudo.sh"
 
 # Install docker-compose
 curl -L https://github.com/docker/compose/releases/download/1.9.0-rc3/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
