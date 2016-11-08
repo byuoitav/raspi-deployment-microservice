@@ -7,6 +7,14 @@
 # Set the proper keyboard layout, update everything, enable autologin, and install our GUI dependencies
 sudo sh -c "curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard; apt-get update; apt-get -y upgrade; apt-get -y dist-upgrade; apt-get -y autoremove; apt-get -y autoclean; apt-get -y install xorg awesome chromium-browser; mkdir -pv /etc/systemd/system/getty@tty1.service.d/; curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/autologin.conf > /etc/systemd/system/getty@tty1.service.d/autologin.conf; systemctl enable getty@tty1.service; usermod -aG sudo pi"
 
+# Install docker-compose
+curl -L https://github.com/docker/compose/releases/download/1.9.0-rc3/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+# Download and run Docker containers
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml > docker-compose.yml
+docker-compose up -d
+
 # Make `startx` result in starting the Awesome window manager
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/xinitrc > /home/pi/.xinitrc
 chmod +x /home/pi/.xinitrc
