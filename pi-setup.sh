@@ -23,6 +23,8 @@ chmod +x /home/pi/.xinitrc
 rm -rf /home/pi/.config
 mkdir /home/pi/.config
 cp -r /etc/xdg/awesome/ /home/pi/.config/awesome/
+chown -R pi /home/pi/.config/awesome/
+chgrp -R pi /home/pi/.config/awesome/
 
 # Make Awesome start Chromium on boot
 echo "awful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:8888')" >> /home/pi/.config/awesome/rc.lua
@@ -41,5 +43,7 @@ systemctl enable getty@tty1.service
 
 # Make X start on login
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/bash_profile > /home/pi/.bash_profile
+chown pi /home/pi/.bash_profile
+chgrp pi /home/pi/.bash_profile
 
 reboot
