@@ -1,5 +1,5 @@
 av-api:
-    image: byuoitav/av-api
+    image: byuoitav/rpi-av-api
     ports:
         - "8000:8000"
     links:
@@ -11,28 +11,14 @@ av-api:
         - EMS_API_PASSWORD=$EMS_API_PASSWORD
     restart: always
 telnet-microservice:
-    image: byuoitav/telnet-microservice
+    image: byuoitav/rpi-telnet-microservice
     ports:
         - "8001:8001"
     environment:
         - LOCAL_ENVIRONMENT="true"
     restart: always
-ftp-microservice:
-    image: byuoitav/ftp-microservice
-    ports:
-        - "8002:8002"
-    environment:
-        - LOCAL_ENVIRONMENT="true"
-    restart: always
-wait-for-restart-microservice:
-    image: byuoitav/wait-for-restart-microservice
-    ports:
-        - "8003:8003"
-    environment:
-        - LOCAL_ENVIRONMENT="true"
-    restart: always
 pjlink-microservice:
-    image: byuoitav/pjlink-microservice
+    image: byuoitav/rpi-pjlink-microservice
     ports:
         - "8005:8005"
     environment:
@@ -41,7 +27,7 @@ pjlink-microservice:
         - PJLINK_PASS=$PJLINK_PASS
     restart: always
 configuration-database-microservice:
-    image: byuoitav/configuration-database-microservice
+    image: byuoitav/rpi-configuration-database-microservice
     ports:
         - "8006:8006"
     environment:
@@ -53,26 +39,15 @@ configuration-database-microservice:
         - CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME
     restart: always
 sony-control-microservice:
-    image: byuoitav/sony-control-microservice
+    image: byuoitav/rpi-sony-control-microservice
     ports:
         - "8007:8007"
     environment:
         - LOCAL_ENVIRONMENT="true"
         - SONY_TV_PSK=$SONY_TV_PSK
     restart: always
-raspi-deployment-microservice:
-    image: byuoitav/raspi-deployment-microservice
-    ports:
-        - "8008:8008"
-    environment:
-        - LOCAL_ENVIRONMENT="true"
-        - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
-        - ELK_ADDRESS=$ELK_ADDRESS
-        - PI_SSH_PASSWORD=$PI_SSH_PASSWORD
-        - PI_SSH_USERNAME=$PI_SSH_USERNAME
-    restart: always
 london-audio-microservice:
-    image: byuoitav/london-audio-microservice
+    image: byuoitav/rpi-london-audio-microservice
     ports:
         - "8009:8009"
     environment:
