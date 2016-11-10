@@ -95,12 +95,12 @@ func SendCommand(hostname string) error {
 	log.Printf("SSH session established.")
 	defer sessionSCP.Close()
 
-	err = scp.CopyPath("update.sh", "/tmp", sessionSCP)
+	err = scp.CopyPath("docker-compose.yml", "/tmp", sessionSCP)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Copied update.sh to the /tmp directory.")
+	log.Printf("Copied docker-compose.yml to the /tmp directory.")
 
 	sessionDeploy, err := connection.NewSession()
 	if err != nil {
@@ -111,7 +111,7 @@ func SendCommand(hostname string) error {
 
 	err = sessionDeploy.Start(
 		"export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") +
-			" && /tmp/update.sh")
+			" && docker-compose -f /tmp/docker-compose.yml up -d")
 	if err != nil {
 		return err
 	}
