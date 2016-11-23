@@ -11,8 +11,10 @@ import (
 func Webhook(context echo.Context) error {
 	response, err := helpers.Deploy()
 	if err != nil {
-		return jsonresp.New(context, http.StatusBadRequest, err.Error())
+		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
+		return nil
 	}
 
-	return jsonresp.New(context, http.StatusOK, response)
+	jsonresp.New(context.Response(), http.StatusOK, response)
+	return nil
 }

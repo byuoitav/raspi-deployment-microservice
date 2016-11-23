@@ -2,12 +2,13 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/byuoitav/hateoas"
 	"github.com/byuoitav/raspi-deployment-microservice/handlers"
+	"github.com/byuoitav/wso2jwt"
 	"github.com/jessemillar/health"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/fasthttp"
 	"github.com/labstack/echo/middleware"
 )
 
@@ -22,13 +23,19 @@ func main() {
 	router.Pre(middleware.RemoveTrailingSlash())
 	router.Use(middleware.CORS())
 
-	router.Get("/", hateoas.RootResponse)
-	router.Get("/health", health.Check)
+	// Use the `secure` routing group to require authentication
+	secure := router.Group("", echo.WrapMiddleware(wso2jwt.ValidateJWT))
 
-	router.Get("/webhook", handlers.Webhook)
+	router.GET("/", echo.WrapHandler(http.HandlerFunc(hateoas.RootResponse)))
+	router.GET("/health", echo.WrapHandler(http.HandlerFunc(health.Check)))
 
-	log.Println("The Raspberry Pi Deployment microservice is listening on " + port)
-	server := fasthttp.New(port)
-	server.ReadBufferSize = 1024 * 10 // Needed to interface properly with WSO2
-	router.Run(server)
+	secure.GET("/webhook", handlers.Webhook)
+
+	server := http.Server{
+		Addr:           port,
+		MaxHeaderBytes: 1024 * 10,
+	}
+
+	router.StartServer(&server)
+
 }
