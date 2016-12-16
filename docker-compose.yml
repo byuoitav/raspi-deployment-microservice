@@ -7,8 +7,6 @@ av-api:
     environment:
         - LOCAL_ENVIRONMENT="true"
         - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS 
-        - EMS_API_USERNAME=$EMS_API_USERNAME 
-        - EMS_API_PASSWORD=$EMS_API_PASSWORD
     restart: always
 telnet-microservice:
     image: byuoitav/rpi-telnet-microservice

@@ -37,5 +37,4 @@ func main() {
 	}
 
 	router.StartServer(&server)
-
 }

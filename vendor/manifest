@@ -203,6 +203,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/tmc/scp",
+			"repository": "https://github.com/tmc/scp",
+			"vcs": "git",
+			"revision": "8734282bd23b160cc07954a157106fe59e0f3993",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/tylerb/graceful",
 			"repository": "https://github.com/tylerb/graceful",
 			"vcs": "git",
@@ -227,12 +235,39 @@
 			"notests": true
 		},
 		{
+			"importpath": "golang.org/x/crypto/curve25519",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "9b1a210a06ea1176ec1f0a1ddf83ad7463b8ea3e",
+			"branch": "master",
+			"path": "curve25519",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/ed25519",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "9b1a210a06ea1176ec1f0a1ddf83ad7463b8ea3e",
+			"branch": "master",
+			"path": "ed25519",
+			"notests": true
+		},
+		{
 			"importpath": "golang.org/x/crypto/ocsp",
 			"repository": "https://go.googlesource.com/crypto",
 			"vcs": "git",
 			"revision": "ede567c8e044a5913dad1d1af3696d9da953104c",
 			"branch": "master",
 			"path": "/ocsp",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/ssh",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "9b1a210a06ea1176ec1f0a1ddf83ad7463b8ea3e",
+			"branch": "master",
+			"path": "/ssh",
 			"notests": true
 		},
 		{

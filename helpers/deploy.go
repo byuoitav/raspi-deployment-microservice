@@ -3,11 +3,13 @@ package helpers
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/byuoitav/authmiddleware/bearertoken"
 	"github.com/tmc/scp"
 
 	"golang.org/x/crypto/ssh"
@@ -61,21 +63,39 @@ func Deploy() (string, error) {
 			continue
 		}
 	}
+
 	log.Printf("Deployment finished.")
 	return "Deployment started", nil
 }
 
 func GetDevices() ([]device, error) {
-	response, err := http.Get(os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS") + "/devices/roles/ControlProcessor/types/pi")
+	client := &http.Client{}
+
+	token, err := bearertoken.GetToken()
+	if err != nil {
+		return []device{}, err
+	}
+
+	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/devices/roles/ControlProcessor/types/pi", nil)
+	req.Header.Set("Authorization", "Bearer "+token.Token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return []device{}, err
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return []device{}, err
 	}
 
 	allDevices := []device{}
-	err = json.NewDecoder(response.Body).Decode(&allDevices)
+	err = json.Unmarshal(b, &allDevices)
 	if err != nil {
 		return []device{}, err
 	}
+
+	log.Printf("%+v", allDevices)
 
 	return allDevices, nil
 }
@@ -109,9 +129,7 @@ func SendCommand(hostname string) error {
 
 	defer sessionDeploy.Close()
 
-	err = sessionDeploy.Start(
-		"export ELK_ADDRESS=" + os.Getenv("ELK_ADDRESS") +
-			" && docker-compose -f /tmp/docker-compose.yml up -d")
+	err = sessionDeploy.Start("docker-compose -f /tmp/docker-compose.yml up")
 	if err != nil {
 		return err
 	}
