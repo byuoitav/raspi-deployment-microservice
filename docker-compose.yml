@@ -25,7 +25,7 @@ pjlink-microservice:
         - PJLINK_PASS=$PJLINK_PASS
     restart: always
 configuration-database:
-    image: hypriot/rpi-mysql
+    image: byuoitav/raspi-database
     ports:
         - "3306:3306"
     environment:
