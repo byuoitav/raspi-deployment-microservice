@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/byuoitav/authmiddleware/bearertoken"
-	"github.com/tmc/scp"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -105,31 +104,19 @@ func SendCommand(hostname string) error {
 	if err != nil {
 		return err
 	}
+
 	log.Printf("TCP connection established.")
 	defer connection.Close()
 
-	sessionSCP, err := connection.NewSession()
+	magicSession, err := connection.NewSession()
 	if err != nil {
 		return err
 	}
+
+	defer magicSession.Close()
 	log.Printf("SSH session established.")
-	defer sessionSCP.Close()
 
-	err = scp.CopyPath("docker-compose.yml", "/tmp", sessionSCP)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Copied docker-compose.yml to the /tmp directory.")
-
-	sessionDeploy, err := connection.NewSession()
-	if err != nil {
-		return err
-	}
-
-	defer sessionDeploy.Close()
-
-	err = sessionDeploy.Start("docker-compose -f /tmp/docker-compose.yml up")
+	err = magicSession.Start("sh -c 'curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml --output /tmp/docker-compose.yml&&docker-compose -f /tmp/docker-compose.yml up -d &'")
 	if err != nil {
 		return err
 	}
