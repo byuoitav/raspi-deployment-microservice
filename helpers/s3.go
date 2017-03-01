@@ -12,7 +12,7 @@ import (
 // retrieveEnvironmentVariables gets the environment variables for eacah Pi as a file to SCP over
 func retrieveEnvironmentVariables() (string, error) {
 	fileName := "environment-variables"
-	fileLocation := "public/"
+	fileLocation := "./public/"
 
 	svc := s3.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
 
@@ -27,7 +27,7 @@ func retrieveEnvironmentVariables() (string, error) {
 
 	defer response.Body.Close()
 
-	outFile, err := os.OpenFile(fileLocation+fileName, os.O_CREATE, 0777)
+	outFile, err := os.OpenFile(fileLocation+fileName, os.O_RDWR, 0777)
 	if err != nil {
 		return fileName, err
 	}
