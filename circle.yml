@@ -1,6 +1,7 @@
 machine:
   services:
     - docker
+    - printenv > environment-variables-circle
 
 test:
   post:
