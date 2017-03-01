@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get all the environment variables
-printenv > environment-variables-circle
+printenv > environment-variables-all
 
 grep -v -F -x -f environment-variables-circle environment-variables-all > environment-variables
 
