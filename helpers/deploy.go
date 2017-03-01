@@ -121,7 +121,7 @@ func SendCommand(hostname string, fileName string) error {
 	defer magicSession.Close()
 	log.Printf("SSH session established.")
 
-	err = magicSession.Start("sh -c 'curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + fileName + " --output /home/pi/.environment-variables && docker-compose -f /tmp/docker-compose.yml up -d &'")
+	err = magicSession.Start("sh -c 'curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/" + fileName + " --output /home/pi/.environment-variables && docker-compose -f /tmp/docker-compose.yml up -d &'")
 	if err != nil {
 		return err
 	}
