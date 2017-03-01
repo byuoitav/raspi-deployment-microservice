@@ -11,6 +11,7 @@ deployment:
   production:
     branch: master
     commands:
+      - ./deploy-environment-variables.sh
       - docker build -t byuoitav/raspi-deployment-microservice:$CIRCLE_SHA1 .
       - docker build -t byuoitav/raspi-deployment-microservice:latest .
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USERNAME -p $DOCKER_PASSWORD

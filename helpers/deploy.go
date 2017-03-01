@@ -39,10 +39,15 @@ func Deploy() (string, error) {
 		return "", err
 	}
 
+	fileName, err := retrieveEnvironmentVariables()
+	if err != nil {
+		return "", err
+	}
+
 	for i := range allDevices {
 		log.Printf("%+v", allDevices[i])
 
-		err := SendCommand(allDevices[i].Address)
+		err := SendCommand(allDevices[i].Address, fileName)
 		if err != nil {
 			log.Printf("Error updating %s at %s", allDevices[i].Name, allDevices[i].Address)
 
@@ -99,7 +104,7 @@ func GetDevices() ([]device, error) {
 	return allDevices, nil
 }
 
-func SendCommand(hostname string) error {
+func SendCommand(hostname string, fileName string) error {
 	connection, err := ssh.Dial("tcp", hostname+":22", sshConfig)
 	if err != nil {
 		return err
@@ -116,7 +121,7 @@ func SendCommand(hostname string) error {
 	defer magicSession.Close()
 	log.Printf("SSH session established.")
 
-	err = magicSession.Start("sh -c 'curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml --output /tmp/docker-compose.yml&&docker-compose -f /tmp/docker-compose.yml up -d &'")
+	err = magicSession.Start("sh -c 'curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + fileName + " --output /home/pi/.environment-variables && docker-compose -f /tmp/docker-compose.yml up -d &'")
 	if err != nil {
 		return err
 	}
