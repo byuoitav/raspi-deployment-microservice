@@ -1,5 +1,5 @@
 machine:
-  pre:
+  post:
     - printenv > /tmp/environment-variables-circle
   services:
     - docker
