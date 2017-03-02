@@ -8,6 +8,11 @@ av-api:
         - LOCAL_ENVIRONMENT="true"
         - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS 
     restart: always
+raspi-tp:
+    image: byuoitav/raspi-tp
+    ports:
+        - "8888:8888"
+    restart: always
 telnet-microservice:
     image: byuoitav/rpi-telnet-microservice
     ports:

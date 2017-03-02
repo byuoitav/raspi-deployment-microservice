@@ -20,3 +20,4 @@ deployment:
       - docker push byuoitav/raspi-deployment-microservice:$CIRCLE_SHA1
       - docker push byuoitav/raspi-deployment-microservice:latest
       - ./deploy.sh $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1
+      - ./deploy-pi.sh
