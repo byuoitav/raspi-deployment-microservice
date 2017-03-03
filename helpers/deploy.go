@@ -1,13 +1,11 @@
 package helpers
 
 import (
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/byuoitav/authmiddleware/bearertoken"
 
@@ -47,25 +45,28 @@ func Deploy() (string, error) {
 	for i := range allDevices {
 		log.Printf("%+v", allDevices[i])
 
-		err := SendCommand(allDevices[i].Address, fileName)
-		if err != nil {
-			log.Printf("Error updating %s at %s", allDevices[i].Name, allDevices[i].Address)
-
-			log.Printf("Sending error to %s\n", os.Getenv("ELK_ADDRESS"))
-
-			report := elkReport{Hostname: allDevices[i].Address, Timestamp: time.Now().Format(time.RFC3339), Action: "Deployment failed to start: " + err.Error()}
-			data, err := json.Marshal(&report)
-
+		go SendCommand(allDevices[i].Address, fileName)
+		// err := SendCommand(allDevices[i].Address, fileName)
+		/*
 			if err != nil {
-				log.Printf("Error sending error report.")
+				log.Printf("Error updating %s at %s", allDevices[i].Name, allDevices[i].Address)
+
+				log.Printf("Sending error to %s\n", os.Getenv("ELK_ADDRESS"))
+
+				report := elkReport{Hostname: allDevices[i].Address, Timestamp: time.Now().Format(time.RFC3339), Action: "Deployment failed to start: " + err.Error()}
+				data, err := json.Marshal(&report)
+				if err != nil {
+					log.Printf("Error sending error report.")
+					continue
+				}
+
+				_, err = http.Post(os.Getenv("ELK_ADDRESS"), "application/json", bytes.NewBuffer(data))
+				if err != nil {
+					log.Printf("Error sending error report: %s.", err.Error())
+				}
 				continue
 			}
-			_, err = http.Post(os.Getenv("ELK_ADDRESS"), "application/json", bytes.NewBuffer(data))
-			if err != nil {
-				log.Printf("Error sending error report: %s.", err.Error())
-			}
-			continue
-		}
+		*/
 	}
 
 	log.Printf("Deployment finished.")
@@ -118,14 +119,14 @@ func SendCommand(hostname string, fileName string) error {
 		return err
 	}
 
-	defer magicSession.Close()
+	//defer magicSession.Close()
 	log.Printf("SSH session established.")
 
-	longCommand := "sh -c 'curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/" + fileName + " --output /home/pi/.environment-variables && source ~/.bashrc && docker-compose -f /tmp/docker-compose.yml pull && docker-compose -f /tmp/docker-compose.yml up -d --remove-orphans'"
+	longCommand := "sh -c 'curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/" + fileName + " --output /home/pi/.environment-variables && . ~/.bashrc && docker-compose -f /tmp/docker-compose.yml pull && docker-compose -f /tmp/docker-compose.yml up -d --remove-orphans'"
 
-	log.Printf(longCommand)
+	log.Print(longCommand)
 
-	err = magicSession.Start(longCommand)
+	err = magicSession.Run(longCommand)
 	if err != nil {
 		return err
 	}
