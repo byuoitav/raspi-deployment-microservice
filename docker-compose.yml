@@ -5,27 +5,36 @@ av-api:
     links:
         - configuration-database-microservice
     environment:
-        - LOCAL_ENVIRONMENT="true"
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS 
     restart: always
 raspi-tp:
     image: byuoitav/raspi-tp
     ports:
         - "8888:8888"
+    environment:
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
     restart: always
 telnet-microservice:
     image: byuoitav/rpi-telnet-microservice
     ports:
         - "8001:8001"
     environment:
-        - LOCAL_ENVIRONMENT="true"
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+    restart: always
+crestron-control-microservice:
+    image: byuoitav/rpi-crestron-control-microservice
+    ports:
+        - "8004:8004"
+    environment:
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
     restart: always
 pjlink-microservice:
     image: byuoitav/rpi-pjlink-microservice
     ports:
         - "8005:8005"
     environment:
-        - LOCAL_ENVIRONMENT="true"
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         - PJLINK_PORT=$PJLINK_PORT 
         - PJLINK_PASS=$PJLINK_PASS
     restart: always
@@ -34,7 +43,7 @@ configuration-database-microservice:
     ports:
         - "8006:8006"
     environment:
-        - LOCAL_ENVIRONMENT="true"
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         - CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME 
         - CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD 
         - CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST 
@@ -46,7 +55,7 @@ sony-control-microservice:
     ports:
         - "8007:8007"
     environment:
-        - LOCAL_ENVIRONMENT="true"
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         - SONY_TV_PSK=$SONY_TV_PSK
     restart: always
 london-audio-microservice:
@@ -54,5 +63,5 @@ london-audio-microservice:
     ports:
         - "8009:8009"
     environment:
-        - LOCAL_ENVIRONMENT="true"
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
     restart: always
