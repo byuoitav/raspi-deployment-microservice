@@ -8,13 +8,6 @@ av-api:
         - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS 
     restart: always
-raspi-tp:
-    image: byuoitav/raspi-tp
-    ports:
-        - "8888:8888"
-    environment:
-        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-    restart: always
 telnet-microservice:
     image: byuoitav/rpi-telnet-microservice
     ports:
@@ -62,6 +55,27 @@ london-audio-microservice:
     image: byuoitav/rpi-london-audio-microservice
     ports:
         - "8009:8009"
+    environment:
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+    restart: always
+cgi-microservice:
+    image: byuoitav/rpi-cgi-microservice
+    ports:
+        - "8010:8010"
+    environment:
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+    restart: always
+av-api-rpc:
+    image: byuoitav/rpi-av-api-rpc
+    ports:
+        - "8100:8100"
+    environment:
+        - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+    restart: always
+raspi-tp:
+    image: byuoitav/raspi-tp
+    ports:
+        - "8888:8888"
     environment:
         - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
     restart: always
