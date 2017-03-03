@@ -9,7 +9,6 @@ services:
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS 
-        network_mode: "host"
         restart: always
     telnet-microservice:
         image: byuoitav/rpi-telnet-microservice
@@ -17,7 +16,6 @@ services:
             - "8001:8001"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
         restart: always
     crestron-control-microservice:
         image: byuoitav/rpi-crestron-control-microservice
@@ -25,7 +23,6 @@ services:
             - "8004:8004"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
         restart: always
     pjlink-microservice:
         image: byuoitav/rpi-pjlink-microservice
@@ -35,7 +32,6 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - PJLINK_PORT=$PJLINK_PORT 
             - PJLINK_PASS=$PJLINK_PASS
-        network_mode: "host"
         restart: always
     configuration-database-microservice:
         image: byuoitav/rpi-configuration-database-microservice
@@ -57,7 +53,6 @@ services:
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - SONY_TV_PSK=$SONY_TV_PSK
-        network_mode: "host"
         restart: always
     london-audio-microservice:
         image: byuoitav/rpi-london-audio-microservice
@@ -65,7 +60,6 @@ services:
             - "8009:8009"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
         restart: always
     cgi-microservice:
         image: byuoitav/rpi-cgi-microservice
@@ -73,7 +67,6 @@ services:
             - "8010:8010"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
         restart: always
     av-api-rpc:
         image: byuoitav/rpi-av-api-rpc
@@ -81,7 +74,6 @@ services:
             - "8100:8100"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
         restart: always
     raspi-tp:
         image: byuoitav/raspi-tp
@@ -90,5 +82,4 @@ services:
         environment:
             - HOSTNAME=$HOSTNAME
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
         restart: always
