@@ -80,6 +80,6 @@ services:
         ports:
             - "8888:8888"
         environment:
-            - HOSTNAME=$HOSTNAME
+            - PI_HOSTNAME=$HOSTNAME
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         restart: always
