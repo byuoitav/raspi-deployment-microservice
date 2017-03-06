@@ -5,9 +5,9 @@
 # The script assumes the username of the autologin user is "pi"
 
 # Run the `sudo.sh` code block to install necessary packages and commands
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/sudo.sh > sudo.sh
-chmod +x sudo.sh
-sudo sh -c "bash sudo.sh"
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/sudo.sh > /tmp/sudo.sh
+chmod +x /tmp/sudo.sh
+sudo sh -c "bash /tmp/sudo.sh"
 
 # Download and run Docker containers
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml > /tmp/docker-compose.yml
