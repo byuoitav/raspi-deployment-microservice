@@ -9,10 +9,6 @@ curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/ma
 chmod +x /tmp/sudo.sh
 sudo sh -c "bash /tmp/sudo.sh"
 
-# Download and run Docker containers
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml > /tmp/docker-compose.yml
-docker-compose -f /tmp/docker-compose.yml up -d
-
 # Make `startx` result in starting the i3 window manager
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/xinitrc > /home/pi/.xinitrc
 chmod +x /home/pi/.xinitrc

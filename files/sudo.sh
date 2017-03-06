@@ -41,6 +41,9 @@ systemctl enable getty@tty1.service
 # Rotate the Pi's screen 180 degrees
 echo "lcd_rotate=2" >> /boot/config.txt
 
+# Enable SSH connections
+touch /boot/ssh
+
 # Add the `pi` user to the sudoers group
 usermod -aG sudo pi
 
