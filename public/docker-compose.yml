@@ -6,7 +6,7 @@ services:
             - "8000:8000"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_HOST
+            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
         network_mode: "host"
         restart: always
     telnet-microservice:
