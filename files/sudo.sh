@@ -24,17 +24,11 @@ echo "deb https://packagecloud.io/Hypriot/Schatzkiste/debian/ jessie main" | sud
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 37BBEE3F7AD95B3F
 apt-get update
 
-# Add the i3 repository to our sources
-echo "deb http://debian.sur5r.net/i3/ $(lsb_release -c -s) universe" >> /etc/apt/sources.list
-apt-get update
-apt-get --allow-unauthenticated install sur5r-keyring
-apt-get update
-
 # Patch the Dirty COW kernel vulnerability
 apt-get -y install raspberrypi-kernel 
 
 # Install UI dependencies
-apt-get -y install xorg i3 chromium-browser
+apt-get -y install xorg i3 suckless-tools chromium-browser
 
 # Install an ARM build of docker-compose
 apt-get install docker-compose
