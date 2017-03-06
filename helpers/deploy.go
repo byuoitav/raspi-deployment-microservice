@@ -120,7 +120,7 @@ func SendCommand(hostname string, fileName string) error {
 	//defer magicSession.Close()
 	log.Printf("SSH session established with %s", hostname)
 
-	longCommand := "sh -c 'curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/" + fileName + " --output /etc/environment && echo \"PI_HOSTNAME=$PI_HOSTNAME\" && . ~/.bashrc && docker-compose -f /tmp/docker-compose.yml pull && docker stop $(docker ps -a -q) || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d --remove-orphans'"
+	longCommand := "sh -c 'curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/docker-compose.yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/" + fileName + " --output /home/pi/.environment-variables && echo \"PI_HOSTNAME=$(cat /etc/hostname)\" >> /home/pi/.environment-variables && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && . /etc/environment && docker-compose -f /tmp/docker-compose.yml pull && docker stop $(docker ps -a -q) || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d --remove-orphans'"
 
 	log.Printf("Running the following command on %s: %s", hostname, longCommand)
 
