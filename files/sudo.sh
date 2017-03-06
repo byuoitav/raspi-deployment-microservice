@@ -2,6 +2,12 @@
 
 # This script is called automatically by `pi-setup.sh` to run a batch of Pi setup commands that require sudo permissions
 
+echo "Type the desired hostname of this device (E.g. ITB-1006-CP2), followed by [ENTER]:"
+
+read desired_hostname
+
+cat $desired_hostname > /etc/hostname
+
 # Fix the keyboard layout
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard
 
