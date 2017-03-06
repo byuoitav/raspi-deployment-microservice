@@ -19,7 +19,7 @@ chmod +x /home/pi/.xinitrc
 
 # Copy the default i3 config
 rm -rf /home/pi/.config
-mkdir /home/pi/.config/i3
+mkdir -p /home/pi/.config/i3
 cp -r /etc/i3/config /home/pi/.config/i3/config
 
 # Make Awesome start Chromium on boot
