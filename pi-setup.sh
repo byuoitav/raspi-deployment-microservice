@@ -13,13 +13,8 @@ sudo sh -c "bash /tmp/sudo.sh"
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/xinitrc > /home/pi/.xinitrc
 chmod +x /home/pi/.xinitrc
 
-# Copy the default i3 config
-rm -rf /home/pi/.config
-mkdir -p /home/pi/.config/i3
-cp -r /etc/i3/config /home/pi/.config/i3/config
-
 # Configure i3
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/i3_config > /home/pi/.config/i3/config
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/i3_config > /home/pi/.i3/config
 
 # Install an ARM-specific Docker version
 curl -sSL http://downloads.hypriot.com/docker-hypriot_1.10.3-1_armhf.deb > /tmp/docker-hypriot_1.10.3-1_armhf.deb
