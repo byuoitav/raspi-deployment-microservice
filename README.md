@@ -7,3 +7,12 @@
 The following environment variables need to be set in order to access SSH on the Raspberry Pi's: `PI_SSH_USERNAME`, `PI_SSH_PASSWORD`, `CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS`, `RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS`, and `ELK_ADDRESS`
 
 Additionally, any environment variables the Pi's will need to function need to be set in the Circle web interface.
+
+Run the following command to install Docker on the Pi in question:
+```
+curl -sSL https://get.docker.com | sh
+```
+
+Run `pi-setup.sh`
+
+Run `mariadb-setup.sh`

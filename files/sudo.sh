@@ -18,9 +18,6 @@ apt-get -y dist-upgrade
 apt-get -y autoremove
 apt-get -y autoclean
 
-# Install Docker
-curl -sSL https://get.docker.com | sh
-
 # Patch the Dirty COW kernel vulnerability
 apt-get -y install raspberrypi-kernel 
 
