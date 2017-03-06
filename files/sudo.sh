@@ -18,11 +18,8 @@ apt-get -y dist-upgrade
 apt-get -y autoremove
 apt-get -y autoclean
 
-# Add the Hyperiot repository to our sources
-apt-get -y install apt-transport-https 
-echo "deb https://packagecloud.io/Hypriot/Schatzkiste/debian/ jessie main" | sudo tee /etc/apt/sources.list.d/hypriot.list
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 37BBEE3F7AD95B3F
-apt-get update
+# Install Docker
+curl -sSL https://get.docker.com | sh
 
 # Patch the Dirty COW kernel vulnerability
 apt-get -y install raspberrypi-kernel 
