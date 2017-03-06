@@ -5,26 +5,22 @@
 # The script assumes the username of the autologin user is "pi"
 
 # Run the `sudo.sh` code block to install necessary packages and commands
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/scripts/sudo.sh > sudo.sh
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/sudo.sh > sudo.sh
 chmod +x sudo.sh
 sudo sh -c "bash sudo.sh"
 
-# Install docker-compose
-curl -L https://github.com/docker/compose/releases/download/1.9.0-rc3/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-
 # Download and run Docker containers
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml > docker-compose.yml
-docker-compose up -d
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/docker-compose.yml > /tmp/docker-compose.yml
+docker-compose -f /tmp/docker-compose.yml up -d
 
-# Make `startx` result in starting the Awesome window manager
+# Make `startx` result in starting the i3 window manager
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/xinitrc > /home/pi/.xinitrc
 chmod +x /home/pi/.xinitrc
 
-# Copy the default Awesome config
+# Copy the default i3 config
 rm -rf /home/pi/.config
 mkdir /home/pi/.config
-cp -r /etc/xdg/awesome/ /home/pi/.config/awesome/
+cp -r /etc/i3/config /home/pi/.config/i3/config
 
 # Make Awesome start Chromium on boot
 echo "awful.util.spawn_with_shell('chromium-browser --kiosk http://localhost:8888')" >> /home/pi/.config/awesome/rc.lua
