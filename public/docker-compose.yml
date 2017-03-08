@@ -82,7 +82,7 @@ services:
         network_mode: "host"
         restart: always
     touchpanel-ui-microservice:
-        image: byuoitav/touchpanel-ui-microservice
+        image: byuoitav/rpi-touchpanel-ui-microservice
         ports:
             - "8888:8888"
         environment:
