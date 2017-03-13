@@ -12,20 +12,22 @@ echo $desired_hostname > /etc/hostname
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard
 
 # Perform general updating
-apt-get update
-apt-get -y upgrade
-apt-get -y dist-upgrade
-apt-get -y autoremove
-apt-get -y autoclean
+apt update
+apt -y upgrade
+apt -y dist-upgrade
+apt -y autoremove
+apt -y autoclean
 
 # Patch the Dirty COW kernel vulnerability
-apt-get -y install raspberrypi-kernel 
+apt -y install raspberrypi-kernel 
 
 # Install UI dependencies
-apt-get -y install xorg i3 suckless-tools chromium-browser
+apt -y install xorg i3 suckless-tools chromium-browser
 
 # Install an ARM build of docker-compose
-apt-get install docker-compose
+apt -y install python-pip
+easy_install --upgrade pip
+pip install docker-compose
 
 # Configure automatic login for the `pi` user
 mkdir -pv /etc/systemd/system/getty@tty1.service.d/
@@ -37,6 +39,9 @@ echo "lcd_rotate=2" >> /boot/config.txt
 
 # Enable SSH connections
 touch /boot/ssh
+
+# Set the timezone
+cp /usr/share/zoneinfo/America/Denver /etc/localtime
 
 # Add the `pi` user to the sudoers group
 usermod -aG sudo pi
