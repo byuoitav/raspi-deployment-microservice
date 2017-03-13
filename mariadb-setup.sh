@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #------
-#Figure out how to set password in automated way. 
+#Figure out how to set password in automated way.
 #-----
 
 sudo debconf-set-selections <<< "maria-db mysql-server/root_password password $CONFIGURATION_DATABASE_PASSWORD"
@@ -17,11 +17,12 @@ command=$(python -c "a = '$HOSTNAME'; a = a.split('-'); command = 'CALL getIDByH
 
 server_id=$(mysql -f -N --user=$CONFIGURATION_DATABASE_USERNAME --password=$CONFIGURATION_DATABASE_PASSWORD --host=$CONFIGURATION_DATABASE_REPLICATION_HOST configuration -e "$command")
 
+#create my.cnf
 echo "[mariadb]" | sudo tee /etc/my.cnf
 echo "server_id=$server_id" | sudo tee --append /etc/my.cnf
 
-mysqladmin -u$CONFIGURATION_DATABASE_USERNAME -p$CONFIGURATION_DATABASE_PASSWORD -h127.0.0.1 --protocol=tcp shutdown
-sudo service mysql start
+#restart service
+sudo service mysql restart
 
 mysqldump --dump-slave --master-data --gtid --password=$CONFIGURATION_DATABASE_PASSWORD --user=root --host=$CONFIGURATION_DATABASE_REPLICATION_SETUP_HOST --all-databases > /tmp/dump.sql
 
