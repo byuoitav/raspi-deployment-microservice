@@ -20,16 +20,16 @@ Additionally, any environment variables the Pi's will need to function need to b
 1. Get `pi-setup.sh` and run it with the following commands:
 
 	```
-	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/pi-setup.sh > pi-setup.sh
-	chmod +x pi-setup.sh
-	./pi-setup.sh
+	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/pi-setup.sh > /tmp/pi-setup.sh
+	chmod +x /tmp/pi-setup.sh
+	/tmp/pi-setup.sh
 	```
 
 1. Trigger a deployment from Circle ("Rebuild" the `raspi-deployment-microservice`) to get the necessary environment variables onto the new Pi
 1. When the Circle deployment finishes, get `mariadb-setup.sh` and run it with the following commands:
 
 	```
-	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > mariadb-setup.sh
-	chmod +x mariadb-setup.sh
-	./mariadb-setup.sh
+	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh
+	chmod +x /tmp/mariadb-setup.sh
+	/tmp/mariadb-setup.sh
 	```
