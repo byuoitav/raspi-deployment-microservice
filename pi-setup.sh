@@ -14,6 +14,7 @@ curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/ma
 chmod +x /home/pi/.xinitrc
 
 # Configure i3
+mkdir /home/pi/.i3
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/i3_config > /home/pi/.i3/config
 
 # Install an ARM-specific Docker version
