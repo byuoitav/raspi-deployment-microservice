@@ -25,8 +25,9 @@ apt -y install raspberrypi-kernel
 apt -y install xorg i3 suckless-tools chromium-browser
 
 # Install an ARM build of docker-compose
-curl -L "https://github.com/docker/compose/releases/download/1.11.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+apt -y install python-pip
+easy_install --upgrade pip
+pip install docker-compose
 
 # Configure automatic login for the `pi` user
 mkdir -pv /etc/systemd/system/getty@tty1.service.d/
