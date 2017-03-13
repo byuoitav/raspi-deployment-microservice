@@ -10,13 +10,6 @@ The following environment variables need to be set in Circle so the deployment f
 Additionally, any environment variables the Pi's will need to function need to be set in the Circle web interface.
 
 ### Installation
-1. Run the following command to install Docker on the Pi in question:
-
-	```
-	curl -sSL https://get.docker.com | sh
-	```
-
-1. Run the command given at the end of the Docker installer output to add the `pi` user to the `docker` group
 1. Get `pi-setup.sh` and run it with the following commands:
 
 	```
@@ -25,6 +18,19 @@ Additionally, any environment variables the Pi's will need to function need to b
 	/tmp/pi-setup.sh
 	```
 
+1. SSH into the Pi using a command similar to the following substituting the hostname value you supplied in the step above where appropriate:
+
+	```
+	ssh pi@HOSTNAME.byu.edu
+	```
+
+1. Run the following command to install Docker on the Pi in question:
+
+	```
+	curl -sSL https://get.docker.com | sh
+	```
+
+1. Run the command given at the end of the Docker installer output to add the `pi` user to the `docker` group
 1. Trigger a deployment from Circle ("Rebuild" the `raspi-deployment-microservice`) to get the necessary environment variables onto the new Pi
 1. When the Circle deployment finishes, get `mariadb-setup.sh` and run it with the following commands:
 
