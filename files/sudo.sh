@@ -12,20 +12,21 @@ echo $desired_hostname > /etc/hostname
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard
 
 # Perform general updating
-apt-get update
-apt-get -y upgrade
-apt-get -y dist-upgrade
-apt-get -y autoremove
-apt-get -y autoclean
+apt update
+apt -y upgrade
+apt -y dist-upgrade
+apt -y autoremove
+apt -y autoclean
 
 # Patch the Dirty COW kernel vulnerability
-apt-get -y install raspberrypi-kernel 
+apt -y install raspberrypi-kernel 
 
 # Install UI dependencies
-apt-get -y install xorg i3 suckless-tools chromium-browser
+apt -y install xorg i3 suckless-tools chromium-browser
 
 # Install an ARM build of docker-compose
-apt-get install docker-compose
+curl -L "https://github.com/docker/compose/releases/download/1.11.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
 
 # Configure automatic login for the `pi` user
 mkdir -pv /etc/systemd/system/getty@tty1.service.d/
