@@ -4,15 +4,31 @@
 [![View in Swagger](http://jessemillar.github.io/view-in-swagger-button/button.svg)](http://byuoitav.github.io/swagger-ui/?url=https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/swagger.json)
 
 ## Setup
-The following environment variables need to be set in order to access SSH on the Raspberry Pi's: `PI_SSH_USERNAME`, `PI_SSH_PASSWORD`, `CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS`, `RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS`, and `ELK_ADDRESS`
+### Environment Variables
+The following environment variables need to be set in Circle so the deployment functionality can SSH into the Raspberry Pi's: `PI_SSH_USERNAME`, `PI_SSH_PASSWORD`, `CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS`, `RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS`, and `ELK_ADDRESS`
 
 Additionally, any environment variables the Pi's will need to function need to be set in the Circle web interface.
 
-Run the following command to install Docker on the Pi in question:
-```
-curl -sSL https://get.docker.com | sh
-```
+### Installation
+1. Run the following command to install Docker on the Pi in question:
 
-Run `pi-setup.sh`
+	```
+	curl -sSL https://get.docker.com | sh
+	```
 
-Run `mariadb-setup.sh`
+1. Get `pi-setup.sh` and run it with the following commands:
+
+	```
+	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/pi-setup.sh > pi-setup.sh
+	chmod +x pi-setup.sh
+	./pi-setup.sh
+	```
+
+1. Trigger a deployment from Circle ("Rebuild" the `raspi-deployment-microservice`) to get the necessary environment variables onto the new Pi
+1. When the Circle deployment finishes, get `mariadb-setup.sh` and run it with the following commands:
+
+	```
+	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > mariadb-setup.sh
+	chmod +x mariadb-setup.sh
+	./mariadb-setup.sh
+	```
