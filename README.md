@@ -31,5 +31,5 @@ Additionally, any environment variables the Pi's will need to function need to b
 	```
 	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh
 	chmod +x /tmp/mariadb-setup.sh
-	/tmp/mariadb-setup.sh
+	sudo /tmp/mariadb-setup.sh
 	```
