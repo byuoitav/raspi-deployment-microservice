@@ -6,7 +6,7 @@ services:
             - "8000:8000"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_HOST
+            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
         network_mode: "host"
         restart: always
     telnet-microservice:
@@ -81,8 +81,8 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always
-    raspi-tp:
-        image: byuoitav/raspi-tp
+    touchpanel-ui-microservice:
+        image: byuoitav/rpi-touchpanel-ui-microservice
         ports:
             - "8888:8888"
         environment:
