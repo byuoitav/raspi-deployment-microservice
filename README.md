@@ -16,7 +16,7 @@ Additionally, any environment variables the Pi's will need to function need to b
 	curl -sSL https://get.docker.com | sh
 	```
 
-1. Run `pi-setup.sh`
+1. Get `pi-setup.sh` and run it with the following commands:
 
 	```
 	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/hotfix/readme/pi-setup.sh
@@ -25,7 +25,7 @@ Additionally, any environment variables the Pi's will need to function need to b
 	```
 
 1. Trigger a deployment from Circle ("Rebuild" the `raspi-deployment-microservice`) to get the necessary environment variables onto the new Pi
-1. When the Circle deployment finishes, run `mariadb-setup.sh`
+1. When the Circle deployment finishes, get `mariadb-setup.sh` and run it with the following commands:
 
 	```
 	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/hotfix/readme/mariadb-setup.sh
