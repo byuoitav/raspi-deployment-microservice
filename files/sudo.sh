@@ -38,6 +38,9 @@ echo "lcd_rotate=2" >> /boot/config.txt
 # Enable SSH connections
 touch /boot/ssh
 
+# Set the timezone
+cp /usr/share/zoneinfo/America/Denver /etc/localtime
+
 # Add the `pi` user to the sudoers group
 usermod -aG sudo pi
 
