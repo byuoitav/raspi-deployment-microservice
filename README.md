@@ -16,6 +16,7 @@ Additionally, any environment variables the Pi's will need to function need to b
 	curl -sSL https://get.docker.com | sh
 	```
 
+1. Run the command given at the end of the Docker installer output to add the `pi` user to the `docker` group
 1. Get `pi-setup.sh` and run it with the following commands:
 
 	```
