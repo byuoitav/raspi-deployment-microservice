@@ -45,7 +45,7 @@ func Deploy(deploymentType string) (string, error) {
 	}
 
 	for i := range allDevices {
-		go SendCommand(allDevices[i].Address, fileName) // Start an update for each Pi
+		go SendCommand(allDevices[i].Address, fileName, deploymentType) // Start an update for each Pi
 	}
 
 	log.Printf("Deployment started")
@@ -104,7 +104,7 @@ func reportToELK(hostname string, err error) {
 	}
 }
 
-func SendCommand(hostname string, fileName string) error {
+func SendCommand(hostname string, fileName string, deploymentType string) error {
 	connection, err := ssh.Dial("tcp", hostname+":22", sshConfig)
 	if err != nil {
 		log.Printf("Error dialing %s: %s", hostname, err.Error())
@@ -122,10 +122,9 @@ func SendCommand(hostname string, fileName string) error {
 		return err
 	}
 
-	//defer magicSession.Close()
 	log.Printf("SSH session established with %s", hostname)
 
-	longCommand := "sh -c 'curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/docker-compose.yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/" + fileName + " --output /home/pi/.environment-variables && echo \"PI_HOSTNAME=$(cat /etc/hostname)\" >> /home/pi/.environment-variables && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && . /etc/environment && docker-compose -f /tmp/docker-compose.yml pull && docker rmi $(docker images -q --filter \"dangling=true\") || true && docker stop $(docker ps -a -q) || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d'"
+	longCommand := "sh -c 'curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/docker-compose-" + deploymentType + ".yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/" + fileName + " --output /home/pi/.environment-variables && echo \"PI_HOSTNAME=$(cat /etc/hostname)\" >> /home/pi/.environment-variables && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && . /etc/environment && docker-compose -f /tmp/docker-compose.yml pull && docker rmi $(docker images -q --filter \"dangling=true\") || true && docker stop $(docker ps -a -q) || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d'"
 
 	log.Printf("Running the following command on %s: %s", hostname, longCommand)
 
