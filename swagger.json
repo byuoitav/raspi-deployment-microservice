@@ -49,9 +49,73 @@
                 }
             }
         },
-        "/webhook": {
+        "/webhook_development": {
             "get": {
-                "summary": "Deploy Updates",
+                "summary": "Deploy Development Updates",
+                "description": "Fire off a deployment.",
+                "tags": [
+                    "Deployment"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Endpoint information",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Response"
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/responses/500"
+                    },
+                    "503": {
+                        "$ref": "#/responses/503"
+                    },
+                    "default": {
+                        "$ref": "#/responses/default"
+                    }
+                }
+            }
+        },
+        "/webhook_stage": {
+            "get": {
+                "summary": "Deploy Stage Updates",
+                "description": "Fire off a deployment.",
+                "tags": [
+                    "Deployment"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Endpoint information",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Response"
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/responses/500"
+                    },
+                    "503": {
+                        "$ref": "#/responses/503"
+                    },
+                    "default": {
+                        "$ref": "#/responses/default"
+                    }
+                }
+            }
+        },
+        "/webhook_production": {
+            "get": {
+                "summary": "Deploy Production Updates",
                 "description": "Fire off a deployment.",
                 "tags": [
                     "Deployment"
