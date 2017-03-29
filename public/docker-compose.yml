@@ -75,6 +75,22 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always
+    pulse-eight-neo-microservice:
+        build: byuoitav/rpi-pulse-eight-neo-microservice
+        ports:
+            - "8011:8011"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+        network_mode: "host"
+        restart: always
+    adcp-control-microservice:
+        image: byuoitav/rpi-adcp-control-microservice
+        ports:
+            - "8012:8012"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+        network_mode: "host"
+        restart: always
     av-api-rpc:
         image: byuoitav/rpi-av-api-rpc
         ports:
@@ -92,14 +108,6 @@ services:
             - "8888:8888"
         environment:
             - PI_HOSTNAME=$PI_HOSTNAME
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
-        restart: always
-    adcp-control-microservice:
-        image: byuoitav/rpi-adcp-control-microservice
-        ports:
-            - "8012:8012"
-        environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always

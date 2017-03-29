@@ -33,8 +33,8 @@ var sshConfig = &ssh.ClientConfig{
 	},
 }
 
-func Deploy() (string, error) {
-	allDevices, err := GetDevices()
+func Deploy(deploymentType string) (string, error) {
+	allDevices, err := GetDevices(deploymentType)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func Deploy() (string, error) {
 	return "Deployment started", nil
 }
 
-func GetDevices() ([]device, error) {
+func GetDevices(deploymentType string) ([]device, error) {
 	client := &http.Client{}
 
 	token, err := bearertoken.GetToken()
@@ -60,7 +60,12 @@ func GetDevices() ([]device, error) {
 		return []device{}, err
 	}
 
-	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/devices/roles/ControlProcessor/types/pi", nil)
+	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/"+deploymentType+"/devices/roles/ControlProcessor/types/pi", nil)
+
+	if deploymentType == "production" {
+		req, _ = http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/devices/roles/ControlProcessor/types/pi", nil)
+	}
+
 	req.Header.Set("Authorization", "Bearer "+token.Token)
 
 	resp, err := client.Do(req)

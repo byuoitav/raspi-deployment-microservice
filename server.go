@@ -30,7 +30,9 @@ func main() {
 	router.GET("/", echo.WrapHandler(http.HandlerFunc(hateoas.RootResponse)))
 	router.GET("/health", echo.WrapHandler(http.HandlerFunc(health.Check)))
 
-	secure.GET("/webhook", handlers.Webhook)
+	secure.GET("/webhook_development", handlers.WebhookDevelopment)
+	secure.GET("/webhook_stage", handlers.WebhookStage)
+	secure.GET("/webhook_production", handlers.WebhookProduction)
 
 	server := http.Server{
 		Addr:           port,
