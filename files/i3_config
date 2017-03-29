@@ -164,4 +164,4 @@ bar {
         status_command i3status
 }
 
-exec chromium-browser --kiosk http://localhost:8888
+exec chromium-browser --kiosk --disable-pinch --overscroll-history-navigation=0 --disable-infobars http://localhost:8888
