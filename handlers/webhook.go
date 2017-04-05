@@ -40,3 +40,14 @@ func WebhookProduction(context echo.Context) error {
 	jsonresp.New(context.Response(), http.StatusOK, response)
 	return nil
 }
+
+func WebhookDevice(context echo.Context) error {
+	response, err := helpers.Deploy(context.Param("hostname"))
+	if err != nil {
+		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
+		return nil
+	}
+
+	jsonresp.New(context.Response(), http.StatusOK, response)
+	return nil
+}
