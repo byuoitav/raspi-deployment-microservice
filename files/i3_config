@@ -164,4 +164,5 @@ bar {
         status_command i3status
 }
 
+exec /home/pi/update_docker_containers.sh
 exec chromium-browser --kiosk --disable-pinch --overscroll-history-navigation=0 --disable-infobars http://localhost:8888
