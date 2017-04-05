@@ -15,6 +15,7 @@ chmod +x /home/pi/.xinitrc
 
 # Download the script necessary to update Docker containers after a reboot
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/update_docker_containers.sh > /home/pi/update_docker_containers.sh
+chmod +x /home/pi/update_docker_containers.sh
 
 # Configure i3
 mkdir /home/pi/.i3
