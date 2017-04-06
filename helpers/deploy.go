@@ -3,13 +3,16 @@ package helpers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/byuoitav/authmiddleware/bearertoken"
+	"github.com/byuoitav/configuration-database-microservice/accessors"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -34,7 +37,7 @@ var sshConfig = &ssh.ClientConfig{
 }
 
 func Deploy(deploymentType string) (string, error) {
-	allDevices, err := GetDevices(deploymentType)
+	allDevices, err := GetAllDevices(deploymentType)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +55,24 @@ func Deploy(deploymentType string) (string, error) {
 	return "Deployment started", nil
 }
 
-func GetDevices(deploymentType string) ([]device, error) {
+func DeploySingle(hostname string) (string, error) {
+	room, err := GetRoom(hostname)
+	if err != nil {
+		return "", err
+	}
+
+	fileName, err := retrieveEnvironmentVariables()
+	if err != nil {
+		return "", err
+	}
+
+	go SendCommand(hostname+".byu.edu", fileName, room.RoomDesignation) // Start an update for the Pi
+
+	log.Printf("Deployment started")
+	return "Deployment started", nil
+}
+
+func GetAllDevices(deploymentType string) ([]device, error) {
 	client := &http.Client{}
 
 	token, err := bearertoken.GetToken()
@@ -87,6 +107,44 @@ func GetDevices(deploymentType string) ([]device, error) {
 	log.Printf("All devices from database: %+v", allDevices)
 
 	return allDevices, nil
+}
+
+func GetRoom(hostname string) (accessors.Room, error) {
+	client := &http.Client{}
+
+	token, err := bearertoken.GetToken()
+	if err != nil {
+		return accessors.Room{}, err
+	}
+
+	splitHostname := strings.Split(hostname, "-")
+	if len(splitHostname) != 3 {
+		return accessors.Room{}, errors.New("Invalid hostname: " + hostname)
+	}
+
+	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/buildings/"+splitHostname[0]+"/rooms/"+splitHostname[1], nil)
+
+	req.Header.Set("Authorization", "Bearer "+token.Token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return accessors.Room{}, err
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return accessors.Room{}, err
+	}
+
+	room := accessors.Room{}
+	err = json.Unmarshal(b, &room)
+	if err != nil {
+		return accessors.Room{}, err
+	}
+
+	log.Printf("Device room from database: %+v", room)
+
+	return room, nil
 }
 
 func reportToELK(hostname string, err error) {

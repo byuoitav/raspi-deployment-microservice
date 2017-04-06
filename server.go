@@ -33,6 +33,7 @@ func main() {
 	secure.GET("/webhook_development", handlers.WebhookDevelopment)
 	secure.GET("/webhook_stage", handlers.WebhookStage)
 	secure.GET("/webhook_production", handlers.WebhookProduction)
+	secure.GET("/webhook_device/:hostname", handlers.WebhookDevice)
 
 	server := http.Server{
 		Addr:           port,

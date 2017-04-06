@@ -13,6 +13,10 @@ sudo sh -c "bash /tmp/sudo.sh"
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/xinitrc > /home/pi/.xinitrc
 chmod +x /home/pi/.xinitrc
 
+# Download the script necessary to update Docker containers after a reboot
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/update_docker_containers.sh > /home/pi/update_docker_containers.sh
+chmod +x /home/pi/update_docker_containers.sh
+
 # Configure i3
 mkdir /home/pi/.i3
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/i3_config > /home/pi/.i3/config
