@@ -103,3 +103,13 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always
+    zeromq-proxy-microservice:
+        image: byuoitav/rpi-zeromq-proxy-microservice:stage
+        ports:
+            - "7000:7000"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+            - PI_HOSTNAME=$PI_HOSTNAME
+            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+        network_mode: "host"
+        restart: always
