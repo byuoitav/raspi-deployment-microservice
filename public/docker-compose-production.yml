@@ -1,7 +1,7 @@
 version: '2'
 services:
     av-api:
-        image: byuoitav/rpi-av-api
+        image: byuoitav/rpi-av-api:production
         ports:
             - "8000:8000"
         environment:
@@ -12,7 +12,7 @@ services:
         network_mode: "host"
         restart: always
     crestron-control-microservice:
-        image: byuoitav/rpi-crestron-control-microservice
+        image: byuoitav/rpi-crestron-control-microservice:production
         ports:
             - "8004:8004"
         environment:
@@ -20,30 +20,30 @@ services:
         network_mode: "host"
         restart: always
     pjlink-microservice:
-        image: byuoitav/rpi-pjlink-microservice
+        image: byuoitav/rpi-pjlink-microservice:production
         ports:
             - "8005:8005"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - PJLINK_PORT=$PJLINK_PORT 
+            - PJLINK_PORT=$PJLINK_PORT
             - PJLINK_PASS=$PJLINK_PASS
         network_mode: "host"
         restart: always
     configuration-database-microservice:
-        image: byuoitav/rpi-configuration-database-microservice
+        image: byuoitav/rpi-configuration-database-microservice:production
         ports:
             - "8006:8006"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME 
-            - CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD 
-            - CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST 
-            - CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT 
+            - CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME
+            - CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD
+            - CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST
+            - CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT
             - CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME
         network_mode: "host"
         restart: always
     sony-control-microservice:
-        image: byuoitav/rpi-sony-control-microservice
+        image: byuoitav/rpi-sony-control-microservice:production
         ports:
             - "8007:8007"
         environment:
@@ -52,7 +52,7 @@ services:
         network_mode: "host"
         restart: always
     london-audio-microservice:
-        image: byuoitav/rpi-london-audio-microservice
+        image: byuoitav/rpi-london-audio-microservice:production
         ports:
             - "8009:8009"
         environment:
@@ -60,7 +60,7 @@ services:
         network_mode: "host"
         restart: always
     cgi-microservice:
-        image: byuoitav/rpi-cgi-microservice
+        image: byuoitav/rpi-cgi-microservice:production
         ports:
             - "8010:8010"
         environment:
@@ -68,7 +68,7 @@ services:
         network_mode: "host"
         restart: always
     pulse-eight-neo-microservice:
-        build: byuoitav/rpi-pulse-eight-neo-microservice
+        image: byuoitav/rpi-pulse-eight-neo-microservice:production
         ports:
             - "8011:8011"
         environment:
@@ -76,7 +76,7 @@ services:
         network_mode: "host"
         restart: always
     adcp-control-microservice:
-        image: byuoitav/rpi-adcp-control-microservice
+        image: byuoitav/rpi-adcp-control-microservice:production
         ports:
             - "8012:8012"
         environment:
@@ -84,7 +84,7 @@ services:
         network_mode: "host"
         restart: always
     av-api-rpc:
-        image: byuoitav/rpi-av-api-rpc
+        image: byuoitav/rpi-av-api-rpc:production
         ports:
             - "8100:8100"
         environment:
@@ -95,7 +95,7 @@ services:
         network_mode: "host"
         restart: always
     touchpanel-ui-microservice:
-        image: byuoitav/rpi-touchpanel-ui-microservice
+        image: byuoitav/rpi-touchpanel-ui-microservice:production
         ports:
             - "8888:8888"
         environment:
@@ -103,13 +103,31 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always
-    zeromq-proxy-microservice:
-        image: byuoitav/rpi-zeromq-proxy-microservice
+    configuration-database-tool:
+        image: byuoitav/rpi-configuration-database-tool:production
         ports:
-            - "7000:7000"
+            - "9999:9999"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - PI_HOSTNAME=$PI_HOSTNAME
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
         network_mode: "host"
         restart: always
+    event-router-microservice:
+        image: byuoitav/rpi-event-router-microservice:production
+        ports:
+            - "7000:7000"
+        environment:
+            - PI_HOSTNAME=$PI_HOSTNAME
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+        network_mode: "host"
+        restart: "always"
+    event-translator-microservice:
+        image: byuoitav/rpi-event-translator-microservice:production
+        ports:
+            - "7002:7002"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+            - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
+        network_mode: "host"
+        restart: "always"
