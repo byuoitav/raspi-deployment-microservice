@@ -11,8 +11,6 @@ echo ""
 
 chvt 2
 
-echo "Starting $0"
-
 bootfile="/usr/local/games/firstboot"
 
 if [ -f "$bootfile" ]; then
@@ -32,10 +30,14 @@ if [ -f "$bootfile" ]; then
 else
 	echo "Second boot."
 
+	wait 20
+	chvt 2
+
 	until $(sudo usermod -aG docker pi); do
 		curl -sSL https://get.docker.com -k | sh
 		wait
 	done
+	echo "Added user pi to the docker group"
 
 	printf "Please trigger a build to get the necessary environment variables.\n"
 	printf "Waiting...\n"
