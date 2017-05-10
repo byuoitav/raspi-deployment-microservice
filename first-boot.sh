@@ -17,18 +17,25 @@ bootfile="/usr/local/games/firstboot"
 
 if [ -f "$bootfile" ]; then
 	echo "First boot."
-	sudo rm $bootfile
 
 	# download pi-setup
-	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/pi-setup.sh > /tmp/pi-setup.sh
+	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/pi-setup.sh > /tmp/pi-setup.sh); do
+		echo "Trying again."
+	done
 	chmod +x /tmp/pi-setup.sh
+
+	echo "Removing first boot file."
+	sudo rm $bootfile
+
 	/tmp/pi-setup.sh
+	wait
 else
 	echo "Second boot."
 
-	curl -sSL https://get.docker.com -k | sh
-	wait
-	sudo usermod -aG docker pi
+	until $(sudo usermod -aG docker pi); do
+		curl -sSL https://get.docker.com -k | sh
+		wait
+	done
 
 	printf "Please trigger a build to get the necessary environment variables.\n"
 	printf "Waiting...\n"
@@ -38,18 +45,24 @@ else
 	printf "original mod time to /etc/environment: $modtime"
 	newtime=$(stat -c %Y /etc/environment)
 	until [ "$modtime" != "$newtime" ]; do
+		newtime=$(stat -c %Y /etc/environment)
 		printf "\tnew mod time to /etc/environment: $newtime"
-		sleep 5
+		sleep 10
 	done
 
-	printf "recieved env. variables\n"
+	printf "\nrecieved env. variables\n"
+	source /etc/environment
 
-	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh
+	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh); do
+		echo "Trying again."
+	done
 	chmod +x /tmp/mariadb-setup.sh
-	/tmp/mariadb-setup.sh
 
 	echo "Removing symlink to startup script."
 	sudo systemctl disable first-boot.service
+
+	/tmp/mariadb-setup.sh
+	wait
 fi
 
 exit 0
