@@ -1,5 +1,16 @@
 #!/bin/bash
 
+#Ensure that our environment Variables are set
+source /etc/environment
+if [ -z "$CONFIGURATION_DATABASE_PASSWORD" ]; then
+    echo "Environment Variables not available in script"
+    return 1
+fi
+if [ -z "$CONFIGURATION_DATABASE_USERNAME" ]; then
+    echo "Environment Variables not available in script"
+    return 1
+fi
+
 #------
 #Figure out how to set password in automated way.
 #-----
