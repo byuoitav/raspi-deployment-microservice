@@ -1,0 +1,14 @@
+[Unit]
+Description=Pi setup
+After=getty@tty2.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/first-boot.sh
+StandardInput=tty
+TTYPath=/dev/tty2
+TTYReset=yes
+TTYVHangup=yes
+
+[Install]
+WantedBy=default.target
