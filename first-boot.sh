@@ -27,20 +27,23 @@ else
 	echo "Second boot."
 
 	curl -sSL https://get.docker.com -k | sh
+	wait
 	sudo usermod -aG docker pi
 
 	printf "Please trigger a build to get the necessary environment variables.\n"
 	printf "Waiting...\n"
 
 	# wait for env. variables
-	until [ -n "$CONFIGURATION_DATABASE_REPLICATION_HOST" ]; do
-		printf ".\n"
-		# source etc/environment
-		while read -r env; do export "$env"; done
+	modtime=$(stat -c %Y /etc/environment)
+	printf "original mod time to /etc/environment: $modtime"
+	newtime=$(stat -c %Y /etc/environment)
+	until [ "$modtime" != "$newtime" ]; do
+		printf "\tnew mod time to /etc/environment: $newtime"
 		sleep 5
 	done
 
 	printf "recieved env. variables\n"
+
 	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh
 	chmod +x /tmp/mariadb-setup.sh
 	/tmp/mariadb-setup.sh
@@ -48,3 +51,5 @@ else
 	echo "Removing symlink to startup script."
 	sudo systemctl disable first-boot.service
 fi
+
+exit 0
