@@ -15,9 +15,9 @@ echo "Starting $0"
 
 bootfile="/usr/local/games/firstboot"
 
-if [ -f "$bootfile"]; then
+if [ -f "$bootfile" ]; then
 	echo "First boot."
-	sudo rm bootfile
+	sudo rm $bootfile
 
 	# download pi-setup
 	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/pi-setup.sh > /tmp/pi-setup.sh
@@ -26,22 +26,22 @@ if [ -f "$bootfile"]; then
 
 else
 	echo "Second boot."
-	curl -sSL https://get.docker.com -k | sh
 
+	curl -sSL https://get.docker.com -k | sh
 	sudo usermod -aG docker pi
 
 	printf "Please trigger a build to get the necessary environment variables.\n"
 	printf "Waiting...\n"
 
 	# wait for env. variables
-	until $([-n "$CONFIGURATION_DATABASE_REPLICATION_HOST"]); do
+	until [ -n "$CONFIGURATION_DATABASE_REPLICATION_HOST" ]; do
 		printf ".\n"
+		# source etc/environment
+		while read -r env; do export "$env"; done
 		sleep 5
 	done
 
-	# source etc/environment
-	while read -r env; do export "$env"; done
-
+	printf "recieved env. variables\n"
 	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh
 	chmod +x /tmp/mariadb-setup.sh
 	/tmp/mariadb-setup.sh
