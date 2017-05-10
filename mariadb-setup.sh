@@ -3,9 +3,9 @@
 #------
 #Figure out how to set password in automated way.
 #-----
-
-sudo debconf-set-selections <<< "maria-db mysql-server/root_password password $CONFIGURATION_DATABASE_PASSWORD"
-sudo debconf-set-selections <<< "maria-db mysql-server/root_password_again password $CONFIGURATION_DATABASE_PASSWORD"
+sudo export DEBIAN_FRONTEND=noninteractive
+sudo debconf-set-selections <<< "mariadb-server-10.0 mariadb-server/root_password password $CONFIGURATION_DATABASE_PASSWORD"
+sudo debconf-set-selections <<< "mariadb-server-10.0 mariadb-server/root_password_again password $CONFIGURATION_DATABASE_PASSWORD"
 
 sudo apt-get install mariadb-server mariadb-client -y
 
