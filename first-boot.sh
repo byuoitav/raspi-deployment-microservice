@@ -23,7 +23,6 @@ if [ -f "$bootfile" ]; then
 	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/pi-setup.sh > /tmp/pi-setup.sh
 	chmod +x /tmp/pi-setup.sh
 	/tmp/pi-setup.sh
-
 else
 	echo "Second boot."
 
@@ -46,6 +45,6 @@ else
 	chmod +x /tmp/mariadb-setup.sh
 	/tmp/mariadb-setup.sh
 
-	echo "Deleting startup script. location: $0"
-	#rm $0
+	echo "Removing symlink to startup script."
+	sudo systemctl disable first-boot.service
 fi
