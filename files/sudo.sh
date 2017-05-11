@@ -15,7 +15,7 @@ read desired_ip
 
 echo "interface eth0" >> /etc/dhcpcd.conf
 echo "static ip_address=$desired_ip/24" >> /etc/dhcpcd.conf
-routers=echo "static_routers=$desired_ip" | cut -d "." -f -3
+routers=$(echo "static_routers=$desired_ip" | cut -d "." -f -3)
 echo "$routers.1" >> /etc/dhcpcd.conf
 echo "static domain_name_servers=10.8.0.19, 10.8.0.26" >> /etc/dhcpcd.conf
 
