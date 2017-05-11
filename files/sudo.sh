@@ -7,6 +7,7 @@ echo "Type the desired hostname of this device (E.g. ITB-1006-CP2), followed by 
 read desired_hostname
 
 echo $desired_hostname > /etc/hostname
+echo "127.0.1.1    $desired_hostname" >> /etc/hosts
 
 # get static ip
 echo "Type the desired static ip-address of this device (E.g. 10.5.99.18), followed by [ENTER]:"
