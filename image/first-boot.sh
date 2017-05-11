@@ -3,13 +3,9 @@
 
 sleep 15
 
-echo ""
-echo ""
-echo "Hi from Danny"
-echo ""
-echo ""
+printf "\n\nHi From Danny\n\n"
 
-chvt 2
+sudo chvt 2
 
 bootfile="/usr/local/games/firstboot"
 
@@ -26,12 +22,11 @@ if [ -f "$bootfile" ]; then
 	sudo rm $bootfile
 
 	/tmp/pi-setup.sh
-	wait
 else
 	echo "Second boot."
 
-	wait 20
-	chvt 2
+	wait 15
+	sudo chvt 2
 
 	until $(sudo usermod -aG docker pi); do
 		curl -sSL https://get.docker.com -k | sh
@@ -60,11 +55,8 @@ else
 	done
 	chmod +x /tmp/mariadb-setup.sh
 
+	/tmp/mariadb-setup.sh
+
 	echo "Removing symlink to startup script."
 	sudo systemctl disable first-boot.service
-
-	/tmp/mariadb-setup.sh
-	wait
 fi
-
-exit 0
