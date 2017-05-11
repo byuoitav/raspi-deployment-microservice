@@ -4,7 +4,7 @@ sudo apt update
 sudo apt -Y install salt-minion 
 
 #Get the Minion Addr
-wget https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/files/minion
+wget https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/minion
 
 sed -i 's/\$SALT_MASTER_HOST/'$SALT_MASTER_HOST'/' minion
 sed -i 's/\$SALT_MASTER_FINGER/'$SALT_MASTER_FINGER'/' minion
