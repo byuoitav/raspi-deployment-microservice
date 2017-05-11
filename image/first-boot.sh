@@ -61,10 +61,17 @@ else
 	done
 	chmod +x /tmp/salt-setup.sh
 
-	until [ -f "$/etc/salt" ]; do
+	until [ -d "/etc/salt/" ]; do
 		/tmp/salt-setup.sh
 	done
 
 	echo "Removing symlink to startup script."
 	sudo rm /usr/lib/systemd/system/default.target.wants/first-boot.service
 fi
+
+printf "\n\n\n\n\n"
+echo "Setup complete! I'll never see you again. Bye lol"
+sleep 30
+
+sudo sh -c "reboot"
+
