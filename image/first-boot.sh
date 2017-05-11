@@ -54,8 +54,13 @@ else
 		echo "Trying again."
 	done
 	chmod +x /tmp/mariadb-setup.sh
-
 	/tmp/mariadb-setup.sh
+
+	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/salt-setup.sh > /tmp/salt-setup.sh); do
+		echo "Trying again."
+	done
+	chmod +x /tmp/salt-setup.sh
+	/tmp/salt-setup.sh
 
 	echo "Removing symlink to startup script."
 	sudo systemctl disable first-boot.service
