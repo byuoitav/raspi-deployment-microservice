@@ -25,7 +25,7 @@ services:
             - "8005:8005"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - PJLINK_PORT=$PJLINK_PORT 
+            - PJLINK_PORT=$PJLINK_PORT
             - PJLINK_PASS=$PJLINK_PASS
         network_mode: "host"
         restart: always
@@ -35,10 +35,10 @@ services:
             - "8006:8006"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME 
-            - CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD 
-            - CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST 
-            - CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT 
+            - CONFIGURATION_DATABASE_USERNAME=$CONFIGURATION_DATABASE_USERNAME
+            - CONFIGURATION_DATABASE_PASSWORD=$CONFIGURATION_DATABASE_PASSWORD
+            - CONFIGURATION_DATABASE_HOST=$CONFIGURATION_DATABASE_HOST
+            - CONFIGURATION_DATABASE_PORT=$CONFIGURATION_DATABASE_PORT
             - CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME
         network_mode: "host"
         restart: always
@@ -68,7 +68,7 @@ services:
         network_mode: "host"
         restart: always
     pulse-eight-neo-microservice:
-        build: byuoitav/rpi-pulse-eight-neo-microservice
+        image: byuoitav/rpi-pulse-eight-neo-microservice:development
         ports:
             - "8011:8011"
         environment:
@@ -103,13 +103,22 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always
-    zeromq-proxy-microservice:
-        image: byuoitav/rpi-zeromq-proxy-microservice:development
+    event-router-microservice:
+        image: byuoitav/rpi-event-router-microservice:development
         ports:
             - "7000:7000"
         environment:
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - PI_HOSTNAME=$PI_HOSTNAME
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
         network_mode: "host"
-        restart: always
+        restart: "always"
+    event-translator-microservice:
+        image: byuoitav/rpi-event-translator-microservice:development
+        ports:
+            - "7002:7002"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+            - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
+        network_mode: "host"
+        restart: "always"
