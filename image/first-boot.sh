@@ -25,7 +25,7 @@ if [ -f "$bootfile" ]; then
 else
 	echo "Second boot."
 
-	wait 15
+	wait 45 
 	sudo chvt 2
 
 	until $(sudo usermod -aG docker pi); do
@@ -60,8 +60,18 @@ else
 		echo "Trying again."
 	done
 	chmod +x /tmp/salt-setup.sh
-	/tmp/salt-setup.sh
+
+	until [ -d "/etc/salt/" ]; do
+		/tmp/salt-setup.sh
+	done
 
 	echo "Removing symlink to startup script."
-	sudo systemctl disable first-boot.service
+	sudo rm /usr/lib/systemd/system/default.target.wants/first-boot.service
 fi
+
+printf "\n\n\n\n\n"
+echo "Setup complete! I'll never see you again. Bye lol"
+sleep 30
+
+sudo sh -c "reboot"
+
