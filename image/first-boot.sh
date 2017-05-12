@@ -43,7 +43,7 @@ else
 	newtime=$(stat -c %Y /etc/environment)
 	until [ "$modtime" != "$newtime" ]; do
 		newtime=$(stat -c %Y /etc/environment)
-		printf "\tnew mod time to /etc/environment: $newtime"
+		printf "\tnew mod time to /etc/environment: $newtime\n"
 		sleep 10
 	done
 
@@ -65,13 +65,22 @@ else
 		/tmp/salt-setup.sh
 	done
 
+	until [ $(docker ps -q | wc -l) -gt 1 ]; do
+		echo "Waiting for docker containers to download"
+		sleep 10
+	done
+
 	echo "Removing symlink to startup script."
 	sudo rm /usr/lib/systemd/system/default.target.wants/first-boot.service
 fi
 
-printf "\n\n\n\n\n"
-echo "Setup complete! I'll never see you again. Bye lol"
+clear
+printf "\n\n\n\n\n\n"
+printf "Setup complete! I'll never see you again."
+printf "\n\tPlease wait for me to reboot.\n"
 sleep 30
+printf "\n\nBye lol"
+sleep 5
 
 sudo sh -c "reboot"
 
