@@ -101,7 +101,7 @@ master_finger: $SALT_MASTER_FINGER
 # Since salt uses detached ids it is possible to run multiple minions on the
 # same machine but with different ids, this can be useful for salt compute
 # clusters.
-#id:
+id: $PI_HOSTNAME
 
 # Cache the minion id to a file when the minion's id is not statically defined
 # in the minion config. Defaults to "True". This setting prevents potential
