@@ -2,6 +2,9 @@
 
 # This script is called automatically by `pi-setup.sh` to run a batch of Pi setup commands that require sudo permissions
 
+# Fix the keyboard layout
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard
+
 echo "Type the desired hostname of this device (E.g. ITB-1006-CP2), followed by [ENTER]:"
 
 read desired_hostname
@@ -20,8 +23,6 @@ routers=$(echo "static routers=$desired_ip" | cut -d "." -f -3)
 echo "$routers.1" >> /etc/dhcpcd.conf
 echo "static domain_name_servers=10.8.0.19, 10.8.0.26" >> /etc/dhcpcd.conf
 
-# Fix the keyboard layout
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard
 
 # Perform general updating
 apt update
