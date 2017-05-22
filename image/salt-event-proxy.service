@@ -1,0 +1,9 @@
+[Unit]
+Description=Proxy for local actions that need permissions outside of docker 
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/salt-event-proxy
+
+[Install]
+WantedBy=multi-user.target
