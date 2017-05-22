@@ -14,4 +14,5 @@ sed -i 's/\$PI_HOSTNAME/'$PI_HOSTNAME'/' minion
 
 sudo mv minion /etc/salt/minion 
 
-
+sudo setfacl -m u:pi:rwx /etc/salt/pki/minion/
+sudo setfacl -m u:pi:rwx /etc/salt/pki/minion/*
