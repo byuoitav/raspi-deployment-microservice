@@ -23,6 +23,8 @@ routers=$(echo "static routers=$desired_ip" | cut -d "." -f -3)
 echo "$routers.1" >> /etc/dhcpcd.conf
 echo "static domain_name_servers=10.8.0.19, 10.8.0.26" >> /etc/dhcpcd.conf
 
+# Update the time (from google, to ensure https works)
+date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"
 
 # Perform general updating
 apt update
@@ -59,7 +61,10 @@ cp /usr/share/zoneinfo/America/Denver /etc/localtime
 # Add the `pi` user to the sudoers group
 usermod -aG sudo pi
 
-# Update the time (from google)
-date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"
-echo "The time is: $(date)"
-sleep 10 
+# set to update from byu servers
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/ntp.conf > /etc/ntp.conf
+apt -y install ntpdate
+systemctl stop ntp
+ntpdate-debian
+systemctl start ntp
+ntpq -p
