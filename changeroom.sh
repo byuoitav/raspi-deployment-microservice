@@ -28,7 +28,8 @@ head -n -1 /etc/hosts > temp.txt && mv temp.txt /etc/hosts
 echo "127.0.1.1      $new_hostname" >> /etc/hosts
 
 # update ip
-head -n -3 /etc/dhcpcd.conf > temp.txt && mv temp.txt /etc/dhcpcd.conf
+head -n -4 /etc/dhcpcd.conf > temp.txt && mv temp.txt /etc/dhcpcd.conf
+echo "interface eth0" >> /etc/dhcpcd.conf
 echo "static ip_address=$new_ip/24" >> /etc/dhcpcd.conf
 routers=$(echo "static routers=$new_ip" | cut -d "." -f -3)
 echo "$routers.1" >> /etc/dhcpcd.conf
