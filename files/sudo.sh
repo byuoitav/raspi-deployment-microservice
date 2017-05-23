@@ -21,7 +21,7 @@ echo "interface eth0" >> /etc/dhcpcd.conf
 echo "static ip_address=$desired_ip/24" >> /etc/dhcpcd.conf
 routers=$(echo "static routers=$desired_ip" | cut -d "." -f -3)
 echo "$routers.1" >> /etc/dhcpcd.conf
-echo "static domain_name_servers=10.8.0.19, 10.8.0.26" >> /etc/dhcpcd.conf
+echo "static domain_name_servers=10.8.0.19 10.8.0.26" >> /etc/dhcpcd.conf
 
 # Update the time (from google, to ensure https works)
 date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"
