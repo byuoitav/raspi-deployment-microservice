@@ -7,7 +7,7 @@ curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/ma
 
 echo "Type the desired hostname of this device (E.g. ITB-1006-CP2), followed by [ENTER]:"
 
-read desired_hostname
+read -e desired_hostname
 
 echo $desired_hostname > /etc/hostname
 echo "127.0.1.1    $desired_hostname" >> /etc/hosts
@@ -15,7 +15,7 @@ echo "127.0.1.1    $desired_hostname" >> /etc/hosts
 # get static ip
 echo "Type the desired static ip-address of this device (E.g. 10.5.99.18), followed by [ENTER]:"
 
-read desired_ip
+read -e desired_ip
 
 echo "interface eth0" >> /etc/dhcpcd.conf
 echo "static ip_address=$desired_ip/24" >> /etc/dhcpcd.conf
