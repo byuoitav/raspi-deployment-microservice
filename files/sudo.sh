@@ -59,3 +59,7 @@ cp /usr/share/zoneinfo/America/Denver /etc/localtime
 # Add the `pi` user to the sudoers group
 usermod -aG sudo pi
 
+# Update the time (from google)
+date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"
+echo "The time is: $(date)"
+sleep 10 
