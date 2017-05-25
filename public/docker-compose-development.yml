@@ -11,14 +11,6 @@ services:
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
         network_mode: "host"
         restart: always
-    crestron-control-microservice:
-        image: byuoitav/rpi-crestron-control-microservice:development
-        ports:
-            - "8004:8004"
-        environment:
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
-        restart: always
     pjlink-microservice:
         image: byuoitav/rpi-pjlink-microservice:development
         ports:
@@ -55,14 +47,6 @@ services:
         image: byuoitav/rpi-london-audio-microservice:development
         ports:
             - "8009:8009"
-        environment:
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
-        restart: always
-    cgi-microservice:
-        image: byuoitav/rpi-cgi-microservice:development
-        ports:
-            - "8010:8010"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
