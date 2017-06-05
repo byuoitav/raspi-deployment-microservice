@@ -37,6 +37,7 @@ var sshConfig = &ssh.ClientConfig{
 }
 
 func Deploy(deploymentType string) (string, error) {
+	log.Printf("Starting deployment")
 	allDevices, err := GetAllDevices(deploymentType)
 	if err != nil {
 		return "", err
@@ -79,6 +80,7 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 	if err != nil {
 		return []device{}, err
 	}
+	log.Printf("Making request for all devices to: %v", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/"+deploymentType+"/devices/roles/ControlProcessor/types/pi")
 
 	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/"+deploymentType+"/devices/roles/ControlProcessor/types/pi", nil)
 
