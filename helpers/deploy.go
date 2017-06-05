@@ -92,17 +92,20 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Printf("Error getting devices 1: %v", err.Error())
 		return []device{}, err
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.Printf("Error getting devices 2: %v", err.Error())
 		return []device{}, err
 	}
 
 	allDevices := []device{}
 	err = json.Unmarshal(b, &allDevices)
 	if err != nil {
+		log.Printf("Error getting devices 3: %v", err.Error())
 		return []device{}, err
 	}
 
