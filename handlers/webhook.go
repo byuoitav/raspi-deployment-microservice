@@ -42,7 +42,7 @@ func WebhookProduction(context echo.Context) error {
 }
 
 func WebhookDevice(context echo.Context) error {
-	response, err := helpers.Deploy(context.Param("hostname"))
+	response, err := helpers.DeploySingle(context.Param("hostname"))
 	if err != nil {
 		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
 		return nil
