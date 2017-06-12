@@ -1,0 +1,9 @@
+[Unit]
+Description=alerts salt of broken sensor contacts
+After=network.target salt-minion.service
+
+[Service]
+ExecStart=/usr/bin/contacts.py
+
+[Install]
+WantedBy=multi-user.target
