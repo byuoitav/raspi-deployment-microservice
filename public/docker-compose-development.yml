@@ -106,3 +106,13 @@ services:
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
         network_mode: "host"
         restart: "always"
+    device-monitoring-microservice:
+        image: byuoitav/rpi-device-monitoring-microservice:development
+        ports:
+            - "10000:10000"
+        environment:
+            - PI_HOSTNAME=$PI_HOSTNAME
+            - DEVICE_PING_INTERVAL=$DEVICE_PING_INTERVAL
+            - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
+        network_mode: "host"
+        restart: "always"
