@@ -80,9 +80,9 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 	if err != nil {
 		return []device{}, err
 	}
-	log.Printf("Making request for all devices to: %v", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/"+deploymentType+"/devices/roles/ControlProcessor/types/pi")
+	log.Printf("Making request for all devices to: %v", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/deployment/devices/roles/ControlProcessor/types/pi/"+deploymentType)
 
-	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/"+deploymentType+"/devices/roles/ControlProcessor/types/pi", nil)
+	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/deployment/devices/roles/ControlProcessor/types/pi/"+deploymentType, nil)
 
 	if deploymentType == "production" {
 		req, _ = http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/devices/roles/ControlProcessor/types/pi", nil)
