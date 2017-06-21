@@ -2,6 +2,9 @@
 
 # This script is called automatically by `pi-setup.sh` to run a batch of Pi setup commands that require sudo permissions
 
+# Update the time (from google, to ensure https works)
+date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"
+
 # Fix the keyboard layout
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard
 
@@ -23,8 +26,10 @@ routers=$(echo "static routers=$desired_ip" | cut -d "." -f -3)
 echo "$routers.1" >> /etc/dhcpcd.conf
 echo "static domain_name_servers=10.8.0.19 10.8.0.26" >> /etc/dhcpcd.conf
 
-# Update the time (from google, to ensure https works)
-date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"
+# set contact points up
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/contact-setup.sh > /tmp/contact-setup.sh
+chmod 775 /tmp/contact-setup.sh
+./tmp/contact-setup.sh
 
 # Perform general updating
 apt update
