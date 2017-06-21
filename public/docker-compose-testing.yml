@@ -43,39 +43,12 @@ services:
             - SONY_TV_PSK=$SONY_TV_PSK
         network_mode: "host"
         restart: always
-    london-audio-microservice:
-        image: byuoitav/rpi-london-audio-microservice:testing
-        ports:
-            - "8009:8009"
-        environment:
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
-        restart: always
-    pulse-eight-neo-microservice:
-        image: byuoitav/rpi-pulse-eight-neo-microservice:testing
-        ports:
-            - "8011:8011"
-        environment:
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
-        restart: always
     adcp-control-microservice:
         image: byuoitav/rpi-adcp-control-microservice:testing
         ports:
             - "8012:8012"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
-        restart: always
-    av-api-rpc:
-        image: byuoitav/rpi-av-api-rpc:testing
-        ports:
-            - "8100:8100"
-        environment:
-            - PI_HOSTNAME=$PI_HOSTNAME
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
-            - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
         network_mode: "host"
         restart: always
     touchpanel-ui-microservice:
