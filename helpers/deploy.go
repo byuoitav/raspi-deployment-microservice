@@ -91,12 +91,14 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 	req.Header.Set("Authorization", "Bearer "+token.Token)
 
 	resp, err := client.Do(req)
+	log.Printf("response: %s", resp)
 	if err != nil {
 		log.Printf("Error getting devices 1: %v", err.Error())
 		return []device{}, err
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
+	log.Printf("b: %s", b)
 	if err != nil {
 		log.Printf("Error getting devices 2: %v", err.Error())
 		return []device{}, err
@@ -104,6 +106,7 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 
 	allDevices := []device{}
 	err = json.Unmarshal(b, &allDevices)
+	log.Printf("alldevices: %s", allDevices)
 	if err != nil {
 		log.Printf("Error getting devices 3: %v", err.Error())
 		return []device{}, err
