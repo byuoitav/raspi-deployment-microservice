@@ -1,7 +1,7 @@
 version: '2'
 services:
     av-api:
-        image: byuoitav/rpi-av-api:development
+        image: byuoitav/rpi-av-api:testing
         ports:
             - "8000:8000"
         environment:
@@ -12,7 +12,7 @@ services:
         network_mode: "host"
         restart: always
     pjlink-microservice:
-        image: byuoitav/rpi-pjlink-microservice:development
+        image: byuoitav/rpi-pjlink-microservice:testing
         ports:
             - "8005:8005"
         environment:
@@ -22,7 +22,7 @@ services:
         network_mode: "host"
         restart: always
     configuration-database-microservice:
-        image: byuoitav/rpi-configuration-database-microservice:development
+        image: byuoitav/rpi-configuration-database-microservice:testing
         ports:
             - "8006:8006"
         environment:
@@ -35,7 +35,7 @@ services:
         network_mode: "host"
         restart: always
     sony-control-microservice:
-        image: byuoitav/rpi-sony-control-microservice:development
+        image: byuoitav/rpi-sony-control-microservice:testing
         ports:
             - "8007:8007"
         environment:
@@ -43,43 +43,16 @@ services:
             - SONY_TV_PSK=$SONY_TV_PSK
         network_mode: "host"
         restart: always
-    london-audio-microservice:
-        image: byuoitav/rpi-london-audio-microservice:development
-        ports:
-            - "8009:8009"
-        environment:
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
-        restart: always
-    pulse-eight-neo-microservice:
-        image: byuoitav/rpi-pulse-eight-neo-microservice:development
-        ports:
-            - "8011:8011"
-        environment:
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-        network_mode: "host"
-        restart: always
     adcp-control-microservice:
-        image: byuoitav/rpi-adcp-control-microservice:development
+        image: byuoitav/rpi-adcp-control-microservice:testing
         ports:
             - "8012:8012"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always
-    av-api-rpc:
-        image: byuoitav/rpi-av-api-rpc:development
-        ports:
-            - "8100:8100"
-        environment:
-            - PI_HOSTNAME=$PI_HOSTNAME
-            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
-            - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
-        network_mode: "host"
-        restart: always
     touchpanel-ui-microservice:
-        image: byuoitav/rpi-touchpanel-ui-microservice:development
+        image: byuoitav/rpi-touchpanel-ui-microservice:testing
         ports:
             - "8888:8888"
         environment:
@@ -89,7 +62,7 @@ services:
         network_mode: "host"
         restart: always
     event-router-microservice:
-        image: byuoitav/rpi-event-router-microservice:development
+        image: byuoitav/rpi-event-router-microservice:testing
         ports:
             - "7000:7000"
         environment:
@@ -99,21 +72,11 @@ services:
         network_mode: "host"
         restart: "always"
     event-translator-microservice:
-        image: byuoitav/rpi-event-translator-microservice:development
+        image: byuoitav/rpi-event-translator-microservice:testing
         ports:
             - "7002:7002"
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
-            - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
-        network_mode: "host"
-        restart: "always"
-    device-monitoring-microservice:
-        image: byuoitav/rpi-device-monitoring-microservice:development
-        ports:
-            - "10000:10000"
-        environment:
-            - PI_HOSTNAME=$PI_HOSTNAME
-            - DEVICE_PING_INTERVAL=$DEVICE_PING_INTERVAL
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
         network_mode: "host"
         restart: "always"
