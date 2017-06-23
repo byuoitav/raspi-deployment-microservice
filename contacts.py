@@ -16,7 +16,8 @@ def sendAlert():
             'room':data[1],
             'cause':'SECURITY',
             'category':'INFO',
-            'name':host,
+            'hostname':host,
+            'hosttype':'control proccessor',
             'timestamp':str(datetime.datetime.now().isoformat('T'))
             }
 
