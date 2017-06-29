@@ -43,6 +43,14 @@ services:
             - SONY_TV_PSK=$SONY_TV_PSK
         network_mode: "host"
         restart: always
+    pulse-eight-neo-microservice:
+        image: byuoitav/rpi-pulse-eight-neo-microservice:testing
+        ports:
+            - "8011:8011"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+        network_mode: "host"
+        restart: always
     adcp-control-microservice:
         image: byuoitav/rpi-adcp-control-microservice:testing
         ports:
