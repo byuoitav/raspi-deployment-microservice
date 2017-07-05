@@ -55,7 +55,7 @@ curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/ma
 systemctl enable getty@tty1.service
 
 # Rotate the Pi's screen 180 degrees
-echo "lcd_rotate=2" >> /boot/config.txt
+# echo "lcd_rotate=2" >> /boot/config.txt
 
 # Enable SSH connections
 touch /boot/ssh
