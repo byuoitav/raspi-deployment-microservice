@@ -1,0 +1,22 @@
+{
+    "ITB-1101-CP1": {
+        "ui": "circle-default",
+        "devices": [
+            {
+                "name": "D1",
+                "inputs": [
+                    "Overflow",
+                    "HDMIIn",
+                    "AppleTV",
+                    "ChromeCast"
+                ],
+                "deafult-input": "AppleTV"
+            } 
+        ],
+        "features": [
+            "display-to-all",
+            "power-off-all",
+            "group-input"
+        ]
+    }
+}
