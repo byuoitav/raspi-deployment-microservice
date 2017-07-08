@@ -1,28 +1,34 @@
 {
   "ITB-1101-CP1": {
     "ui": "circle-default",
-    "devices": [
+	"input-devices": [
+		{
+          "name": "Overflow",
+          "icon": "people"
+        },
+        {
+          "name": "HDMIIn",
+          "icon": "settings_input_hdmi"
+        },
+        {
+          "name": "AppleTV",
+          "icon": "airplay"
+        },
+        {
+          "name": "ChromeCast",
+          "icon": "airplay"
+        }
+	],
+    "output-devices": [
       {
         "name": "D1",
         "inputs": [
-          {
-            "name": "Overflow",
-            "icon": ""
-          },
-          {
-            "name": "HDMIIn",
-            "icon": ""
-          },
-          {
-            "name": "AppleTV",
-            "icon": ""
-          },
-          {
-            "name": "ChromeCast",
-            "icon": ""
-          }
+         "Overflow",
+         "HDMIIn",
+         "AppleTV",
+         "ChromeCast"
         ],
-        "deafult-input": "AppleTV"
+        "default-input": "AppleTV"
       }
     ],
     "features": [
