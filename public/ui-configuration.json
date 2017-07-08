@@ -22,7 +22,7 @@
     "outputdevices": [
       {
         "name": "D2",
-		"icon": "tv",
+	"icon": "tv",
         "inputs": [
          "Overflow",
          "HDMIIn",
