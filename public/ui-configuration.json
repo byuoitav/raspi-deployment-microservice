@@ -21,7 +21,7 @@
 	],
     "outputdevices": [
       {
-        "name": "D1",
+        "name": "D2",
         "inputs": [
          "Overflow",
          "HDMIIn",
