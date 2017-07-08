@@ -1,7 +1,7 @@
 {
   "ITB-1101-CP1": {
     "ui": "circle-default",
-	"input-devices": [
+	"inputdevices": [
 		{
           "name": "Overflow",
           "icon": "people"
@@ -19,7 +19,7 @@
           "icon": "airplay"
         }
 	],
-    "output-devices": [
+    "outputdevices": [
       {
         "name": "D1",
         "inputs": [
