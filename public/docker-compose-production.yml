@@ -86,6 +86,7 @@ services:
             - PI_HOSTNAME=$PI_HOSTNAME
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - HELP_SLACKBOT_WEBHOOK=$HELP_SLACKBOT_WEBHOOK
+            - UI_CONFIGURATION_ADDRESS=$UI_CONFIGURATION_ADDRESS
         network_mode: "host"
         restart: always
     event-router-microservice:
@@ -105,5 +106,6 @@ services:
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
+            - ELASTIC_API_EVENTS_DEV=$ELASTIC_API_EVENTS_DEV
         network_mode: "host"
         restart: "always"
