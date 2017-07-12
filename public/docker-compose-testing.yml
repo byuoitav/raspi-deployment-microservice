@@ -67,6 +67,7 @@ services:
             - PI_HOSTNAME=$PI_HOSTNAME
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - HELP_SLACKBOT_WEBHOOK=$HELP_SLACKBOT_WEBHOOK
+            - UI_CONFIGURATION_ADDRESS=$UI_CONFIGURATION_ADDRESS
         network_mode: "host"
         restart: always
     event-router-microservice:
@@ -99,5 +100,13 @@ services:
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+        network_mode: "host"
+        restart: "always"
+    london-audio-microservice:
+        image: byuoitav/rpi-london-audio-microservice:testing
+        ports: 
+            - "8009:8009"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: "always"
