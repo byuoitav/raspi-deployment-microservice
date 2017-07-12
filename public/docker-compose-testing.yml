@@ -90,3 +90,12 @@ services:
             - ELASTIC_API_EVENTS_DEV=$ELASTIC_API_EVENTS_DEV
         network_mode: "host"
         restart: "always"
+    london-audio-microservice:
+        image: byuoitav/rpi-london-audio-microservice:testing
+        ports: 
+            - "8009:8009"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+        network_mode: "host"
+        restart: "always"
+
