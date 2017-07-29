@@ -58,6 +58,14 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always
+    pulse-eight-neo-microservice:
+        image: byuoitav/rpi-kramer-microservice:development
+        ports:
+            - "8014:8014"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+        network_mode: "host"
+        restart: always
     adcp-control-microservice:
         image: byuoitav/rpi-adcp-control-microservice:development
         ports:
