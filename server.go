@@ -32,6 +32,8 @@ func main() {
 
 	secure.GET("/webhook/:branch", handlers.WebhookDeployment)
 	secure.GET("/webhook_device/:hostname", handlers.WebhookDevice)
+	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts)
+	secure.GET("/webhook_contacts/disable/:hostname", handlers.DisableContacts)
 
 	server := http.Server{
 		Addr:           port,
