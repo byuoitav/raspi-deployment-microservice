@@ -63,3 +63,18 @@ func WebhookDevice(context echo.Context) error {
 	jsonresp.New(context.Response(), http.StatusOK, response)
 	return nil
 }
+
+func EnableContacts(context echo.Context) error {
+
+	response, err := helpers.EnableContacts(context.Param("hostname"))
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, "You failure!")
+	}
+
+	return context.JSON(http.StatusOK, response)
+}
+
+func DisableContacts(context echo.Context) error {
+
+	return context.JSON(http.StatusOK, "Success!")
+}
