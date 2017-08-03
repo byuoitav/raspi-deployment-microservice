@@ -34,17 +34,12 @@ func UpdateContactState(hostname string, active bool) error {
 	log.Printf("SSH session established with %s", hostname)
 
 	if active {
-		err = session.Run("sudo systemctl enable contacts")
+		err = session.Run("sudo systemctl enable contacts && sudo systemctl start contacts")
 		if err != nil {
 			log.Printf("Error enabling contacts service: %s", err.Error())
 			return err
 		}
 
-		err = session.Run("sudo systemctl start contacts")
-		if err != nil {
-			log.Printf("Error starting contacts service: %s", err.Error())
-			return err
-		}
 	} else {
 		err = session.Run("sudo systemctl stop contacts")
 		if err != nil {
