@@ -30,8 +30,8 @@ def sendAlert():
     requests.post(address, json = payload, headers = headers)
 
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(18, GPIO.IN)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(7, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
 CONTACT_COUNTER = 1200
 ALERT_COUNTER = 5
@@ -41,7 +41,7 @@ while (True):
     FLAG = 0
     print 'contacts closed'
 
-    while (GPIO.input(18) == 0):
+    while (GPIO.input(7) == 1):
 
         print 'contacts broken'
         if FLAG == ALERT_COUNTER:
