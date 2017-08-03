@@ -66,15 +66,20 @@ func WebhookDevice(context echo.Context) error {
 
 func EnableContacts(context echo.Context) error {
 
-	response, err := helpers.EnableContacts(context.Param("hostname"))
+	err := helpers.UpdateContactState(context.Param("hostname"), true)
 	if err != nil {
-		return context.JSON(http.StatusInternalServerError, "You failure!")
+		return context.JSON(http.StatusInternalServerError, map[string]string{"Response": "Failed to set state"})
 	}
 
-	return context.JSON(http.StatusOK, response)
+	return context.JSON(http.StatusOK, map[string]string{"Response": "Success"})
 }
 
 func DisableContacts(context echo.Context) error {
 
-	return context.JSON(http.StatusOK, "Success!")
+	err := helpers.UpdateContactState(context.Param("hostname"), false)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, map[string]string{"Response": "Failed to set state"})
+	}
+
+	return context.JSON(http.StatusOK, map[string]string{"Response": "Success"})
 }

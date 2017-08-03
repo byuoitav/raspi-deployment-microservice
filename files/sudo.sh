@@ -27,9 +27,11 @@ echo "$routers.1" >> /etc/dhcpcd.conf
 echo "static domain_name_servers=10.8.0.19 10.8.0.26" >> /etc/dhcpcd.conf
 
 # set contact points up
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/contact-setup.sh > /tmp/contact-setup.sh
-chmod 775 /tmp/contact-setup.sh
-./tmp/contact-setup.sh
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/image/contacts.service > /usr/lib/systemd/system/contacts.service
+chmod 664 /usr/lib/systemd/system/contacts.service
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/contacts.py > /usr/bin/contacts.py
+chmod 775 /usr/bin/contacts.py
+systemctl daemon-reload
 
 # Perform general updating
 apt update
