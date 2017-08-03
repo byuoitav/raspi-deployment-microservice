@@ -41,7 +41,7 @@ func UpdateContactState(hostname string, active bool) error {
 		}
 
 	} else {
-		err = session.Run("sudo systemctl stop contacts")
+		err = session.Run("sudo systemctl stop contacts && sudo systemctl stop contacts")
 		if err != nil {
 			log.Printf("Error disabling contacts service: %s", err.Error())
 			return err
