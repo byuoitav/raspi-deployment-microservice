@@ -11,4 +11,4 @@ chmod +x /usr/local/bin/xssstart
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/screenshutoff.sh > /home/pi/screenshutoff.sh 
 chmod +x /home/pi/screenshutoff.sh
 
-echo "Please reboot device for changes to take effect."
+echo "You're all good to go!"
