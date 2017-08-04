@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [ "$EUID" -ne 0 ]; then
 	echo "Must be run as root/sudo."
 	exit 1
@@ -12,6 +14,6 @@ curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/ma
 chmod +x /usr/local/bin/screenshutoff
 
 # make script run when x server starts
-echo "screenshutoff" >> /home/pi/.xinitrc
+curl https://github.com/byuoitav/raspi-deployment-microservice/blob/master/files/xinitrc > /home/pi/.xinitrc
 
 echo "You're all good to go!"
