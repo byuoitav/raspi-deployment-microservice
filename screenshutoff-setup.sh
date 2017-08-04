@@ -14,6 +14,6 @@ curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/ma
 chmod +x /usr/local/bin/screenshutoff
 
 # make script run when x server starts
-curl https://github.com/byuoitav/raspi-deployment-microservice/blob/master/files/xinitrc > /home/pi/.xinitrc
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/xinitrc > /home/pi/.xinitrc
 
 echo "You're all good to go!"
