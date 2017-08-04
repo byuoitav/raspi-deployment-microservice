@@ -8,7 +8,10 @@ curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/ma
 chmod +x /usr/local/bin/xssstart
 
 # get start script
-curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/screenshutoff.sh > /home/pi/screenshutoff.sh 
-chmod +x /home/pi/screenshutoff.sh
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/screenshutoff.sh > /usr/local/bin/screenshutoff
+chmod +x /usr/local/bin/screenshutoff
+
+# make script run when x server starts
+echo "screenshutoff" >> /home/pi/.xinitrc
 
 echo "You're all good to go!"
