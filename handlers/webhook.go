@@ -10,7 +10,7 @@ import (
 
 func WebhookDeployment(context echo.Context) error {
 	branch := context.Param("branch")
-	response, err := helpers.Deploy(branch)
+	response, err := helpers.ScheduleDeployment(branch)
 	if err != nil {
 		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
 		return nil
