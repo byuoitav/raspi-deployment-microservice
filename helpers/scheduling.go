@@ -23,8 +23,6 @@ func ScheduleDeployment(deploymentType string) (string, error) {
 		color.Unset()
 		return "", errors.New(fmt.Sprintf("there is already a %s deployment scheduled/occuring", deploymentType))
 	}
-	scheduledDeployments[deploymentType] = true
-
 	switch deploymentType {
 	case "stage":
 		t := GetTimeTomorrowByHour(STAGE_DEPLOYMENT_HOUR)
@@ -59,6 +57,8 @@ func Deploy(deploymentType string) error {
 	log.Printf("%s deployment started", deploymentType)
 	color.Unset()
 
+	scheduledDeployments[deploymentType] = true
+
 	allDevices, err := GetAllDevices(deploymentType)
 	if err != nil {
 		return err
@@ -80,6 +80,8 @@ func Deploy(deploymentType string) error {
 
 // waits for s to return, then starts a deployment
 func DeployOnSchedule(s chan time.Time, deploymentType string) {
+	scheduledDeployments[deploymentType] = true
+
 	color.Set(color.FgBlue)
 	log.Printf("Waiting to deploy to %s...", deploymentType)
 	color.Unset()
