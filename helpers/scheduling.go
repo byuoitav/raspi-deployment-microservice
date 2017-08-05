@@ -13,8 +13,18 @@ const STAGE_DEPLOYMENT_HOUR = 0
 const PROD_DEPLOYMENT_HOUR = 0
 const ACCURACY = time.Minute
 
+var scheduledDeployments = make(map[string]bool)
+
 // deploys/schedules deployments based on deploymentType
 func ScheduleDeployment(deploymentType string) (string, error) {
+	if scheduledDeployments[deploymentType] {
+		color.Set(color.FgHiRed)
+		log.Printf("there is already a %s deployment scheduled/occuring", deploymentType)
+		color.Unset()
+		return "", errors.New(fmt.Sprintf("there is already a %s deployment scheduled/occuring", deploymentType))
+	}
+	scheduledDeployments[deploymentType] = true
+
 	switch deploymentType {
 	case "stage":
 		t := GetTimeTomorrowByHour(STAGE_DEPLOYMENT_HOUR)
@@ -49,7 +59,6 @@ func Deploy(deploymentType string) error {
 	log.Printf("%s deployment started", deploymentType)
 	color.Unset()
 
-	return nil
 	allDevices, err := GetAllDevices(deploymentType)
 	if err != nil {
 		return err
@@ -63,6 +72,8 @@ func Deploy(deploymentType string) error {
 	for i := range allDevices {
 		go SendCommand(allDevices[i].Address, fileName, deploymentType) // Start an update for each Pi
 	}
+
+	scheduledDeployments[deploymentType] = false
 
 	return nil
 }
