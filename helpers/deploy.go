@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/byuoitav/authmiddleware/bearertoken"
 	"github.com/byuoitav/configuration-database-microservice/accessors"
-	"github.com/fatih/color"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -36,74 +34,6 @@ var sshConfig = &ssh.ClientConfig{
 	Auth: []ssh.AuthMethod{
 		ssh.Password(os.Getenv("PI_SSH_PASSWORD")),
 	},
-}
-
-func Deploy(deploymentType string) (string, error) {
-	var schedule chan time.Time
-
-	switch deploymentType {
-	case "development":
-		schedule = Schedule(time.Now())
-		return "", errors.New("error")
-		break
-	case "testing":
-		break
-	case "stage":
-		//		log.Printf("Scheduling deployment for %s")
-		break
-	case "production":
-		//		log.Printf("Scheduling deployment for %s")
-		break
-	default:
-		break
-	}
-
-	// wait for the scheduled time to hit
-	<-schedule
-	log.Printf("Starting deployment")
-
-	allDevices, err := GetAllDevices(deploymentType)
-	if err != nil {
-		return "", err
-	}
-
-	fileName, err := retrieveEnvironmentVariables()
-	if err != nil {
-		return "", err
-	}
-
-	for i := range allDevices {
-		go SendCommand(allDevices[i].Address, fileName, deploymentType) // Start an update for each Pi
-	}
-
-	log.Printf("Deployment started")
-	return "Deployment started", nil
-}
-
-func Schedule(t time.Time) chan time.Time {
-	log.Printf("Creating schedule for %s", t)
-	// verify t is in the future
-
-	ret := make(chan time.Time)
-
-	rounded := t.UTC().Round(time.Minute)
-	ticker := time.NewTicker(time.Second * 1)
-	go func() {
-		for tick := range ticker.C {
-			rtick := tick.UTC().Round(time.Minute)
-			fmt.Printf("Rounded tick: %s; compared to scheduled time: %s", rtick, rounded)
-			if rounded.Equal(rtick) {
-				color.Set(color.FgHiGreen)
-				log.Printf("Scheduled time %s reached\n", rounded)
-				color.Unset()
-				ret <- rtick
-				break
-			}
-		}
-
-		ticker.Stop()
-	}()
-	return ret
 }
 
 func DeploySingle(hostname string) (string, error) {
@@ -141,7 +71,7 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 	req.Header.Set("Authorization", "Bearer "+token.Token)
 
 	resp, err := client.Do(req)
-	log.Printf("response: %s", resp)
+	log.Printf("response: %v", resp)
 	if err != nil {
 		log.Printf("Error getting devices 1: %v", err.Error())
 		return []device{}, err
