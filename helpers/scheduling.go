@@ -49,7 +49,7 @@ func ScheduleDeployment(deploymentType string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return "Deployment started", nil
+		return fmt.Sprintf("%s deployment started", deploymentType), nil
 	}
 }
 
