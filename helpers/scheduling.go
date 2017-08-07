@@ -17,6 +17,8 @@ var scheduledDeployments = make(map[string]bool)
 
 // deploys/schedules deployments based on deploymentType
 func ScheduleDeployment(deploymentType string) (string, error) {
+	//	log.Printf("deployment: %s --> %v", deploymentType, scheduledDeployments[deploymentType])
+
 	if scheduledDeployments[deploymentType] {
 		color.Set(color.FgHiRed)
 		log.Printf("there is already a %s deployment scheduled/occuring", deploymentType)
@@ -57,7 +59,7 @@ func Deploy(deploymentType string) error {
 	log.Printf("%s deployment started", deploymentType)
 	color.Unset()
 
-	scheduledDeployments[deploymentType] = true
+	scheduledDeployments[deploymentType] = false
 
 	allDevices, err := GetAllDevices(deploymentType)
 	if err != nil {
@@ -72,8 +74,6 @@ func Deploy(deploymentType string) error {
 	for i := range allDevices {
 		go SendCommand(allDevices[i].Address, fileName, deploymentType) // Start an update for each Pi
 	}
-
-	scheduledDeployments[deploymentType] = false
 
 	return nil
 }
