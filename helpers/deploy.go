@@ -13,6 +13,7 @@ import (
 
 	"github.com/byuoitav/authmiddleware/bearertoken"
 	"github.com/byuoitav/configuration-database-microservice/accessors"
+	"github.com/fatih/color"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -34,6 +35,31 @@ var sshConfig = &ssh.ClientConfig{
 	Auth: []ssh.AuthMethod{
 		ssh.Password(os.Getenv("PI_SSH_PASSWORD")),
 	},
+}
+
+// deploys environment variables and docker containers to pi's
+func Deploy(deploymentType string) error {
+	color.Set(color.FgHiGreen)
+	log.Printf("%s deployment started", deploymentType)
+	color.Unset()
+
+	scheduledDeployments[deploymentType] = false
+
+	allDevices, err := GetAllDevices(deploymentType)
+	if err != nil {
+		return err
+	}
+
+	fileName, err := retrieveEnvironmentVariables()
+	if err != nil {
+		return err
+	}
+
+	for i := range allDevices {
+		go SendCommand(allDevices[i].Address, fileName, deploymentType) // Start an update for each Pi
+	}
+
+	return nil
 }
 
 func DeploySingle(hostname string) (string, error) {
