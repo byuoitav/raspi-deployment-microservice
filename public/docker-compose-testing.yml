@@ -130,3 +130,14 @@ services:
         network_mode: "host"
         restart: "always"
         tty: true
+    london-audio-microservice:
+        image: byuoitav/rpi-shure-audio-microservice:testing
+        ports:
+            - "8013:8013"
+        environment:
+            - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+            - PI_HOSTNAME=$PI_HOSTNAME
+            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+        network_mode: "host"
+        restart: "always"
