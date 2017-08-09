@@ -15,35 +15,45 @@ const ACCURACY = time.Minute
 
 var scheduledDeployments = make(map[string]bool)
 
+func HoldDeployment(branch string, status bool) {
+	if status {
+		log.Printf("Disabling %s deployments", branch)
+	} else {
+		log.Printf("Enabling %s deployments", branch)
+	}
+
+	scheduledDeployments[branch] = status
+}
+
 // deploys/schedules deployments based on deploymentType
 func ScheduleDeployment(deploymentType string) (string, error) {
-	//	log.Printf("deployment: %s --> %v", deploymentType, scheduledDeployments[deploymentType])
-
 	if scheduledDeployments[deploymentType] {
 		color.Set(color.FgHiRed)
-		log.Printf("there is already a %s deployment scheduled/occuring", deploymentType)
+		log.Printf("%s deployments are currently being held.", deploymentType)
 		color.Unset()
-		return "", errors.New(fmt.Sprintf("there is already a %s deployment scheduled/occuring", deploymentType))
+		return "", errors.New(fmt.Sprintf("%s deployments are currently being held", deploymentType))
 	}
 	switch deploymentType {
-	case "stage":
-		t := GetTimeTomorrowByHour(STAGE_DEPLOYMENT_HOUR)
-		schedule, err := Schedule(t, ACCURACY)
-		if err != nil {
-			return "", err
-		}
+	/*
+			case "stage":
+				t := GetTimeTomorrowByHour(STAGE_DEPLOYMENT_HOUR)
+				schedule, err := Schedule(t, ACCURACY)
+				if err != nil {
+					return "", err
+				}
 
-		go DeployOnSchedule(schedule, deploymentType)
-		return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
-	case "production":
-		t := GetTimeTomorrowByHour(PROD_DEPLOYMENT_HOUR)
-		schedule, err := Schedule(t, ACCURACY)
-		if err != nil {
-			return "", err
-		}
+				go DeployOnSchedule(schedule, deploymentType)
+				return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
+		case "production":
+			t := GetTimeTomorrowByHour(PROD_DEPLOYMENT_HOUR)
+			schedule, err := Schedule(t, ACCURACY)
+			if err != nil {
+				return "", err
+			}
 
-		go DeployOnSchedule(schedule, deploymentType)
-		return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
+			go DeployOnSchedule(schedule, deploymentType)
+			return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
+	*/
 	default:
 		err := Deploy(deploymentType)
 		if err != nil {
@@ -51,31 +61,6 @@ func ScheduleDeployment(deploymentType string) (string, error) {
 		}
 		return fmt.Sprintf("%s deployment started", deploymentType), nil
 	}
-}
-
-// deploys environment variables and docker containers to pi's
-func Deploy(deploymentType string) error {
-	color.Set(color.FgHiGreen)
-	log.Printf("%s deployment started", deploymentType)
-	color.Unset()
-
-	scheduledDeployments[deploymentType] = false
-
-	allDevices, err := GetAllDevices(deploymentType)
-	if err != nil {
-		return err
-	}
-
-	fileName, err := retrieveEnvironmentVariables()
-	if err != nil {
-		return err
-	}
-
-	for i := range allDevices {
-		go SendCommand(allDevices[i].Address, fileName, deploymentType) // Start an update for each Pi
-	}
-
-	return nil
 }
 
 // waits for s to return, then starts a deployment
