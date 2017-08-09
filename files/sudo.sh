@@ -33,6 +33,11 @@ curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/ma
 chmod 775 /usr/bin/contacts.py
 systemctl daemon-reload
 
+# set up screenshutoff
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/screenshutoff-setup.sh > /tmp/sss-setup.sh
+chmod +x /tmp/sss-setup.sh
+sh -c "bash /tmp/sss-setup.sh"
+
 # Perform general updating
 apt update
 apt -y upgrade
@@ -55,9 +60,6 @@ pip install docker-compose
 mkdir -pv /etc/systemd/system/getty@tty1.service.d/
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/autologin.conf > /etc/systemd/system/getty@tty1.service.d/autologin.conf
 systemctl enable getty@tty1.service
-
-# Rotate the Pi's screen 180 degrees
-# echo "lcd_rotate=2" >> /boot/config.txt
 
 # Enable SSH connections
 touch /boot/ssh
