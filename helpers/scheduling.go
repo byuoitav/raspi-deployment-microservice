@@ -26,15 +26,17 @@ func ScheduleDeployment(deploymentType string) (string, error) {
 		return "", errors.New(fmt.Sprintf("there is already a %s deployment scheduled/occuring", deploymentType))
 	}
 	switch deploymentType {
-	case "stage":
-		t := GetTimeTomorrowByHour(STAGE_DEPLOYMENT_HOUR)
-		schedule, err := Schedule(t, ACCURACY)
-		if err != nil {
-			return "", err
-		}
+	/*
+		case "stage":
+			t := GetTimeTomorrowByHour(STAGE_DEPLOYMENT_HOUR)
+			schedule, err := Schedule(t, ACCURACY)
+			if err != nil {
+				return "", err
+			}
 
-		go DeployOnSchedule(schedule, deploymentType)
-		return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
+			go DeployOnSchedule(schedule, deploymentType)
+			return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
+	*/
 	case "production":
 		t := GetTimeTomorrowByHour(PROD_DEPLOYMENT_HOUR)
 		schedule, err := Schedule(t, ACCURACY)
