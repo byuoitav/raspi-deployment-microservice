@@ -11,6 +11,7 @@ services:
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
         network_mode: "host"
         restart: always
+        tty: true
     pjlink-microservice:
         image: byuoitav/rpi-pjlink-microservice:testing
         ports:
@@ -21,6 +22,7 @@ services:
             - PJLINK_PASS=$PJLINK_PASS
         network_mode: "host"
         restart: always
+        tty: true
     configuration-database-microservice:
         image: byuoitav/rpi-configuration-database-microservice:testing
         ports:
@@ -34,6 +36,7 @@ services:
             - CONFIGURATION_DATABASE_NAME=$CONFIGURATION_DATABASE_NAME
         network_mode: "host"
         restart: always
+        tty: true
     sony-control-microservice:
         image: byuoitav/rpi-sony-control-microservice:testing
         ports:
@@ -43,6 +46,7 @@ services:
             - SONY_TV_PSK=$SONY_TV_PSK
         network_mode: "host"
         restart: always
+        tty: true
     pulse-eight-neo-microservice:
         image: byuoitav/rpi-pulse-eight-neo-microservice:testing
         ports:
@@ -51,6 +55,16 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always
+        tty: true
+    kramer-microservice:
+        image: byuoitav/rpi-kramer-microservice:testing
+        ports:
+            - "8014:8014"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+        network_mode: "host"
+        restart: always
+        tty: true
     adcp-control-microservice:
         image: byuoitav/rpi-adcp-control-microservice:testing
         ports:
@@ -59,6 +73,7 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: always
+        tty: true
     touchpanel-ui-microservice:
         image: byuoitav/rpi-touchpanel-ui-microservice:testing
         ports:
@@ -70,6 +85,7 @@ services:
             - UI_CONFIGURATION_ADDRESS=$UI_CONFIGURATION_ADDRESS
         network_mode: "host"
         restart: always
+        tty: true
     event-router-microservice:
         image: byuoitav/rpi-event-router-microservice:testing
         ports:
@@ -80,6 +96,7 @@ services:
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
         network_mode: "host"
         restart: "always"
+        tty: true
     event-translator-microservice:
         image: byuoitav/rpi-event-translator-microservice:testing
         ports:
@@ -90,6 +107,7 @@ services:
             - ELASTIC_API_EVENTS_DEV=$ELASTIC_API_EVENTS_DEV
         network_mode: "host"
         restart: "always"
+        tty: true
     device-monitoring-microservice:
         image: byuoitav/rpi-device-monitoring-microservice:testing
         ports:
@@ -102,6 +120,7 @@ services:
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
         network_mode: "host"
         restart: "always"
+        tty: true
     london-audio-microservice:
         image: byuoitav/rpi-london-audio-microservice:testing
         ports: 
@@ -110,3 +129,4 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
         network_mode: "host"
         restart: "always"
+        tty: true
