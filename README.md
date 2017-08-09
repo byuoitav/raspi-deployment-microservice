@@ -10,32 +10,21 @@ The following environment variables need to be set in Circle so the deployment f
 Additionally, any environment variables the Pi's will need to function need to be set in the Circle web interface.
 
 ### Installation
-1. Get `pi-setup.sh` and run it with the following commands:
+The installation process is mostly automated and very easy
+1. Make sure the JSON object representing the UI associated with the PI has been updated in the `ui-configuration` Github Repository
+1. When prompted, enter the desired hostname of the Pi, e.g.
+	```
+	ITB-1101-CP1
+	```
+1. When prompted, enter the desired IP address of the Pi, e.g.
 
 	```
-	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/pi-setup.sh > /tmp/pi-setup.sh
-	chmod +x /tmp/pi-setup.sh
-	/tmp/pi-setup.sh
+	10.66.9.13
 	```
 
-1. SSH into the Pi using a command similar to the following substituting the hostname value you supplied in the step above where appropriate:
+1. Wait for the Pi to reboot twice, then it's good to go
 
-	```
-	ssh pi@HOSTNAME.byu.edu
-	```
+### Contact Points
+The Raspberry Pi's monitor contact closures on their GPIO pins with a python-based systemd service, which is automatically installed during the setup sequence. 
+The Pi monitors on pin 7 and grounds pin 9
 
-1. Run the following command to install Docker on the Pi in question:
-
-	```
-	curl -sSL https://get.docker.com | sh
-	```
-
-1. Run the command given at the end of the Docker installer output to add the `pi` user to the `docker` group
-1. Trigger a deployment from Circle ("Rebuild" the `raspi-deployment-microservice`) to get the necessary environment variables onto the new Pi
-1. When the Circle deployment finishes, get `mariadb-setup.sh` and run it with the following commands:
-
-	```
-	curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh
-	chmod +x /tmp/mariadb-setup.sh
-	sudo /tmp/mariadb-setup.sh
-	```
