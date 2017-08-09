@@ -130,7 +130,7 @@ services:
         network_mode: "host"
         restart: "always"
         tty: true
-    london-audio-microservice:
+    shure-audio-microservice:
         image: byuoitav/rpi-shure-audio-microservice:stage
         ports:
             - "8013:8013"
