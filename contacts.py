@@ -17,7 +17,7 @@ def sendAlert():
             'cause':'SECURITY',
             'category':'INFO',
             'hostname':host,
-            'hosttype':'control proccessor',
+            'hosttype':'control processor',
             'timestamp':str(datetime.datetime.now().isoformat('T'))
             }
 
