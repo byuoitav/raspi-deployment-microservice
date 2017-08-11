@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/byuoitav/authmiddleware/bearertoken"
-	"github.com/byuoitav/configuration-database-microservice/accessors"
+	"github.com/byuoitav/configuration-database-microservice/structs"
 	"github.com/fatih/color"
 
 	"golang.org/x/crypto/ssh"
@@ -123,17 +123,17 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 	return allDevices, nil
 }
 
-func GetRoom(hostname string) (accessors.Room, error) {
+func GetRoom(hostname string) (structs.Room, error) {
 	client := &http.Client{}
 
 	token, err := bearertoken.GetToken()
 	if err != nil {
-		return accessors.Room{}, err
+		return structs.Room{}, err
 	}
 
 	splitHostname := strings.Split(hostname, "-")
 	if len(splitHostname) != 3 {
-		return accessors.Room{}, errors.New("Invalid hostname: " + hostname)
+		return structs.Room{}, errors.New("Invalid hostname: " + hostname)
 	}
 
 	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/buildings/"+splitHostname[0]+"/rooms/"+splitHostname[1], nil)
@@ -142,18 +142,18 @@ func GetRoom(hostname string) (accessors.Room, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return accessors.Room{}, err
+		return structs.Room{}, err
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return accessors.Room{}, err
+		return structs.Room{}, err
 	}
 
-	room := accessors.Room{}
+	room := structs.Room{}
 	err = json.Unmarshal(b, &room)
 	if err != nil {
-		return accessors.Room{}, err
+		return structs.Room{}, err
 	}
 
 	log.Printf("Device room from database: %+v", room)
