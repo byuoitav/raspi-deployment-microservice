@@ -9,6 +9,7 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: always
         tty: true
@@ -83,6 +84,7 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - HELP_SLACKBOT_WEBHOOK=$HELP_SLACKBOT_WEBHOOK
             - UI_CONFIGURATION_ADDRESS=$UI_CONFIGURATION_ADDRESS
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: always
         tty: true
@@ -94,6 +96,7 @@ services:
             - PI_HOSTNAME=$PI_HOSTNAME
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+            - EVENT_NODE_ADDRESSES=$EVENT_NODE_ADDRESSES
         network_mode: "host"
         restart: "always"
         tty: true
@@ -105,6 +108,7 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
             - ELASTIC_API_EVENTS_DEV=$ELASTIC_API_EVENTS_DEV
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: "always"
         tty: true
@@ -118,6 +122,7 @@ services:
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: "always"
         tty: true
@@ -139,5 +144,6 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - PI_HOSTNAME=$PI_HOSTNAME
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: "always"
