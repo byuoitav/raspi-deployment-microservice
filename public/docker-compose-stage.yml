@@ -116,7 +116,6 @@ services:
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
-            - ELASTIC_API_EVENTS_DEV=$ELASTIC_API_EVENTS_DEV
             - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: "always"
