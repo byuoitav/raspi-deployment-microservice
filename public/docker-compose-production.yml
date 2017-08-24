@@ -9,6 +9,7 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: always
         tty: true
@@ -92,6 +93,7 @@ services:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - HELP_SLACKBOT_WEBHOOK=$HELP_SLACKBOT_WEBHOOK
             - UI_CONFIGURATION_ADDRESS=$UI_CONFIGURATION_ADDRESS
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: always
         tty: true
@@ -103,6 +105,7 @@ services:
             - PI_HOSTNAME=$PI_HOSTNAME
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+            - EVENT_NODE_ADDRESSES=$EVENT_NODE_ADDRESSES
         network_mode: "host"
         restart: "always"
         tty: true
@@ -113,7 +116,33 @@ services:
         environment:
             - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
             - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
-            - ELASTIC_API_EVENTS_DEV=$ELASTIC_API_EVENTS_DEV
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: "always"
         tty: true
+    device-monitoring-microservice:
+        image: byuoitav/rpi-device-monitoring-microservice:production
+        ports:
+            - "10000:10000"
+        environment:
+            - PI_HOSTNAME=$PI_HOSTNAME
+            - DEVICE_PING_INTERVAL=$DEVICE_PING_INTERVAL
+            - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
+        network_mode: "host"
+        restart: "always"
+        tty: true
+    shure-audio-microservice:
+        image: byuoitav/rpi-shure-audio-microservice:production
+        ports:
+            - "8013:8013"
+        environment:
+            - ELASTIC_API_EVENTS=$ELASTIC_API_EVENTS
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+            - PI_HOSTNAME=$PI_HOSTNAME
+            - CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS=$CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS
+            - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
+        network_mode: "host"
+        restart: "always"
