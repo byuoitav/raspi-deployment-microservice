@@ -2,14 +2,11 @@
 
 echo "Second boot."
 
-	wait 45
-	sudo chvt 2
-
-	until $(sudo usermod -aG docker pi); do
-		curl -sSL https://get.docker.com -k | sh
-		wait
-	done
-	echo "Added user pi to the docker group"
+until $(sudo usermod -aG docker pi); do
+	curl -sSL https://get.docker.com -k | sh
+	wait
+done
+echo "Added user pi to the docker group"
 
 # get environment variables
 curl http://sandbag.byu.edu:2000/deploy/$(hostname)
@@ -37,13 +34,3 @@ until [ $(docker ps -q | wc -l) -gt 1 ]; do
 	echo "Waiting for docker containers to download"
 	sleep 10
 done
-
-echo "Removing symlink to startup script."
-sudo rm /usr/lib/systemd/system/default.target.wants/first-boot.service
-
-clear
-printf "\n\tSetup complete. Please wait for me to reboot...\n"
-sleep 30
-
-sudo sh -c "reboot"
-
