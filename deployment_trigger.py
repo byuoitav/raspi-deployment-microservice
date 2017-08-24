@@ -43,7 +43,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             request.send_response(200)
             request.end_headers()
-            request.wfile.write("Success!")
+            request.wfile.write("successfully triggered deployment")
     
         else:
             request.send_response(400)
