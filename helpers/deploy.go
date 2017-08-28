@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -79,6 +80,47 @@ func DeploySingle(hostname string) (string, error) {
 	return "Deployment started", nil
 }
 
+func GetDevice(hostname string) (structs.Device, error) {
+	client := &http.Client{}
+
+	token, err := bearertoken.GetToken()
+	if err != nil {
+		return structs.Device{}, err
+	}
+
+	log.Printf("Getting device information for %v", hostname)
+
+	splitRoom := strings.Split(hostname, "-")
+
+	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/buildings/%s/rooms/%s/devices/%s", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS"), splitRoom[0], splitRoom[1], splitRoom[2]), nil)
+	req.Header.Set("Authorization", "Bearer "+token.Token)
+
+	resp, err := client.Do(req)
+	log.Printf("response: %v", resp)
+	if err != nil {
+		log.Printf("Error getting device 1: %v", err.Error())
+		return structs.Device{}, err
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	log.Printf("b: %s", b)
+	if err != nil {
+		log.Printf("Error getting device 2: %v", err.Error())
+		return structs.Device{}, err
+	}
+
+	toReturn := structs.Device{}
+	err = json.Unmarshal(b, toReturn)
+	if err != nil {
+		log.Printf("Error getting device 3: %v", err.Error())
+		return structs.Device{}, err
+	}
+
+	log.Printf("Device: %v", toReturn)
+
+	return toReturn, nil
+}
+
 func GetAllDevices(deploymentType string) ([]device, error) {
 	client := &http.Client{}
 
@@ -112,7 +154,6 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 
 	allDevices := []device{}
 	err = json.Unmarshal(b, &allDevices)
-	log.Printf("alldevices: %s", allDevices)
 	if err != nil {
 		log.Printf("Error getting devices 3: %v", err.Error())
 		return []device{}, err
