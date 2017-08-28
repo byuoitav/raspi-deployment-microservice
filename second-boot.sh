@@ -28,6 +28,8 @@ until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microse
 done
 chmod +x /tmp/mariadb-setup.sh
 
+/tmp/mariadb-setup.sh
+
 # salt setup
 until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/salt-setup.sh > /tmp/salt-setup.sh); do
 	echo "Trying again."
@@ -36,6 +38,7 @@ chmod +x /tmp/salt-setup.sh
 
 until [ -d "/etc/salt/" ]; do
 	/tmp/salt-setup.sh
+	wait
 done
 
 # docker 
