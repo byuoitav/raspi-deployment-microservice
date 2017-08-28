@@ -165,4 +165,4 @@ bar {
 }
 
 exec /home/pi/update_docker_containers.sh
-exec chromium-browser --kiosk --disable-pinch --disable-session-crashed-bubble --overscroll-history-navigation=0 --disable-infobars http://localhost:8888
+exec chromium-browser --kiosk --incognito --disable-pinch --disable-session-crashed-bubble --overscroll-history-navigation=0 --disable-infobars http://localhost:8888
