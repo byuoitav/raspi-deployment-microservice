@@ -66,16 +66,19 @@ func Deploy(deploymentType string) error {
 func DeploySingle(hostname string) (string, error) {
 	room, err := GetRoom(hostname)
 	if err != nil {
+		log.Printf("error getting room")
 		return "", err
 	}
 
 	fileName, err := retrieveEnvironmentVariables()
 	if err != nil {
+		log.Printf("error getting env variables")
 		return "", err
 	}
 
 	dev, err := GetDevice(hostname)
 	if err != nil {
+		log.Printf("error getting device")
 		return "", err
 	}
 
@@ -115,7 +118,7 @@ func GetDevice(hostname string) (structs.Device, error) {
 	}
 
 	toReturn := structs.Device{}
-	err = json.Unmarshal(b, toReturn)
+	err = json.Unmarshal(b, &toReturn)
 	if err != nil {
 		log.Printf("Error getting device 3: %v", err.Error())
 		return structs.Device{}, err
