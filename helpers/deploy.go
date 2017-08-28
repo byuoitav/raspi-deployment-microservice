@@ -74,7 +74,12 @@ func DeploySingle(hostname string) (string, error) {
 		return "", err
 	}
 
-	go SendCommand(hostname+".byu.edu", fileName, room.RoomDesignation) // Start an update for the Pi
+	dev, err := GetDevice(hostname)
+	if err != nil {
+		return "", err
+	}
+
+	go SendCommand(dev.Address, fileName, room.RoomDesignation) // Start an update for the Pi
 
 	log.Printf("Deployment started")
 	return "Deployment started", nil
