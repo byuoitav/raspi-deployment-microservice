@@ -10,7 +10,7 @@ echo "Added user pi to the docker group"
 
 # get environment variables
 echo "Getting environment variables"
-until $(curl http://sandgrains.byu.edu/$(hostname)); do 
+until $(curl https://sandgrains.byu.edu/$(hostname)); do 
 	echo "Trying again"
 done
 
