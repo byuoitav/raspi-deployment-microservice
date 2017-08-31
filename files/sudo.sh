@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 # This script is called automatically by `pi-setup.sh` to run a batch of Pi setup commands that require sudo permissions
+started="/usr/local/games/setup-started"
+
+ip=`ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/'`
+echo "\n\nmy ip address: $ip\n\n"
 
 # Update the time (from google, to ensure https works)
 date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"
@@ -12,14 +16,28 @@ echo "Type the desired hostname of this device (E.g. ITB-1006-CP2), followed by 
 
 read -e desired_hostname
 
-echo $desired_hostname > /etc/hostname
-echo "127.0.1.1    $desired_hostname" >> /etc/hosts
-
 # get static ip
-echo "Type the desired static ip-address of this device (E.g. 10.5.99.18), followed by [ENTER]:"
+echo "Type the desired static ip-address of this device (e.g. $ip), followed by [ENTER]:"
 
 read -e desired_ip
 
+# check if script has already been started
+if [ -f "$started" ]; then
+	touch $started
+	echo "setup has been started remotely"
+	echo "please wait for me to reboot (about 30 minutes)"
+	sleep infinity
+	exit
+fi
+
+# copy original dhcp file
+cp /etc/dhcpcd.conf /etc/dhcpcd.conf.other
+
+# setup hostname
+echo $desired_hostname > /etc/hostname
+echo "127.0.1.1    $desired_hostname" >> /etc/hosts
+
+# setup static ip
 echo "interface eth0" >> /etc/dhcpcd.conf
 echo "static ip_address=$desired_ip/24" >> /etc/dhcpcd.conf
 routers=$(echo "static routers=$desired_ip" | cut -d "." -f -3)
