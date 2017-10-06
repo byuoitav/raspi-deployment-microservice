@@ -27,12 +27,14 @@ func HoldDeployment(branch string, status bool) {
 
 // deploys/schedules deployments based on deploymentType
 func ScheduleDeployment(deploymentType string) (string, error) {
+
 	if scheduledDeployments[deploymentType] {
-		color.Set(color.FgHiRed)
-		log.Printf("%s deployments are currently being held.", deploymentType)
-		color.Unset()
-		return "", errors.New(fmt.Sprintf("%s deployments are currently being held", deploymentType))
+
+		msg := fmt.Sprintf("%s deployments are currently being held")
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return "", errors.New(msg)
 	}
+
 	switch deploymentType {
 	/*
 			case "stage":
@@ -54,6 +56,7 @@ func ScheduleDeployment(deploymentType string) (string, error) {
 			go DeployOnSchedule(schedule, deploymentType)
 			return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
 	*/
+
 	default:
 		err := Deploy(deploymentType)
 		if err != nil {
