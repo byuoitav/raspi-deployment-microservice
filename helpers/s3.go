@@ -27,7 +27,7 @@ func retrieveEnvironmentVariables(designation string) (string, error) {
 	log.Printf("[helpers] fetching environment variables...")
 
 	var client http.Client
-	url := os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS") + PORT + fmt.Sprintf(ENDPOINT, designation)
+	url := os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS") + fmt.Sprintf(ENDPOINT, designation)
 
 	log.Printf("[helplers] making request against url %s", url)
 
