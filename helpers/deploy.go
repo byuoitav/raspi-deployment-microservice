@@ -195,7 +195,11 @@ func GetRoom(hostname string) (structs.Room, error) {
 
 	client := &http.Client{}
 
-	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/buildings/"+splitHostname[0]+"/rooms/"+splitHostname[1], nil)
+	url := os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS") + "/buildings/" + splitHostname[0] + "/rooms/" + splitHostname[1]
+
+	log.Printf("[helpers] making request against url: %s", url)
+
+	req, _ := http.NewRequest("GET", url, nil)
 
 	err := SetToken(req)
 	if err != nil {
