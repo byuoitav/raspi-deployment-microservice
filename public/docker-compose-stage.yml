@@ -13,6 +13,9 @@ services:
         network_mode: "host"
         restart: always
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     pjlink-microservice:
         image: byuoitav/rpi-pjlink-microservice:stage
         ports:
@@ -24,6 +27,9 @@ services:
         network_mode: "host"
         restart: always
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     configuration-database-microservice:
         image: byuoitav/rpi-configuration-database-microservice:stage
         ports:
@@ -38,6 +44,9 @@ services:
         network_mode: "host"
         restart: always
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     sony-control-microservice:
         image: byuoitav/rpi-sony-control-microservice:stage
         ports:
@@ -48,6 +57,9 @@ services:
         network_mode: "host"
         restart: always
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     london-audio-microservice:
         image: byuoitav/rpi-london-audio-microservice:stage
         ports:
@@ -57,6 +69,9 @@ services:
         network_mode: "host"
         restart: always
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     pulse-eight-neo-microservice:
         image: byuoitav/rpi-pulse-eight-neo-microservice:stage
         ports:
@@ -66,6 +81,9 @@ services:
         network_mode: "host"
         restart: always
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     kramer-microservice:
         image: byuoitav/rpi-kramer-microservice:stage
         ports:
@@ -75,6 +93,9 @@ services:
         network_mode: "host"
         restart: always
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     adcp-control-microservice:
         image: byuoitav/rpi-adcp-control-microservice:stage
         ports:
@@ -84,6 +105,9 @@ services:
         network_mode: "host"
         restart: always
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     touchpanel-ui-microservice:
         image: byuoitav/rpi-touchpanel-ui-microservice:stage
         ports:
@@ -97,6 +121,9 @@ services:
         network_mode: "host"
         restart: always
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     event-router-microservice:
         image: byuoitav/rpi-event-router-microservice:stage
         ports:
@@ -109,6 +136,9 @@ services:
         network_mode: "host"
         restart: "always"
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     event-translator-microservice:
         image: byuoitav/rpi-event-translator-microservice:stage
         ports:
@@ -120,6 +150,9 @@ services:
         network_mode: "host"
         restart: "always"
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     device-monitoring-microservice:
         image: byuoitav/rpi-device-monitoring-microservice:stage
         ports:
@@ -134,6 +167,9 @@ services:
         network_mode: "host"
         restart: "always"
         tty: true
+        logging:
+            options:
+                max-size: "100m"
     shure-audio-microservice:
         image: byuoitav/rpi-shure-audio-microservice:stage
         ports:
@@ -146,3 +182,6 @@ services:
             - EVENT_ROUTER_ADDRESS=$EVENT_ROUTER_ADDRESS
         network_mode: "host"
         restart: "always"
+        logging:
+            options:
+                max-size: "100m"
