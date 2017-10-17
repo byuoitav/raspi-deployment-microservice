@@ -9,9 +9,9 @@ done
 echo "Added user pi to the docker group"
 
 # get environment variables
-echo "Getting environment variables"
-until $(curl http://sandbag.byu.edu:2001/deploy/$(hostname)); do 
-	echo "Trying again"
+echo "getting environment variables..."
+until curl http://sandbag.byu.edu:2001/deploy/$(hostname); do 
+	echo "trying again..."
 done
 
 until [ $PI_HOSTNAME ]; do
