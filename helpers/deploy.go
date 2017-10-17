@@ -40,18 +40,17 @@ var sshConfig = &ssh.ClientConfig{
 
 // deploys environment variables and docker containers to pi's
 func Deploy(deploymentType string) error {
-	color.Set(color.FgHiGreen)
-	log.Printf("%s deployment started", deploymentType)
-	color.Unset()
 
-	scheduledDeployments[deploymentType] = false
+	log.Printf("%s", color.HiGreenString("[helpers] deployment started"))
+
+	scheduledDeployments[deploymentType] = false //why?? it seems like this code doesn't get executed if this line evaluates to true
 
 	allDevices, err := GetAllDevices(deploymentType)
 	if err != nil {
 		return err
 	}
 
-	fileName, err := retrieveEnvironmentVariables()
+	fileName, err := retrieveEnvironmentVariables(deploymentType)
 	if err != nil {
 		return err
 	}
@@ -64,13 +63,17 @@ func Deploy(deploymentType string) error {
 }
 
 func DeploySingle(hostname string) (string, error) {
+
+	log.Printf("[helpers] starting single deployment...")
+
 	room, err := GetRoom(hostname)
 	if err != nil {
-		log.Printf("error getting room")
-		return "", err
+		msg := fmt.Sprintf("failed to get room: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return "", errors.New(msg)
 	}
 
-	fileName, err := retrieveEnvironmentVariables()
+	fileName, err := retrieveEnvironmentVariables(room.RoomDesignation)
 	if err != nil {
 		log.Printf("error getting env variables")
 		return "", err
@@ -89,20 +92,26 @@ func DeploySingle(hostname string) (string, error) {
 }
 
 func GetDevice(hostname string) (structs.Device, error) {
-	client := &http.Client{}
-
-	token, err := bearertoken.GetToken()
-	if err != nil {
-		return structs.Device{}, err
-	}
 
 	log.Printf("Getting device information for %v", hostname)
 
 	splitRoom := strings.Split(hostname, "-")
+	if len(splitRoom) != 3 {
+		msg := fmt.Sprintf("invalid hostname: %s", hostname)
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return structs.Device{}, errors.New(msg)
+	}
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/buildings/%s/rooms/%s/devices/%s", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS"), splitRoom[0], splitRoom[1], splitRoom[2]), nil)
-	req.Header.Set("Authorization", "Bearer "+token.Token)
 
+	err := SetToken(req)
+	if err != nil {
+		msg := fmt.Sprintf("failed to set bearer token: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return structs.Device{}, errors.New(msg)
+	}
+
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	log.Printf("response: %v", resp)
 	if err != nil {
@@ -129,6 +138,7 @@ func GetDevice(hostname string) (structs.Device, error) {
 	return toReturn, nil
 }
 
+//TODO make this use the existing DBO package
 func GetAllDevices(deploymentType string) ([]device, error) {
 	client := &http.Client{}
 
@@ -173,39 +183,54 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 }
 
 func GetRoom(hostname string) (structs.Room, error) {
-	client := &http.Client{}
 
-	token, err := bearertoken.GetToken()
-	if err != nil {
-		return structs.Room{}, err
-	}
+	log.Printf("[helpers] getting room: %s", hostname)
 
 	splitHostname := strings.Split(hostname, "-")
 	if len(splitHostname) != 3 {
-		return structs.Room{}, errors.New("Invalid hostname: " + hostname)
+		msg := fmt.Sprintf("invalid hostname: %s", hostname)
+		log.Printf("%s", color.HiRedString("[helplers] %s", msg))
+		return structs.Room{}, errors.New(msg)
 	}
 
-	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/buildings/"+splitHostname[0]+"/rooms/"+splitHostname[1], nil)
+	client := &http.Client{}
 
-	req.Header.Set("Authorization", "Bearer "+token.Token)
+	url := os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS") + "/buildings/" + splitHostname[0] + "/rooms/" + splitHostname[1]
+
+	log.Printf("[helpers] making request against url: %s", url)
+
+	req, _ := http.NewRequest("GET", url, nil)
+
+	err := SetToken(req)
+	if err != nil {
+		msg := fmt.Sprintf("cannot set token: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return structs.Room{}, errors.New(msg)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return structs.Room{}, err
+		msg := fmt.Sprintf("failed to complete request: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return structs.Room{}, errors.New(msg)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return structs.Room{}, err
+		msg := fmt.Sprintf("failed to read body: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helplers] %s", msg))
+		return structs.Room{}, errors.New(msg)
 	}
 
-	room := structs.Room{}
+	var room structs.Room
 	err = json.Unmarshal(b, &room)
 	if err != nil {
-		return structs.Room{}, err
+		msg := fmt.Sprintf("failed to unmarshal struct: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helplers] %s", msg))
+		return structs.Room{}, errors.New(msg)
 	}
 
-	log.Printf("Device room from database: %+v", room)
+	//log.Printf("Device room from database: %+v", room)
 
 	return room, nil
 }
