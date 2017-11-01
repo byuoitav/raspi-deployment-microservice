@@ -17,6 +17,10 @@ chmod +x /home/pi/.xinitrc
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/update_docker_containers.sh > /home/pi/update_docker_containers.sh
 chmod +x /home/pi/update_docker_containers.sh
 
+#Download the changeroom script
+curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/changeroom.sh > /home/pi/changeroom.sh
+chmod +x /home/pi/changeroom.sh
+
 # Configure i3
 mkdir /home/pi/.i3
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/i3_config > /home/pi/.i3/config
