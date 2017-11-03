@@ -5,6 +5,7 @@ if [ "$EUID" -ne 0 ]; then
 	exit 1
 fi
 
+oldhost=$HOSTNAME
 read -p "This pi is currently set up for room $HOSTNAME. Are you sure you want to change it? (Y/n) " -n 1 response
 echo ""
 case "$response" in
@@ -26,6 +27,9 @@ read -e new_ip
 echo $new_hostname > /etc/hostname 
 head -n -1 /etc/hosts > temp.txt && mv temp.txt /etc/hosts
 echo "127.0.1.1      $new_hostname" >> /etc/hosts
+
+# update the salt minion
+sed -i -e 's/$oldhost/$new_hostname/g' /etc/salt/minion
 
 # update ip
 head -n -4 /etc/dhcpcd.conf > temp.txt && mv temp.txt /etc/dhcpcd.conf
