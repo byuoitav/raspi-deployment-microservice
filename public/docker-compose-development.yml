@@ -184,3 +184,15 @@ services:
         logging:
             options:
                 max-size: "100m"
+    atlona-microservice:
+        image: byuoitav/rpi-atlona-microservice:development
+        ports:
+            - "8015:8015"
+        environment:
+            - LOCAL_ENVIRONMENT=$LOCAL_ENVIRONMENT
+        network_mode: "host"
+        restart: always
+        tty: true
+        logging:
+            options:
+                max-size: "100m"
