@@ -86,11 +86,18 @@ func DeployDevice(hostname string) (string, error) {
 		return "", errors.New(msg)
 	}
 
+	//build device name
+	deviceName := strings.Split(hostname, "-")[2]
+	log.Printf("[helpers] looking for device: %s", deviceName)
+
 	//get device class
 	var deviceClass string
 	for _, device := range room.Devices {
 
-		if device.Name == hostname { //found device
+		log.Printf("[helpers] found device: %s of class: %s", device.Name, device.Class)
+
+		if device.Name == deviceName { //found device
+
 			deviceClass = device.Class
 		}
 	}
