@@ -26,7 +26,7 @@ func HoldDeployment(branch string, status bool) {
 }
 
 // deploys/schedules deployments based on deploymentType
-func ScheduleDeployment(deploymentType string) (string, error) {
+func ScheduleDeployment(deviceClass, deploymentType string) (string, error) {
 
 	if scheduledDeployments[deploymentType] {
 
@@ -58,7 +58,7 @@ func ScheduleDeployment(deploymentType string) (string, error) {
 	*/
 
 	default:
-		err := Deploy(deploymentType)
+		err := Deploy(deviceClass, deploymentType)
 		if err != nil {
 			return "", err
 		}
@@ -67,7 +67,7 @@ func ScheduleDeployment(deploymentType string) (string, error) {
 }
 
 // waits for s to return, then starts a deployment
-func DeployOnSchedule(s chan time.Time, deploymentType string) {
+func DeployOnSchedule(s chan time.Time, deviceClass, deploymentType string) {
 	scheduledDeployments[deploymentType] = true
 
 	color.Set(color.FgBlue)
@@ -77,7 +77,7 @@ func DeployOnSchedule(s chan time.Time, deploymentType string) {
 	<-s
 	close(s)
 
-	Deploy(deploymentType)
+	Deploy(deviceClass, deploymentType)
 }
 
 // schedules a timer that returns when the specified time is reached
