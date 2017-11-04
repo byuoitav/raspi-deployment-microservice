@@ -10,8 +10,11 @@ import (
 )
 
 func WebhookDeployment(context echo.Context) error {
-	branch := context.Param("branch")
-	response, err := helpers.ScheduleDeployment(branch)
+
+	deviceClass := context.Param("class")
+	deploymentType := context.Param("designation")
+
+	response, err := helpers.ScheduleDeployment(deviceClass, deploymentType)
 	if err != nil {
 		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
 		return nil
@@ -34,7 +37,7 @@ func EnableDeploymentsByBranch(context echo.Context) error {
 }
 
 func WebhookDevice(context echo.Context) error {
-	response, err := helpers.DeploySingle(context.Param("hostname"))
+	response, err := helpers.DeployDevice(context.Param("hostname"))
 	if err != nil {
 		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
 		return nil

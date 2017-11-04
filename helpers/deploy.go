@@ -38,34 +38,47 @@ var sshConfig = &ssh.ClientConfig{
 	},
 }
 
-// deploys environment variables and docker containers to pi's
-func Deploy(deploymentType string) error {
+//deploys to all pi's with the given class and designation
+//e.g. class = "av-control"
+//e.g. desigation = "development"
+func Deploy(class, designation string) error {
 
 	log.Printf("%s", color.HiGreenString("[helpers] deployment started"))
 
-	scheduledDeployments[deploymentType] = false //why?? it seems like this code doesn't get executed if this line evaluates to true
+	//scheduledDeployments[deploymentType] = false //why?? it seems like this code doesn't get executed if this line evaluates to true
 
-	allDevices, err := GetAllDevices(deploymentType)
+	allDevices, err := GetAllDevices(designation)
 	if err != nil {
 		return err
 	}
 
-	fileName, err := retrieveEnvironmentVariables(deploymentType)
+	classId, err := GetClassId(class)
+	if err != nil {
+		return err
+	}
+
+	desigId, err := GetDesignationId(designation)
+	if err != nil {
+		return err
+	}
+
+	fileName, err := retrieveEnvironmentVariables(classId, desigId)
 	if err != nil {
 		return err
 	}
 
 	for i := range allDevices {
-		go SendCommand(allDevices[i].Address, fileName, deploymentType) // Start an update for each Pi
+		go SendCommand(allDevices[i].Address, fileName, designation) // Start an update for each Pi
 	}
 
 	return nil
 }
 
-func DeploySingle(hostname string) (string, error) {
+func DeployDevice(hostname string) (string, error) {
 
 	log.Printf("[helpers] starting single deployment...")
 
+	//retrieve room from configuration database
 	room, err := GetRoom(hostname)
 	if err != nil {
 		msg := fmt.Sprintf("failed to get room: %s", err.Error())
@@ -73,7 +86,39 @@ func DeploySingle(hostname string) (string, error) {
 		return "", errors.New(msg)
 	}
 
-	fileName, err := retrieveEnvironmentVariables(room.RoomDesignation)
+	//get device class
+	var deviceClass string
+	for _, device := range room.Devices {
+
+		if device.Name == hostname { //found device
+			deviceClass = device.Class
+		}
+	}
+
+	if len(deviceClass) == 0 { //if we don't find anything
+		msg := "device class not found"
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return "", errors.New(msg)
+	}
+
+	//get class ID
+	classId, err := GetClassId(deviceClass)
+	if err != nil {
+		msg := fmt.Sprintf("class ID not found: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return "", errors.New(msg)
+	}
+
+	//get designation ID
+	desigId, err := GetDesignationId(room.RoomDesignation)
+	if err != nil {
+		msg := fmt.Sprintf("designation ID not found: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return "", errors.New(msg)
+	}
+
+	//get environment file based on the two IDs
+	fileName, err := retrieveEnvironmentVariables(classId, desigId)
 	if err != nil {
 		log.Printf("error getting env variables")
 		return "", err
