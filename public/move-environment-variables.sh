@@ -1,3 +1,5 @@
 #!/bin/bash
 
-sudo mv ~/.environment-variables /etc/environment
+sudo cat ~/.environment-variables > /etc/environment
+
+echo \"PI_HOSTNAME=$(cat /etc/hostname)\" >> /etc/environment
