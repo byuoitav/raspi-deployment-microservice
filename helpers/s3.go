@@ -55,6 +55,7 @@ func retrieveEnvironmentVariables(classId, designationId int64) (string, error) 
 	}
 
 	fileLocation := os.Getenv("GOPATH") + "/src/github.com/byuoitav/raspi-deployment-microservice/public/"
+	log.Printf("[helpers] filepath: %s", fileLocation)
 	outFile, err := os.OpenFile(fileLocation+FILE_NAME, os.O_RDWR|os.O_CREATE, 0777)
 	if err != nil {
 		return "", err
