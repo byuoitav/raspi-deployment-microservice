@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -60,6 +61,13 @@ func retrieveEnvironmentVariables(classId, designationId int64) (string, error) 
 	}
 
 	defer outFile.Close()
+
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	log.Printf("[helpers] response: %s", string(bytes))
 
 	_, err = io.Copy(outFile, resp.Body)
 	if err != nil {
