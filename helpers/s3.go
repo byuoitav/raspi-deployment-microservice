@@ -61,19 +61,26 @@ func retrieveEnvironmentVariables(classId, designationId int64) (string, error) 
 		return "", err
 	}
 
-	defer outFile.Close()
-
-	bytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	log.Printf("[helpers] response: %s", string(bytes))
+	outFile.Close()
 
 	_, err = io.Copy(outFile, resp.Body)
 	if err != nil {
 		return "", err
 	}
+
+	testFile, err := os.Open(fileLocation + FILE_NAME)
+	if err != nil {
+		return "", err
+	}
+
+	contents, err := ioutil.ReadAll(testFile)
+	if err != nil {
+		return "", err
+	}
+
+	log.Printf("[helpers] contents of %s: %s", fileLocation+FILE_NAME, string(contents))
+
+	testFile.Close()
 
 	return FILE_NAME, nil
 }
