@@ -52,17 +52,7 @@ func Deploy(class, designation string) error {
 		return err
 	}
 
-	classId, err := GetClassId(class)
-	if err != nil {
-		return err
-	}
-
-	desigId, err := GetDesignationId(designation)
-	if err != nil {
-		return err
-	}
-
-	fileName, err := retrieveEnvironmentVariables(classId, desigId)
+	fileName, err := retrieveEnvironmentVariables(class, designation)
 	if err != nil {
 		return err
 	}
@@ -108,24 +98,8 @@ func DeployDevice(hostname string) (string, error) {
 		return "", errors.New(msg)
 	}
 
-	//get class ID
-	classId, err := GetClassId(deviceClass)
-	if err != nil {
-		msg := fmt.Sprintf("class ID not found: %s", err.Error())
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-		return "", errors.New(msg)
-	}
-
-	//get designation ID
-	desigId, err := GetDesignationId(room.RoomDesignation)
-	if err != nil {
-		msg := fmt.Sprintf("designation ID not found: %s", err.Error())
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-		return "", errors.New(msg)
-	}
-
 	//get environment file based on the two IDs
-	fileName, err := retrieveEnvironmentVariables(classId, desigId)
+	fileName, err := retrieveEnvironmentVariables(deviceClass, room.RoomDesignation)
 	if err != nil {
 		log.Printf("error getting env variables")
 		return "", err
