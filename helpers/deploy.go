@@ -38,6 +38,8 @@ var sshConfig = &ssh.ClientConfig{
 	},
 }
 
+var TIMER_DURATION = 3 * time.Minute
+
 //deploys to all pi's with the given class and designation
 //e.g. class = "av-control"
 //e.g. desigation = "development"
@@ -52,13 +54,18 @@ func Deploy(class, designation string) error {
 		return err
 	}
 
-	fileName, err := retrieveEnvironmentVariables(class, designation)
+	environment, _, err := retrieveEnvironmentVariables(class, designation)
 	if err != nil {
 		return err
 	}
 
+	dockerCompose, _, err := RetrieveDockerCompose(class, designation)
+	if err != nil {
+		return errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
+	}
+
 	for i := range allDevices {
-		go SendCommand(allDevices[i].Address, fileName, designation) // Start an update for each Pi
+		go SendCommand(allDevices[i].Address, environment, dockerCompose) // Start an update for each Pi
 	}
 
 	return nil
@@ -67,6 +74,9 @@ func Deploy(class, designation string) error {
 func DeployDevice(hostname string) (string, error) {
 
 	log.Printf("[helpers] starting single deployment...")
+
+	//hostname should be all caps - names in config DB are all caps
+	allCaps := strings.ToUpper(hostname)
 
 	//retrieve room from configuration database
 	room, err := GetRoom(hostname)
@@ -99,11 +109,34 @@ func DeployDevice(hostname string) (string, error) {
 	}
 
 	//get environment file based on the two IDs
-	fileName, err := retrieveEnvironmentVariables(deviceClass, room.RoomDesignation)
+	envFile, envPath, err := retrieveEnvironmentVariables(deviceClass, room.RoomDesignation)
 	if err != nil {
-		log.Printf("error getting env variables")
-		return "", err
+		return "", errors.New(fmt.Sprintf("error fetching environment variables: %s", err.Error()))
 	}
+
+	dockerCompose, composePath, err := RetrieveDockerCompose(deviceClass, room.RoomDesignation)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
+	}
+
+	f := func() {
+		log.Printf("[helpers] removing old file: %s...", envFile)
+		err := os.Remove(envPath + envFile)
+		if err != nil {
+			log.Printf("[helpers] error removing old file: %s", err.Error())
+		}
+	}
+
+	g := func() {
+		log.Printf("[helpers] removing old file: %s...", dockerCompose)
+		err := os.Remove(composePath + dockerCompose)
+		if err != nil {
+			log.Printf("[helpers] error removing old file: %s", err.Error())
+		}
+	}
+
+	AddEntry(envFile, time.AfterFunc(TIMER_DURATION, f))
+	AddEntry(dockerCompose, time.AfterFunc(TIMER_DURATION, g))
 
 	dev, err := GetDevice(hostname)
 	if err != nil {
@@ -111,10 +144,10 @@ func DeployDevice(hostname string) (string, error) {
 		return "", err
 	}
 
-	go SendCommand(dev.Address, fileName, room.RoomDesignation) // Start an update for the Pi
+	go SendCommand(dev.Address, envFile, dockerCompose) // Start an update for the Pi
 
-	log.Printf("Deployment started")
-	return "Deployment started", nil
+	log.Printf("deployment started")
+	return "deployment started", nil
 }
 
 func GetDevice(hostname string) (structs.Device, error) {
@@ -276,7 +309,7 @@ func reportToELK(hostname string, err error) {
 	}
 }
 
-func SendCommand(hostname string, fileName string, deploymentType string) error {
+func SendCommand(hostname, environment, docker string) error {
 	connection, err := ssh.Dial("tcp", hostname+":22", sshConfig)
 	if err != nil {
 		log.Printf("Error dialing %s: %s", hostname, err.Error())
@@ -296,7 +329,7 @@ func SendCommand(hostname string, fileName string, deploymentType string) error 
 
 	log.Printf("SSH session established with %s", hostname)
 
-	longCommand := "bash -c 'curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/docker-compose-" + deploymentType + ".yml --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/" + fileName + " --output /home/pi/.environment-variables && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && source /etc/environment && docker-compose -f /tmp/docker-compose.yml pull && docker rmi $(docker images -q --filter \"dangling=true\") || true && docker stop $(docker ps -a -q) || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d'"
+	longCommand := "bash -c 'curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + docker + " --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + environment + " --output /home/pi/.environment-variables && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && source /etc/environment && docker-compose -f /tmp/docker-compose.yml pull && docker rmi $(docker images -q --filter \"dangling=true\") || true && docker stop $(docker ps -a -q) || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d'"
 
 	log.Printf("Running the following command on %s: %s", hostname, longCommand)
 

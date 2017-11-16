@@ -7,6 +7,7 @@ import (
 	"github.com/byuoitav/authmiddleware"
 	"github.com/byuoitav/hateoas"
 	"github.com/byuoitav/raspi-deployment-microservice/handlers"
+	"github.com/byuoitav/raspi-deployment-microservice/helpers"
 	"github.com/jessemillar/health"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -17,6 +18,8 @@ func main() {
 	if err != nil {
 		log.Fatalln("Could not load Swagger file. Error: " + err.Error())
 	}
+
+	helpers.MakeMap() //make map of file names to timers
 
 	port := ":8008"
 	router := echo.New()
