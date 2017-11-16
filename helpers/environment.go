@@ -134,9 +134,3 @@ func GetDesignationId(desigName string) (int64, error) {
 
 	return 0, errors.New("designation not found") //if we make it this far without finding it, it wasn't there
 }
-
-func RetrieveDockerCompose(className, designationName string) (string, error) {
-
-	log.Printf("[helpers] retrieving docker-compose file...")
-	return "", nil
-}
