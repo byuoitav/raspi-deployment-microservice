@@ -87,7 +87,7 @@ func DeployDevice(hostname string) (string, error) {
 	}
 
 	//build device name
-	deviceName := strings.Split(hostname, "-")[2]
+	deviceName := strings.Split(allCaps, "-")[2]
 	log.Printf("[helpers] looking for device: %s", deviceName)
 
 	//get device class
