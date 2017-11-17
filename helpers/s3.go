@@ -21,89 +21,90 @@ const DOCKER_PATH = "/src/github.com/byuoitav/raspi-deployment-microservice/publ
 const ENVIRO_PATH = "/src/github.com/byuoitav/raspi-deployment-microservice/public/"
 
 // retrieveEnvironmentVariables gets the environment variables for each Pi as a file to SCP over
-func retrieveEnvironmentVariables(class, designation string) (string, string, error) {
+func retrieveEnvironmentVariables(class, designation string) (string, error) {
 
 	log.Printf("[helpers] fetching environment variables...")
 
 	classId, desigId, err := GetClassAndDesignationID(class, designation)
 	if err != nil {
-		return "", "", errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
+		return "", errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
 	}
 
 	response, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/variables", classId, desigId))
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	if response.StatusCode != http.StatusOK {
 		msg, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			return "", "", errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, unable to read response: %s", response.StatusCode, err.Error()))
+			return "", errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, unable to read response: %s", response.StatusCode, err.Error()))
 		}
-		return "", "", errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, message: %s", response.StatusCode, string(msg)))
+		return "", errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, message: %s", response.StatusCode, string(msg)))
 	}
 
 	fileName, err := GenerateRandomString(NUM_BYTES)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	fileLocation := os.Getenv("GOPATH") + ENVIRO_PATH
-
 	outFile, err := os.OpenFile(fileLocation+fileName, os.O_RDWR|os.O_CREATE, 0777)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	_, err = io.Copy(outFile, response.Body)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	outFile.Close()
+	TrackFile(fileName, fileLocation)
 
-	return fileName, fileLocation, nil
+	return fileName, nil
 }
 
-func RetrieveDockerCompose(class, designation string) (string, string, error) {
+func RetrieveDockerCompose(class, designation string) (string, error) {
 
 	log.Printf("[helpers] retrieving docker-compose file for devices of class: %s, designation: %s", class, designation)
 
 	//get class and designation IDs
 	classID, desigId, err := GetClassAndDesignationID(class, designation)
 	if err != nil {
-		return "", "", errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
+		return "", errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
 	}
 
 	resp, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/docker-compose", classID, desigId))
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", "", errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d", resp.StatusCode))
+		return "", errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d", resp.StatusCode))
 	}
 
 	fileName, err := GenerateRandomString(NUM_BYTES)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	fileLocation := os.Getenv("GOPATH") + DOCKER_PATH
 
 	outFile, err := os.OpenFile(fileLocation+fileName, os.O_RDWR|os.O_CREATE, 0777)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	_, err = io.Copy(outFile, resp.Body)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	outFile.Close()
+	TrackFile(fileName, fileLocation)
 
-	return fileName, fileLocation, nil
+	return fileName, nil
 }
 
 func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
