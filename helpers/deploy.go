@@ -54,12 +54,12 @@ func Deploy(class, designation string) error {
 		return err
 	}
 
-	environment, _, err := retrieveEnvironmentVariables(class, designation)
+	environment, err := retrieveEnvironmentVariables(class, designation)
 	if err != nil {
 		return err
 	}
 
-	dockerCompose, _, err := RetrieveDockerCompose(class, designation)
+	dockerCompose, err := RetrieveDockerCompose(class, designation)
 	if err != nil {
 		return errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
 	}
@@ -109,34 +109,15 @@ func DeployDevice(hostname string) (string, error) {
 	}
 
 	//get environment file based on the two IDs
-	envFile, envPath, err := retrieveEnvironmentVariables(deviceClass, room.RoomDesignation)
+	envFile, err := retrieveEnvironmentVariables(deviceClass, room.RoomDesignation)
 	if err != nil {
 		return "", errors.New(fmt.Sprintf("error fetching environment variables: %s", err.Error()))
 	}
 
-	dockerCompose, composePath, err := RetrieveDockerCompose(deviceClass, room.RoomDesignation)
+	dockerCompose, err := RetrieveDockerCompose(deviceClass, room.RoomDesignation)
 	if err != nil {
 		return "", errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
 	}
-
-	f := func() {
-		log.Printf("[helpers] removing old file: %s...", envFile)
-		err := os.Remove(envPath + envFile)
-		if err != nil {
-			log.Printf("[helpers] error removing old file: %s", err.Error())
-		}
-	}
-
-	g := func() {
-		log.Printf("[helpers] removing old file: %s...", dockerCompose)
-		err := os.Remove(composePath + dockerCompose)
-		if err != nil {
-			log.Printf("[helpers] error removing old file: %s", err.Error())
-		}
-	}
-
-	AddEntry(envFile, time.AfterFunc(TIMER_DURATION, f))
-	AddEntry(dockerCompose, time.AfterFunc(TIMER_DURATION, g))
 
 	dev, err := GetDevice(hostname)
 	if err != nil {
@@ -201,10 +182,6 @@ func GetDevice(hostname string) (structs.Device, error) {
 func GetAllDevices(deploymentType string) ([]device, error) {
 	client := &http.Client{}
 
-	token, err := bearertoken.GetToken()
-	if err != nil {
-		return []device{}, err
-	}
 	log.Printf("Making request for all devices to: %v", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/deployment/devices/roles/ControlProcessor/types/pi/"+deploymentType)
 
 	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/deployment/devices/roles/ControlProcessor/types/pi/"+deploymentType, nil)
@@ -213,7 +190,14 @@ func GetAllDevices(deploymentType string) ([]device, error) {
 		req, _ = http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/devices/roles/ControlProcessor/types/pi", nil)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+token.Token)
+	if len(os.Getenv("LOCAL_ENVIRONMENT")) == 0 {
+		token, err := bearertoken.GetToken()
+		if err != nil {
+			return []device{}, err
+		}
+
+		req.Header.Set("Authorization", "Bearer "+token.Token)
+	}
 
 	resp, err := client.Do(req)
 	log.Printf("response: %v", resp)
@@ -322,7 +306,7 @@ func SendCommand(hostname, environment, docker string) error {
 
 	magicSession, err := connection.NewSession()
 	if err != nil {
-		log.Printf("Error starting a session with %s: %s", hostname, err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] error starting a session with %s: %s", hostname, err.Error()))
 		reportToELK(hostname, err)
 		return err
 	}
@@ -335,12 +319,12 @@ func SendCommand(hostname, environment, docker string) error {
 
 	err = magicSession.Run(longCommand)
 	if err != nil {
-		log.Printf("Error updating %s: %s", hostname, err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] error updating %s: %s", hostname, err.Error()))
 		reportToELK(hostname, err)
 		return err
 	}
 
-	log.Printf("Finished updating %s", hostname)
+	log.Printf("%s", color.HiGreenString("[helpers] finished updating %s", hostname))
 
 	return nil
 }
