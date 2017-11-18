@@ -7,19 +7,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
 )
 
-var fileTimers map[string]*time.Timer
-
-func MakeMap() {
-	fileTimers = make(map[string]*time.Timer)
-}
+var fileTimers sync.Map
 
 func AddEntry(fileName string, timer *time.Timer) {
-	fileTimers[fileName] = timer
+	fileTimers.Store(fileName, timer)
 }
 
 func GenerateRandomString(numBytes int) (string, error) {
