@@ -313,7 +313,7 @@ func SendCommand(hostname, environment, docker string) error {
 
 	log.Printf("SSH session established with %s", hostname)
 
-	longCommand := "bash -c 'curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/" + docker + " --output /tmp/docker-compose.yml && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + environment + " --output /home/pi/.environment-variables && curl " + os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS") + "/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && source /etc/environment && docker-compose -f /tmp/docker-compose.yml pull && docker rmi $(docker images -q --filter \"dangling=true\") || true && docker stop $(docker ps -a -q) || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d'"
+	longCommand := fmt.Sprintf(`bash -c 'curl %s/%s --output /tmp/docker-compose.yml && curl %s/%s --output /home/pi/.environment-variables && curl "+os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS")+"/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && source /etc/environment && docker-compose -f /tmp/docker-compose.yml pull && docker rmi $(docker images -q --filter \"dangling=true\") || true && docker stop $(docker ps -a -q) || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d'`, os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS"), docker, os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS"), environment)
 
 	log.Printf("Running the following command on %s: %s", hostname, longCommand)
 
