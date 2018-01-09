@@ -36,7 +36,7 @@ until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microse
 done
 chmod +x /tmp/salt-setup.sh
 
-until [ -d "/etc/salt/" ]; do
+until [ -f "/etc/salt/setup" ]; do
 	/tmp/salt-setup.sh
 	wait
 done
