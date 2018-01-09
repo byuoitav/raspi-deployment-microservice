@@ -15,8 +15,8 @@ fi
 #Figure out how to set password in automated way.
 #-----
 sudo export DEBIAN_FRONTEND=noninteractive
-sudo debconf-set-selections <<< "maria-db mysql-server/root_password password $CONFIGURATION_DATABASE_PASSWORD"
-sudo debconf-set-selections <<< "maria-db mysql-server/root_password_again password $CONFIGURATION_DATABASE_PASSWORD"
+sudo debconf-set-selections <<< "maria-db mysql-server/root_password password root
+sudo debconf-set-selections <<< "maria-db mysql-server/root_password_again password install
 
 sudo apt-get install mariadb-server mariadb-client -y
 
@@ -37,9 +37,9 @@ sudo service mysql restart
 
 mysqldump --dump-slave --master-data --gtid --password=$CONFIGURATION_DATABASE_PASSWORD --user=root --host=$CONFIGURATION_DATABASE_REPLICATION_SETUP_HOST --all-databases > /tmp/dump.sql
 
-mysql -f --user=$CONFIGURATION_DATABASE_USERNAME --password=$CONFIGURATION_DATABASE_PASSWORD < /tmp/dump.sql
+mysql -f --user=root --password=install < /tmp/dump.sql
 
-mysql -f --user=$CONFIGURATION_DATABASE_USERNAME --password=$CONFIGURATION_DATABASE_PASSWORD -e "FLUSH PRIVILEGES"
+mysql -f --user=root --password=install -e "FLUSH PRIVILEGES"
 
 #Set Master
 mysql -f --user=$CONFIGURATION_DATABASE_USERNAME --password=$CONFIGURATION_DATABASE_PASSWORD -e "CHANGE MASTER TO master_host='$CONFIGURATION_DATABASE_REPLICATION_HOST', master_port=3306, master_user='$CONFIGURATION_DATABASE_USERNAME', master_password='$CONFIGURATION_DATABASE_PASSWORD', master_use_gtid=slave_pos;"
