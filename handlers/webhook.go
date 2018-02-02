@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/byuoitav/raspi-deployment-microservice/helpers"
@@ -14,26 +13,12 @@ func WebhookDeployment(context echo.Context) error {
 	deviceClass := context.Param("class")
 	deploymentType := context.Param("designation")
 
-	response, err := helpers.ScheduleDeployment(deviceClass, deploymentType)
+	response, err := helpers.Deploy(deviceClass, deploymentType)
 	if err != nil {
-		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
-		return nil
+		return context.JSON(http.StatusBadRequest, err)
 	}
 
-	jsonresp.New(context.Response(), http.StatusOK, response)
-	return nil
-}
-
-func DisableDeploymentsByBranch(context echo.Context) error {
-	branch := context.Param("branch")
-	helpers.HoldDeployment(branch, true)
-	return context.String(http.StatusOK, fmt.Sprintf("Disabled %s deployments", branch))
-}
-
-func EnableDeploymentsByBranch(context echo.Context) error {
-	branch := context.Param("branch")
-	helpers.HoldDeployment(branch, false)
-	return context.String(http.StatusOK, fmt.Sprintf("Enabled %s deployments", branch))
+	return context.JSON(http.StatusOK, response)
 }
 
 func WebhookDevice(context echo.Context) error {

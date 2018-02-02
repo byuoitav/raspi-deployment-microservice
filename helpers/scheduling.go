@@ -25,47 +25,6 @@ func HoldDeployment(branch string, status bool) {
 	scheduledDeployments[branch] = status
 }
 
-// deploys/schedules deployments based on deploymentType
-func ScheduleDeployment(deviceClass, deploymentType string) (string, error) {
-
-	if scheduledDeployments[deploymentType] {
-
-		msg := fmt.Sprintf("%s deployments are currently being held")
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-		return "", errors.New(msg)
-	}
-
-	switch deploymentType {
-	/*
-			case "stage":
-				t := GetTimeTomorrowByHour(STAGE_DEPLOYMENT_HOUR)
-				schedule, err := Schedule(t, ACCURACY)
-				if err != nil {
-					return "", err
-				}
-
-				go DeployOnSchedule(schedule, deploymentType)
-				return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
-		case "production":
-			t := GetTimeTomorrowByHour(PROD_DEPLOYMENT_HOUR)
-			schedule, err := Schedule(t, ACCURACY)
-			if err != nil {
-				return "", err
-			}
-
-			go DeployOnSchedule(schedule, deploymentType)
-			return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
-	*/
-
-	default:
-		err := Deploy(deviceClass, deploymentType)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("%s deployment started", deploymentType), nil
-	}
-}
-
 // waits for s to return, then starts a deployment
 func DeployOnSchedule(s chan time.Time, deviceClass, deploymentType string) {
 	scheduledDeployments[deploymentType] = true

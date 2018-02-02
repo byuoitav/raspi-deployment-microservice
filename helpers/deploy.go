@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byuoitav/authmiddleware/bearertoken"
 	"github.com/byuoitav/configuration-database-microservice/structs"
 	"github.com/fatih/color"
 
@@ -20,9 +19,19 @@ import (
 )
 
 type device struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Type    string `json:"type"`
+	Id            int    `json:"id"`
+	Name          string `json:"name"`
+	Address       string `json:"address"`
+	Type          string `json:"type"`
+	Room          room   `json:"room"`
+	DockerCompose string //name of docker compose file for the device
+	Environment   string //name of environment file for device
+}
+
+type room struct {
+	Id          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json: "description"`
 }
 
 type elkReport struct {
@@ -40,35 +49,37 @@ var sshConfig = &ssh.ClientConfig{
 
 var TIMER_DURATION = 3 * time.Minute
 
-//deploys to all pi's with the given class and designation
-//e.g. class = "av-control"
-//e.g. desigation = "development"
-func Deploy(class, designation string) error {
+//deploys to all pi's on the given branch with the given role
+func Deploy(role, branch string) (string, error) {
 
-	log.Printf("%s", color.HiGreenString("[helpers] deployment started"))
-
-	//scheduledDeployments[deploymentType] = false //why?? it seems like this code doesn't get executed if this line evaluates to true
-
-	allDevices, err := GetAllDevices(designation)
+	//get all devices
+	allDevices, err := GetAllDevices(role, branch)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	environment, err := retrieveEnvironmentVariables(class, designation)
+	err = SetEnvironmentFiles(allDevices)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	dockerCompose, err := RetrieveDockerCompose(class, designation)
+	err = SetDockerComposeFiles(allDevices)
 	if err != nil {
-		return errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
+		return "", err
 	}
 
-	for i := range allDevices {
-		go SendCommand(allDevices[i].Address, environment, dockerCompose) // Start an update for each Pi
+	msg := fmt.Sprintf("%s %s deployment started", role, branch)
+	log.Printf("%s", color.HiGreenString("[helpers] %s", msg))
+
+	for _, devices := range *allDevices {
+
+		for _, device := range devices {
+
+			go SendCommand(device.Address, device.Environment, device.DockerCompose) // Start an update for each Pi
+		}
 	}
 
-	return nil
+	return msg, nil
 }
 
 func DeployDevice(hostname string) (string, error) {
@@ -179,50 +190,47 @@ func GetDevice(hostname string) (structs.Device, error) {
 }
 
 //TODO make this use the existing DBO package
-func GetAllDevices(deploymentType string) ([]device, error) {
+func GetAllDevices(deviceRole, deploymentType string) (*map[int][]device, error) {
+
+	url := fmt.Sprintf("%s/deployment/devices/roles/ControlProcessor/types/pi/%s", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS"), deploymentType)
+	log.Printf("[helpers] making request for all devices to: %s", url)
+
 	client := &http.Client{}
-
-	log.Printf("Making request for all devices to: %v", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/deployment/devices/roles/ControlProcessor/types/pi/"+deploymentType)
-
-	req, _ := http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/deployment/devices/roles/ControlProcessor/types/pi/"+deploymentType, nil)
-
-	if deploymentType == "production" {
-		req, _ = http.NewRequest("GET", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS")+"/devices/roles/ControlProcessor/types/pi", nil)
-	}
-
-	if len(os.Getenv("LOCAL_ENVIRONMENT")) == 0 {
-		token, err := bearertoken.GetToken()
-		if err != nil {
-			return []device{}, err
-		}
-
-		req.Header.Set("Authorization", "Bearer "+token.Token)
-	}
+	req, _ := http.NewRequest("GET", url, nil)
+	SetToken(req)
 
 	resp, err := client.Do(req)
 	log.Printf("response: %v", resp)
 	if err != nil {
-		log.Printf("Error getting devices 1: %v", err.Error())
-		return []device{}, err
+		msg := fmt.Sprintf("error making request: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return &map[int][]device{}, errors.New(msg)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
 	log.Printf("b: %s", b)
 	if err != nil {
-		log.Printf("Error getting devices 2: %v", err.Error())
-		return []device{}, err
+		msg := fmt.Sprintf("error reading repsonse: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return &map[int][]device{}, errors.New(msg)
 	}
 
-	allDevices := []device{}
-	err = json.Unmarshal(b, &allDevices)
+	var devices []device
+	err = json.Unmarshal(b, &devices)
 	if err != nil {
-		log.Printf("Error getting devices 3: %v", err.Error())
-		return []device{}, err
+		msg := fmt.Sprintf("error unmarshalling structs: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[error] %s", msg))
+		return &map[int][]device{}, errors.New(msg)
 	}
 
-	log.Printf("All devices from database: %+v", allDevices)
+	deviceMap := make(map[int][]device) //maps room IDs to devices
 
-	return allDevices, nil
+	for _, device := range devices {
+
+		deviceMap[device.Room.Id] = append(deviceMap[device.Room.Id], device)
+	}
+
+	return &deviceMap, nil
 }
 
 func GetRoom(hostname string) (structs.Room, error) {
@@ -246,7 +254,7 @@ func GetRoom(hostname string) (structs.Room, error) {
 
 	err := SetToken(req)
 	if err != nil {
-		msg := fmt.Sprintf("cannot set token: %s", err.Error())
+		msg := fmt.Sprintf("failed to set token: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return structs.Room{}, errors.New(msg)
 	}

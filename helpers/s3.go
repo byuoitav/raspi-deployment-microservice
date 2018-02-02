@@ -107,6 +107,15 @@ func RetrieveDockerCompose(class, designation string) (string, error) {
 	return fileName, nil
 }
 
+func SetDockerComposeFiles(rooms *map[int][]device) error {
+
+	return nil
+}
+
+func SetEnvironmentFiles(rooms *map[int][]device) error {
+	return nil
+}
+
 func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
 
 	if (len(class) == 0) || (len(designation) == 0) {
