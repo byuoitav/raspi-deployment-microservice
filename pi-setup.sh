@@ -32,3 +32,7 @@ sudo sh -c "dpkg -i /tmp/docker-hypriot_1.10.3-1_armhf.deb; usermod -aG docker p
 # Make X start on login
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/bash_profile > /home/pi/.bash_profile
 
+echo "Removing first boot file."
+sudo rm $bootfile
+	
+sudo sh -c "reboot"
