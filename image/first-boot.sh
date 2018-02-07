@@ -19,8 +19,12 @@ if [ -f "$bootfile" ]; then
 	chmod +x /tmp/pi-setup.sh
 
 	/tmp/pi-setup.sh
+	
 	echo "Removing first boot file."
 	sudo rm $bootfile
+	
+	sudo sh -c "reboot"
+
 else
 	echo "Second boot."
 
