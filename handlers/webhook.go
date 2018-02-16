@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/byuoitav/raspi-deployment-microservice/helpers"
@@ -8,17 +9,27 @@ import (
 	"github.com/labstack/echo"
 )
 
-func WebhookDeployment(context echo.Context) error {
+func DeployDesignation(context echo.Context) error {
 
-	deviceClass := context.Param("class")
-	deploymentType := context.Param("designation")
+	return context.JSON(http.StatusNotImplemented, "not implemented")
+}
 
-	response, err := helpers.Deploy(deviceClass, deploymentType)
+func DeployDesignationByRole(context echo.Context) error {
+
+	designation := context.Param("designation")
+	role := context.Param("role")
+
+	err := helpers.Deploy(designation, role)
 	if err != nil {
 		return context.JSON(http.StatusBadRequest, err)
 	}
 
-	return context.JSON(http.StatusOK, response)
+	return context.JSON(http.StatusOK, fmt.Sprintf("%s %s deployment started", designation, role))
+}
+
+func DeployRoomByDesignationAndRole(context echo.Context) error {
+
+	return context.JSON(http.StatusNotImplemented, "not implemented")
 }
 
 func WebhookDevice(context echo.Context) error {

@@ -30,10 +30,15 @@ func main() {
 	router.GET("/", echo.WrapHandler(http.HandlerFunc(hateoas.RootResponse)))
 	router.GET("/health", echo.WrapHandler(http.HandlerFunc(health.Check)))
 
-	secure.GET("/webhook/:class/:designation", handlers.WebhookDeployment)
+	secure.GET("/webhook/:designation", handlers.DeployDesignation) //	looks for all rooms with the given designation and deploys to all roles
 
-	secure.GET("/webhook_device/:hostname", handlers.WebhookDevice)
-	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts)
+	secure.GET("/webhook/:designation/:role", handlers.DeployDesignationByRole) //	targets all devices with the given role in all rooms
+
+	secure.GET("/webhook/:designation/:role/:room", handlers.DeployRoomByDesignationAndRole) //	targets all devices in the given room with the given role
+
+	secure.GET("/webhook_device/:hostname", handlers.WebhookDevice) //	targets a specific device
+
+	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts) //	TODO figure out how to handle physical monitoring
 	secure.GET("/webhook_contacts/disable/:hostname", handlers.DisableContacts)
 
 	server := http.Server{

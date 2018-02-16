@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/byuoitav/av-api/dbo"
 	"github.com/byuoitav/configuration-database-microservice/structs"
 	"github.com/fatih/color"
 
@@ -50,36 +51,16 @@ var sshConfig = &ssh.ClientConfig{
 var TIMER_DURATION = 3 * time.Minute
 
 //deploys to all pi's on the given branch with the given role
-func Deploy(role, branch string) (string, error) {
+func Deploy(designation, role string) error {
 
-	//get all devices
-	allDevices, err := GetAllDevices(role, branch)
+	rooms, err := dbo.GetRooms() // get all rooms
 	if err != nil {
-		return "", err
+		msg := fmt.Sprintf("failed getting all rooms: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return errors.New(msg)
 	}
 
-	err = SetEnvironmentFiles(allDevices)
-	if err != nil {
-		return "", err
-	}
-
-	err = SetDockerComposeFiles(allDevices)
-	if err != nil {
-		return "", err
-	}
-
-	msg := fmt.Sprintf("%s %s deployment started", role, branch)
-	log.Printf("%s", color.HiGreenString("[helpers] %s", msg))
-
-	for _, devices := range *allDevices {
-
-		for _, device := range devices {
-
-			go SendCommand(device.Address, device.Environment, device.DockerCompose) // Start an update for each Pi
-		}
-	}
-
-	return msg, nil
+	return nil
 }
 
 func DeployDevice(hostname string) (string, error) {
