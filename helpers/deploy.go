@@ -60,15 +60,45 @@ func Deploy(designation, role string) error {
 		return errors.New(msg)
 	}
 
+	envFile, err := retrieveEnvironmentVariables(role, designation) //	environment files are the same for a given designation and role
+	if err != nil {
+		msg := fmt.Sprintf("error fetching environment variables: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return errors.New(msg)
+	}
+
+	for _, room := range rooms { //	deploy to each room with the given designation
+
+		if strings.Compare(room.RoomDesignation, designation) == 0 {
+
+			log.Printf("%s", color.HiGreenString("identified room %s", room.Name))
+			go DeployRoom(room, role, envFile)
+		}
+	}
+
 	return nil
+}
+
+func DeployRoom(room structs.Room, role, environment string) {
+
+	_, err := GetRoomDocker(room, role) //	build map of device IDs to YAML file names
+	if err != nil {
+		log.Printf("%s", color.HiRedString("error deploying to %s: %s", room.Name, err.Error()))
+	}
+
+	//		for _, device := range room.Devices { //	start deployment for each device
+	//
+	//			go SendCommand(device.Address, environment, docker[device.ID])
+	//		}
+
 }
 
 func DeployDevice(hostname string) (string, error) {
 
-	log.Printf("[helpers] starting single deployment...")
-
 	//hostname should be all caps - names in config DB are all caps
 	allCaps := strings.ToUpper(hostname)
+
+	log.Printf("[helpers] starting device deployment to %s...", allCaps)
 
 	//retrieve room from configuration database
 	room, err := GetRoom(hostname)

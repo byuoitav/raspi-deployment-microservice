@@ -13,14 +13,14 @@ import (
 	"github.com/fatih/color"
 )
 
-func GetClassId(className string) (int64, error) {
+func GetRoleId(roleName string) (int64, error) {
 
-	log.Printf("[helpers] getting class ID corresponding to class: %s", className)
+	//	log.Printf("[helpers] getting class ID corresponding to class: %s", color.HiCyanString(roleName))
 
 	var client http.Client
-	url := os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS") + "/classes/definitions/all"
+	url := fmt.Sprintf("%s/classes/definitions/all", os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS"))
 
-	log.Printf("[helplers] making request against url %s", url)
+	//	log.Printf("[helpers] making request against url %s", url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -56,18 +56,20 @@ func GetClassId(className string) (int64, error) {
 		return 0, errors.New(msg)
 	}
 
-	var classes []accessors.Class
-	err = json.Unmarshal(body, &classes)
+	var roles []accessors.Class
+	err = json.Unmarshal(body, &roles)
 	if err != nil {
 		msg := fmt.Sprintf("failed to unmarshal class structs from JSON: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return 0, errors.New(msg)
 	}
 
-	for _, class := range classes {
+	for _, possibleRole := range roles {
 
-		if class.Name == className { //found class ID
-			return class.ID, nil
+		//		log.Printf("[helpers] considering role: %s", color.HiCyanString(possibleRole.Name))
+
+		if possibleRole.Name == roleName { //found class ID
+			return possibleRole.ID, nil
 		}
 	}
 

@@ -116,14 +116,14 @@ func SetEnvironmentFiles(rooms *map[int][]device) error {
 	return nil
 }
 
-func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
+func GetClassAndDesignationID(role, designation string) (int64, int64, error) {
 
-	if (len(class) == 0) || (len(designation) == 0) {
+	if (len(role) == 0) || (len(designation) == 0) {
 		return 0, 0, errors.New("invalid class or designation")
 	}
 
 	//get class ID
-	classId, err := GetClassId(class)
+	roleId, err := GetRoleId(role)
 	if err != nil {
 		msg := fmt.Sprintf("class ID not found: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
@@ -138,7 +138,7 @@ func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
 		return 0, 0, errors.New(msg)
 	}
 
-	return classId, desigId, nil
+	return roleId, desigId, nil
 }
 
 func MakeEnvironmentRequest(endpoint string) (*http.Response, error) {
