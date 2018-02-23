@@ -5,9 +5,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/byuoitav/av-api/dbo"
@@ -53,39 +56,60 @@ func GetRoomDocker(room structs.Room, role string) (map[int]string, error) {
 		return nil, errors.New(msg)
 	}
 
-	reader := bufio.NewReader(resp.Body)
-	scanner := bufio.NewScanner(reader)
+	output := make(map[int]string)
 
-	log.Printf("[helpers] processing designation data...")
-	scanner.Split(split)
-
-	for scanner.Scan() {
-
-		log.Printf("result of split: %s", scanner.Text())
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, nil
-}
+	for _, piece := range bytes.Split(body, []byte("$$$")) {
 
-func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		reader := bufio.NewReader(bytes.NewReader(piece))
 
-	if atEOF {
-		return 0, nil, nil
+		rawId, err := reader.ReadSlice(byte('\n'))
+		if err != nil {
+			return nil, err
+		}
+
+		log.Printf("%s", color.HiMagentaString("rawId: %s", string(rawId)))
+
+		toConvert := bytes.Trim(rawId, " \n")
+
+		log.Printf("%s", color.HiMagentaString("toConvert: %s", string(toConvert)))
+
+		id, err := strconv.Atoi(string(toConvert))
+		if err != nil {
+			return nil, err
+		}
+
+		fileName, err := GenerateRandomString(NUM_BYTES)
+		if err != nil {
+			return nil, err
+		}
+
+		fileLocation := os.Getenv("GOPATH") + DOCKER_PATH
+
+		outFile, err := os.OpenFile(fileLocation+fileName, os.O_RDWR|os.O_CREATE, 0777)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = io.Copy(outFile, reader)
+		if err != nil {
+			return nil, err
+		}
+
+		outFile.Close()
+		TrackFile(fileName, fileLocation)
+
+		output[id] = fileName
+
 	}
 
-	delim := []byte("$$$")
+	log.Printf("%v", output)
 
-	yamls := bytes.SplitN(data, delim, 2)
-
-	if (len(yamls[0]) + len(delim)) > len(data) {
-
-		var toReturn []byte
-		copy(toReturn, data)
-
-		return 0, toReturn, nil
-	}
-
-	return (len(yamls[0]) + len(delim)), yamls[0], nil
+	return output, nil
 }
 
 func GetConfigDbRoleId(role string) (int, error) {

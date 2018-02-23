@@ -19,7 +19,7 @@ func DeployDesignationByRole(context echo.Context) error {
 	designation := context.Param("designation")
 	role := context.Param("role")
 
-	err := helpers.Deploy(designation, role)
+	err := helpers.DeployDesignation(designation, role)
 	if err != nil {
 		return context.JSON(http.StatusBadRequest, err)
 	}
@@ -29,7 +29,15 @@ func DeployDesignationByRole(context echo.Context) error {
 
 func DeployRoomByDesignationAndRole(context echo.Context) error {
 
-	return context.JSON(http.StatusNotImplemented, "not implemented")
+	room := context.Param("room")
+	role := context.Param("role")
+
+	err := helpers.DeployRoom(room, role)
+	if err != nil {
+		return context.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	return context.JSON(http.StatusOK, fmt.Sprintf("deployment to %ss in %s started", role, room))
 }
 
 func WebhookDevice(context echo.Context) error {

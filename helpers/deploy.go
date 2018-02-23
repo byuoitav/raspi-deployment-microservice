@@ -51,7 +51,7 @@ var sshConfig = &ssh.ClientConfig{
 var TIMER_DURATION = 3 * time.Minute
 
 //deploys to all pi's on the given branch with the given role
-func Deploy(designation, role string) error {
+func DeployDesignation(designation, role string) error {
 
 	rooms, err := dbo.GetRooms() // get all rooms
 	if err != nil {
@@ -72,24 +72,59 @@ func Deploy(designation, role string) error {
 		if strings.Compare(room.RoomDesignation, designation) == 0 {
 
 			log.Printf("%s", color.HiGreenString("identified room %s", room.Name))
-			go DeployRoom(room, role, envFile)
+			go StartRoom(room, role, envFile)
 		}
 	}
 
 	return nil
 }
 
-func DeployRoom(room structs.Room, role, environment string) {
+func DeployRoom(roomName, roleName string) error {
 
-	_, err := GetRoomDocker(room, role) //	build map of device IDs to YAML file names
+	info := strings.Split(roomName, "-") //	splitting room name on hyphen yields building and room
+	if len(info) < 2 {
+		msg := fmt.Sprintf("invalid room name: %s", roomName)
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return errors.New(msg)
+	}
+
+	room, err := dbo.GetRoomByInfo(info[0], info[1]) //	get room designation
+	if err != nil {
+		msg := fmt.Sprintf("room %s  not found: %s", roomName, err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return errors.New(msg)
+	}
+
+	envFile, err := retrieveEnvironmentVariables(roleName, room.RoomDesignation) //	get room environment file
+	if err != nil {
+		msg := fmt.Sprintf("error fetching environment variables: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return errors.New(msg)
+	}
+
+	StartRoom(room, roleName, envFile)
+
+	return nil
+}
+
+func StartRoom(room structs.Room, role, envFileName string) {
+
+	log.Printf("%s", color.HiGreenString("[helpers] deployment to %s started", room.Name))
+
+	docker, err := GetRoomDocker(room, role) //	build map of device IDs to YAML file names
 	if err != nil {
 		log.Printf("%s", color.HiRedString("error deploying to %s: %s", room.Name, err.Error()))
 	}
 
-	//		for _, device := range room.Devices { //	start deployment for each device
-	//
-	//			go SendCommand(device.Address, environment, docker[device.ID])
-	//		}
+	for _, device := range room.Devices { //	start deployment for each device
+
+		if ok := structs.HasRole(device, role); ok {
+
+			log.Printf("Deploying docker-compose file: %s", color.HiYellowString(docker[device.ID]))
+
+			go SendCommand(device.Address, envFileName, docker[device.ID])
+		}
+	}
 
 }
 

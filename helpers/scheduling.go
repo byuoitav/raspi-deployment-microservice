@@ -27,16 +27,6 @@ func HoldDeployment(branch string, status bool) {
 
 // waits for s to return, then starts a deployment
 func DeployOnSchedule(s chan time.Time, deviceClass, deploymentType string) {
-	scheduledDeployments[deploymentType] = true
-
-	color.Set(color.FgBlue)
-	log.Printf("Waiting to deploy to %s...", deploymentType)
-	color.Unset()
-
-	<-s
-	close(s)
-
-	Deploy(deviceClass, deploymentType)
 }
 
 // schedules a timer that returns when the specified time is reached
