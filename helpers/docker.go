@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -63,22 +64,36 @@ func GetRoomDocker(room structs.Room, role string) (map[int]string, error) {
 		return nil, err
 	}
 
+	finder := regexp.MustCompile("[0-9]+")
+
 	for _, piece := range bytes.Split(body, []byte("$$$")) {
+
+		rawId := finder.Find(piece)
+		if rawId == nil {
+			log.Printf("%s", color.HiRedString("unable to find device ID"))
+			continue
+		}
 
 		reader := bufio.NewReader(bytes.NewReader(piece))
 
-		rawId, err := reader.ReadSlice(byte('\n'))
+		_, err := reader.Discard(len(rawId) + 1) //	discard the id and the newline from the buffer
 		if err != nil {
-			return nil, err
+			log.Printf("%s", color.HiRedString("error discarding: %s", err.Error()))
+			continue
 		}
+
+		//		rawId, err := reader.ReadSlice(byte('\n'))
+		//		if err != nil {
+		//			return nil, err
+		//		}
 
 		log.Printf("%s", color.HiMagentaString("rawId: %s", string(rawId)))
 
-		toConvert := bytes.Trim(rawId, " \n")
+		//toConvert := bytes.Trim(rawId, " \n")
 
-		log.Printf("%s", color.HiMagentaString("toConvert: %s", string(toConvert)))
+		//log.Printf("%s", color.HiMagentaString("toConvert: %s", string(toConvert)))
 
-		id, err := strconv.Atoi(string(toConvert))
+		id, err := strconv.Atoi(string(rawId))
 		if err != nil {
 			return nil, err
 		}
