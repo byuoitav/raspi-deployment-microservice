@@ -4,7 +4,7 @@ echo "starting resize\n"
 
 # stop r/w on var partition
 #init 1
-#echo "did init\n"
+echo "did init\n"
 service dbus stop
 echo "stopped dbus"
 
