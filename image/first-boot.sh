@@ -17,7 +17,6 @@ if [ -f "$resizefile" ]; then
 	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/image/resizevar.sh > /tmp/resizevar.sh); do
 		echo "Downloading resize script"
 	done
-
 	chmod +x /tmp/resizevar.sh
 
     /tmp/resizevar.sh
@@ -59,9 +58,9 @@ clear
 printf "\n\n\n\n\n\n"
 printf "Setup complete! I'll never see you again."
 printf "\n\tPlease wait for me to reboot.\n"
-sleep 20
+sleep 10
 printf "\n\nBye lol"
-sleep 5
+sleep 3
 
 sudo sh -c "reboot"
 
