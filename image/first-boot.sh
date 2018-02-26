@@ -21,6 +21,7 @@ if [ -f "$resizefile" ]; then
 	chmod +x /tmp/resize.sh
 
     sudo /tmp/resizevar.sh
+    sleep 10
 
     # make sure it doesn't get past here
     sudo reboot
