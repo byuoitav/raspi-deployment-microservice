@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-echo "hi"
-sleep 50
-
 # stop r/w on var partition
 init 1
 service dbus stop
