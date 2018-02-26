@@ -38,6 +38,9 @@ echo "fsck'ed and resized\n"
 # remount partition
 mount /dev/mmcblk0p3 /var
 
+# add mounting /var back into fstab
+echo "" >> /etc/fstab
+
 echo "remounted\n"
 
 # show mount table
@@ -49,4 +52,5 @@ sleep 10
 rm /usr/bin/games/resize
 
 # reboot :)
-init 6
+#init 6
+sleep 10000
