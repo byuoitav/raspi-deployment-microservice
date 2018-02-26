@@ -1,10 +1,12 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 echo "starting resize\n"
 
 # stop r/w on var partition
 init 1
+echo "did init\n"
 service dbus stop
+echo "stopped dbus"
 
 echo "stopped dbus\n"
 
@@ -13,7 +15,7 @@ umount /var
 
 echo "unmounted var\n"
 
-fdisk /dev/mmcblk0p3 << EOF 
+fdisk /dev/mmcblk0 << EOF
 p
 d
 3
