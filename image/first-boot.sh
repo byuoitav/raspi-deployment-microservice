@@ -8,6 +8,23 @@ printf "\n\nHi From Danny\n\n"
 sudo chvt 2
 
 bootfile="/usr/local/games/firstboot"
+resizefile="/usr/local/games/resize"
+
+if [ -f "$resizefile" ]; then
+    echo "0th boot. resizing /var partition"
+    sleep 3
+
+	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/image/resizevar.sh > /tmp/resizevar.sh); do
+		echo "Downloading resize script"
+	done
+
+	chmod +x /tmp/resize.sh
+
+    sudo /tmp/resizevar.sh
+
+    # make sure it doesn't get past here
+    sudo reboot
+fi
 
 if [ -f "$bootfile" ]; then
 	echo "First boot."

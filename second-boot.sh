@@ -46,4 +46,3 @@ until [ $(docker ps -q | wc -l) -gt 1 ]; do
 	echo "Waiting for docker containers to download"
 	sleep 10
 done
-
