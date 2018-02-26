@@ -18,10 +18,9 @@ if [ -f "$resizefile" ]; then
 		echo "Downloading resize script"
 	done
 
-	chmod +x /tmp/resize.sh
+	chmod +x /tmp/resizevar.sh
 
-    sudo /tmp/resizevar.sh
-    sleep 10
+    /tmp/resizevar.sh
 
     # make sure it doesn't get past here
     sudo reboot
