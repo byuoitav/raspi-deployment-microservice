@@ -11,9 +11,9 @@ echo "stopped dbus"
 echo "stopped dbus\n"
 
 # unmount /var to resize it
-umount /var
+#umount /var
 
-echo "unmounted var\n"
+#echo "unmounted var\n"
 
 fdisk /dev/mmcblk0 << EOF
 p
@@ -35,7 +35,7 @@ resize2fs /dev/mmcblk0p3
 echo "fsck'ed and resized\n"
 
 # remount partition
-mount /dev/mmcblk0p3
+mount /dev/mmcblk0p3 /var
 
 echo "remounted\n"
 
