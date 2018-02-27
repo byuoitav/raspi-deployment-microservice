@@ -14,12 +14,12 @@ if [ -f "$resizefile" ]; then
     echo "0th boot. resizing /var partition"
     sleep 3
 
-	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/image/resizevar.sh > /tmp/resizevar.sh); do
+	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/image/resizevar > /tmp/resizevar); do
 		echo "Downloading resize script"
 	done
-	chmod +x /tmp/resizevar.sh
+	chmod +x /tmp/resizevar
 
-    /tmp/resizevar.sh
+    sudo /tmp/resizevar
 
     # make sure it doesn't get past here
     sudo reboot
