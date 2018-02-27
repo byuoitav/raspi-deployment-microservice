@@ -23,14 +23,16 @@ EOF
 	
 	echo "finished fdisk"
 	
-	e2fsck -f /dev/mmcblk0p3
-	echo "y\n" | resize2fs -y /dev/mmcblk0p3
+	echo "y" | e2fsck -f /dev/mmcblk0p3
+
+    echo "finished fsck"
+	echo "y" | resize2fs /dev/mmcblk0p3
 	
 	echo "resize /dev/mmcblk0p3"
 	
-	mount /dev/mmcblk0p3 /var
+	#mount /dev/mmcblk0p3 /var
 	
-	echo "remounted /var"
+	#echo "remounted /var"
 	
 	# add mounting /var back into fstab
 	echo "/dev/mmcblk0p3        /var            ext4    defaults          0       0" >> /etc/fstab
@@ -39,13 +41,14 @@ EOF
 	
 	# show mount table
 	lsblk
-	sleep 5
 
 	# remove resize file
 	rm $RESIZE_FILE
 	touch $REBOOT_FILE
 
 	echo "Finished resize. Rebooting..."
+
+	sleep 5
 	reboot
 }
 
