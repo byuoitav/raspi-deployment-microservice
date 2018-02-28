@@ -11,7 +11,7 @@ NC='\033[0m'
 
 fail_unless_root() {
         if [ "$(id -u)" != '0' ]; then
-                echo "${RED}$name must be run as root.${NC}"
+                echo -e "${RED}$name must be run as root.${NC}"
                 exit 1
         fi
 }
@@ -27,7 +27,7 @@ setup_for_change() {
 }
 
 make_ro() {
-    echo "making system readonly..."
+    echo -en "making system readonly..."
 
     # remove any existing ro flags, if they exist
     make_rw>>/dev/null
@@ -38,16 +38,16 @@ make_ro() {
     # make root directory readonly
     sed -i 's/\/\s*ext4\s*defaults/&,ro/' $fstab
 
-    echo "${GREEN}success.${NC}"
+    echo -e "${GREEN}success.${NC}"
 }
 
 make_rw() {
-    echo "making system writable..."
+    echo -en "making system writable..."
     
     # remove all ro flags
     sed -i -E 's/(,ro)|(ro)//' $fstab
 
-    echo "${GREEN}success.${NC}"
+    echo -e "${GREEN}success.${NC}"
 }
 
 prompt_reboot() {
@@ -61,7 +61,7 @@ prompt_reboot() {
             reboot
             ;;
         n|N|*)
-            echo "changes will take effect on next reboot."
+            echo -e "${YELLOW}changes will take effect on next reboot.${NC}"
             exit 0
             ;;
     esac
