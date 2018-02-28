@@ -1,4 +1,4 @@
-#!usr/bin/env bash
+#!/usr/bin/env bash
 
 name="togglero"
 fstab="/etc/fstab"
@@ -13,8 +13,8 @@ fail_unless_root() {
 
 backup_fstab() {
     cp $fstab $backup
-    echo "$fstab backup created at:$backup"
-    sleep 3
+    echo -e "$fstab backup created at:$backup\n"
+    sleep 1
 }
 
 make_ro() {
@@ -42,12 +42,12 @@ make_rw() {
 }
 
 prompt_reboot() {
-    echo "\n\na reboot is required to make these changes."
-    read -p "would you like to reboot now? (y/n)?" choice
+    echo -e "\n\na reboot is required to make these changes."
+    read -p -n 1 "would you like to reboot now? (y/n)? " choice
 
     case "$choice" in
         y|Y)
-            sudo reboot
+            reboot
             ;;
         n|N|*)
             echo "changes will take effect on next reboot."
