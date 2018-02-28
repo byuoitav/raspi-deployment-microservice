@@ -63,4 +63,3 @@ printf "\n\nBye lol"
 sleep 3
 
 sudo sh -c "reboot"
-
