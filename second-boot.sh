@@ -48,7 +48,7 @@ until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microse
 done
 
 # make fs read only
-sudo togglero on
+sudo togglero on -n
 
 # docker 
 until [ $(docker ps -q | wc -l) -gt 1 ]; do
