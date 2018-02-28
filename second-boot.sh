@@ -47,6 +47,9 @@ until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microse
     sleep 5
 done
 
+# make fs read only
+sudo togglero on
+
 # docker 
 until [ $(docker ps -q | wc -l) -gt 1 ]; do
 	echo "Waiting for docker containers to download"
