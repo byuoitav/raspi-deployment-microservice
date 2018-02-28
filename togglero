@@ -4,6 +4,8 @@ name="togglero"
 fstab="/etc/fstab"
 backup="/etc/fstab-backup"
 
+PROMPT_REBOOT=true
+
 RED='\033[1;31m'
 YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
@@ -51,6 +53,11 @@ make_rw() {
 }
 
 prompt_reboot() {
+    if [ !$PROMPT_REBOOT ]; then
+        echo -e "finished! changes will take effect on next reboot."
+        exit 0
+    fi
+
     echo -e "a reboot is required to make these changes."
     echo -en "would you like to reboot now? (y/n) "
     read -n 1 choice
@@ -66,6 +73,17 @@ prompt_reboot() {
             ;;
     esac
 }
+
+# check if there is a flag to not prompt for reboot
+while getopts "n" opt; do
+    case ${opt} in
+        n)
+            PROMPT_REBOOT=false
+            ;;
+        \?)
+            exit 1
+    esac
+done
 
 case "$1" in 
     on)
@@ -83,7 +101,7 @@ case "$1" in
         prompt_reboot
         ;;
     *)
-        echo "usage: $name {on|off}"
+        echo "usage: $name {on|off} [-n]"
         exit 1
         ;;
 esac
