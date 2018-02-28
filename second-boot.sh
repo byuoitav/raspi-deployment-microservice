@@ -46,6 +46,7 @@ until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microse
 	echo "Trying to download togglero again."
     sleep 5
 done
+chmod +x /usr/local/bin/togglero
 
 # make fs read only
 sudo togglero on -n
