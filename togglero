@@ -4,17 +4,26 @@ name="togglero"
 fstab="/etc/fstab"
 backup="/etc/fstab-backup"
 
+RED='\033[1;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
 fail_unless_root() {
         if [ "$(id -u)" != '0' ]; then
-                echo "$name must be run as root."
+                echo "${RED}$name must be run as root.${NC}"
                 exit 1
         fi
 }
 
-backup_fstab() {
+setup_for_change() {
+    # backup
     cp $fstab $backup
-    echo -e "$fstab backup created at:$backup\n"
-    sleep 1
+    echo -e "${YELLOW}backup created at:$backup${NC}"
+    sleep .5
+
+    # make sure / is writeable
+    mount -o remount,rw '/'
 }
 
 make_ro() {
@@ -29,7 +38,7 @@ make_ro() {
     # make root directory readonly
     sed -i 's/\/\s*ext4\s*defaults/&,ro/' $fstab
 
-    echo "success."
+    echo "${GREEN}success.${NC}"
 }
 
 make_rw() {
@@ -38,12 +47,14 @@ make_rw() {
     # remove all ro flags
     sed -i -E 's/(,ro)|(ro)//' $fstab
 
-    echo "success."
+    echo "${GREEN}success.${NC}"
 }
 
 prompt_reboot() {
-    echo -e "\n\na reboot is required to make these changes."
-    read -p -n 1 "would you like to reboot now? (y/n)? " choice
+    echo -e "a reboot is required to make these changes."
+    echo -en "would you like to reboot now? (y/n) "
+    read -n 1 choice
+    echo
 
     case "$choice" in
         y|Y)
@@ -59,14 +70,14 @@ prompt_reboot() {
 case "$1" in 
     on)
         fail_unless_root
-        backup_fstab
+        setup_for_change
 
         make_ro
         prompt_reboot
         ;;
     off)
         fail_unless_root
-        backup_fstab
+        setup_for_change
 
         make_rw
         prompt_reboot
