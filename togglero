@@ -1,0 +1,78 @@
+#!usr/bin/env bash
+
+name="togglero"
+fstab="/etc/fstab"
+backup="/etc/fstab-backup"
+
+fail_unless_root() {
+        if [ "$(id -u)" != '0' ]; then
+                echo "$name must be run as root."
+                exit 1
+        fi
+}
+
+backup_fstab() {
+    cp $fstab $backup
+    echo "$fstab backup created at:$backup"
+    sleep 3
+}
+
+make_ro() {
+    echo "making system readonly..."
+
+    # remove any existing ro flags, if they exist
+    make_rw>>/dev/null
+
+    # make boot partition readonly
+    sed -i 's/\/boot\s*vfat\s*defaults/&,ro/' $fstab
+
+    # make root directory readonly
+    sed -i 's/\/\s*ext4\s*defaults/&,ro/' $fstab
+
+    echo "success."
+}
+
+make_rw() {
+    echo "making system writable..."
+    
+    # remove all ro flags
+    sed -i -E 's/(,ro)|(ro)//' $fstab
+
+    echo "success."
+}
+
+prompt_reboot() {
+    echo "\n\na reboot is required to make these changes."
+    read -p "would you like to reboot now? (y/n)?" choice
+
+    case "$choice" in
+        y|Y)
+            sudo reboot
+            ;;
+        n|N|*)
+            echo "changes will take effect on next reboot."
+            exit 0
+            ;;
+    esac
+}
+
+case "$1" in 
+    on)
+        fail_unless_root
+        backup_fstab
+
+        make_ro
+        prompt_reboot
+        ;;
+    off)
+        fail_unless_root
+        backup_fstab
+
+        make_rw
+        prompt_reboot
+        ;;
+    *)
+        echo "usage: $name {on|off}"
+        exit 1
+        ;;
+esac
