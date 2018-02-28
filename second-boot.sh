@@ -41,6 +41,12 @@ until [ -f "/etc/salt/setup" ]; do
 	wait
 done
 
+# make system read only on next boot, and download toggle script
+until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/togglero > /usr/local/bin/togglero); do
+	echo "Trying to download togglero again."
+    sleep 5
+done
+
 # docker 
 until [ $(docker ps -q | wc -l) -gt 1 ]; do
 	echo "Waiting for docker containers to download"
