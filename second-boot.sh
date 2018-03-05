@@ -49,7 +49,7 @@ done
 chmod +x /usr/local/bin/togglero
 
 # make fs read only
-sudo togglero on -n
+# sudo togglero on -n
 
 # docker 
 until [ $(docker ps -q | wc -l) -gt 1 ]; do
