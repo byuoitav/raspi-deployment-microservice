@@ -135,54 +135,18 @@ func DeployDevice(hostname string) (string, error) {
 
 	log.Printf("[helpers] starting device deployment to %s...", allCaps)
 
-	//retrieve room from configuration database
-	room, err := GetRoom(hostname)
-	if err != nil {
-		msg := fmt.Sprintf("failed to get room: %s", err.Error())
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-		return "", errors.New(msg)
-	}
-
-	//build device name
-	deviceName := strings.Split(allCaps, "-")[2]
-	log.Printf("[helpers] looking for device: %s", deviceName)
-
-	//get device class
-	var deviceClass string
-	for _, device := range room.Devices {
-
-		log.Printf("[helpers] found device: %s of class: %s", device.Name, device.Class)
-
-		if device.Name == deviceName { //found device
-
-			deviceClass = device.Class
-		}
-	}
-
-	if len(deviceClass) == 0 { //if we don't find anything
-		msg := "device class not found"
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-		return "", errors.New(msg)
-	}
-
-	//get environment file based on the two IDs
-	envFile, err := retrieveEnvironmentVariables(deviceClass, room.RoomDesignation)
-	if err != nil {
-		return "", errors.New(fmt.Sprintf("error fetching environment variables: %s", err.Error()))
-	}
-
-	dockerCompose, err := RetrieveDockerCompose(deviceClass, room.RoomDesignation)
-	if err != nil {
-		return "", errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
-	}
-
 	dev, err := GetDevice(hostname)
 	if err != nil {
 		log.Printf("error getting device")
 		return "", err
 	}
 
-	go SendCommand(dev.Address, envFile, dockerCompose) // Start an update for the Pi
+	envFileName, err := GetDeviceDocker(dev)
+	if err != nil {
+		return "", err
+	}
+
+	go SendCommand(dev.Address, envFileName, "") // Start an update for the Pi
 
 	log.Printf("deployment started")
 	return "deployment started", nil

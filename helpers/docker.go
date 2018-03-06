@@ -3,6 +3,7 @@ package helpers
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -18,6 +19,49 @@ import (
 	"github.com/byuoitav/configuration-database-microservice/structs"
 	"github.com/fatih/color"
 )
+
+func GetDeviceDocker(device structs.Device) (string, error) {
+
+	log.Printf("[helpers] generating docker file for: %s", device.Name)
+
+	url := fmt.Sprintf("%s/environment/devices/%d", os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS"), device.ID)
+
+	log.Printf("[helpers] making request to: %s", url)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	err = SetToken(req)
+	if err != nil {
+		return "", err
+	}
+
+	var client http.Client
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New(fmt.Sprintf("non-200 response from designation microservice: %d", resp.StatusCode))
+	}
+
+	var fileName string
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &fileName)
+	if err != nil {
+		return "", err
+	}
+
+	return fileName, nil
+}
 
 //builds a map of device IDs to docker-compose files
 func GetRoomDocker(room structs.Room, role string) (map[int]string, error) {
@@ -82,16 +126,7 @@ func GetRoomDocker(room structs.Room, role string) (map[int]string, error) {
 			continue
 		}
 
-		//		rawId, err := reader.ReadSlice(byte('\n'))
-		//		if err != nil {
-		//			return nil, err
-		//		}
-
 		log.Printf("%s", color.HiMagentaString("rawId: %s", string(rawId)))
-
-		//toConvert := bytes.Trim(rawId, " \n")
-
-		//log.Printf("%s", color.HiMagentaString("toConvert: %s", string(toConvert)))
 
 		id, err := strconv.Atoi(string(rawId))
 		if err != nil {
