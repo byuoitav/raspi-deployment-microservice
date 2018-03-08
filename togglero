@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+name="togglero"
+fstab="/etc/fstab"
+backup="/etc/fstab-backup"
+
+PROMPT_REBOOT=true
+
+RED='\033[1;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+fail_unless_root() {
+        if [ "$(id -u)" != '0' ]; then
+                echo -e "${RED}$name must be run as root.${NC}"
+                exit 1
+        fi
+}
+
+setup_for_change() {
+    # backup
+    cp $fstab $backup
+    echo -e "${YELLOW}backup created at:$backup${NC}"
+    sleep .5
+
+    # make sure / is writeable
+    mount -o remount,rw '/'
+}
+
+make_ro() {
+    echo -en "making system readonly..."
+
+    # remove any existing ro flags, if they exist
+    make_rw>>/dev/null
+
+    # make boot partition readonly
+    sed -i 's/\/boot\s*vfat\s*defaults/&,ro/' $fstab
+
+    # make root directory readonly
+    sed -i 's/\/\s*ext4\s*defaults/&,ro/' $fstab
+
+    echo -e "${GREEN}success.${NC}"
+}
+
+make_rw() {
+    echo -en "making system writable..."
+    
+    # remove all ro flags
+    sed -i -E 's/(,ro)|(ro)//' $fstab
+
+    echo -e "${GREEN}success.${NC}"
+}
+
+prompt_reboot() {
+    if [ !$PROMPT_REBOOT ]; then
+        echo -e "finished! changes will take effect on next reboot."
+        exit 0
+    fi
+
+    echo -e "a reboot is required to make these changes."
+    echo -en "would you like to reboot now? (y/n) "
+    read -n 1 choice
+    echo
+
+    case "$choice" in
+        y|Y)
+            reboot
+            ;;
+        n|N|*)
+            echo -e "${YELLOW}changes will take effect on next reboot.${NC}"
+            exit 0
+            ;;
+    esac
+}
+
+# check if there is a flag to not prompt for reboot
+while getopts "n" opt; do
+    case ${opt} in
+        n)
+            PROMPT_REBOOT=false
+            ;;
+        \?)
+            exit 1
+    esac
+done
+
+case "$1" in 
+    on)
+        fail_unless_root
+        setup_for_change
+
+        make_ro
+        prompt_reboot
+        ;;
+    off)
+        fail_unless_root
+        setup_for_change
+
+        make_rw
+        prompt_reboot
+        ;;
+    *)
+        echo "usage: $name {on|off} [-n]"
+        exit 1
+        ;;
+esac

@@ -8,6 +8,22 @@ printf "\n\nHi From Danny\n\n"
 sudo chvt 2
 
 bootfile="/usr/local/games/firstboot"
+resizefile="/usr/local/games/resize"
+
+if [ -f "$resizefile" ]; then
+    echo "0th boot. resizing /var partition"
+    sleep 3
+
+	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/image/resizevar > /tmp/resizevar); do
+		echo "Downloading resize script"
+	done
+	chmod +x /tmp/resizevar
+
+    sudo /tmp/resizevar
+
+    # make sure it doesn't get past here
+    sudo reboot
+fi
 
 if [ -f "$bootfile" ]; then
 	echo "First boot."
@@ -18,10 +34,8 @@ if [ -f "$bootfile" ]; then
 	done
 	chmod +x /tmp/pi-setup.sh
 
-	echo "Removing first boot file."
-	sudo rm $bootfile
-
 	/tmp/pi-setup.sh
+	
 else
 	echo "Second boot."
 
@@ -44,9 +58,8 @@ clear
 printf "\n\n\n\n\n\n"
 printf "Setup complete! I'll never see you again."
 printf "\n\tPlease wait for me to reboot.\n"
-sleep 20
+sleep 10
 printf "\n\nBye lol"
-sleep 5
+sleep 3
 
 sudo sh -c "reboot"
-

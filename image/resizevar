@@ -1,0 +1,71 @@
+#!/bin/sh
+# resizes /dev/mmcblk0p3 to take up the rest of the filesystem 
+
+NAME="resizevar"
+RESIZE_FILE="/usr/local/games/resize"
+
+expand_partition() {
+	echo "expanding /dev/mmcblk0p3"
+	umount /var || true
+	
+	fdisk /dev/mmcblk0 << EOF
+p
+d
+3
+n
+p
+3
+6481920
+
+p
+w
+EOF
+	
+	echo "finished fdisk"
+	
+	echo "y" | e2fsck -f /dev/mmcblk0p3
+
+    echo "finished fsck"
+	echo "y" | resize2fs /dev/mmcblk0p3
+	
+	echo "resize /dev/mmcblk0p3"
+	
+	#mount /dev/mmcblk0p3 /var
+	
+	#echo "remounted /var"
+	
+	# add mounting /var back into fstab
+	echo "/dev/mmcblk0p3        /var            ext4    defaults          0       0" >> /etc/fstab
+	
+	echo "added partition to fstab"
+	
+	# show mount table
+	lsblk
+
+	# remove resize file
+	rm $RESIZE_FILE
+	touch $REBOOT_FILE
+
+	echo "Finished resize. Rebooting..."
+
+	sleep 5
+	reboot
+}
+
+check_resize_required() {
+	if [ ! -f $RESIZE_FILE ]; then
+		echo "No resize required. Exiting..."
+		exit 0 
+	fi
+}
+
+fail_unless_root() {
+	if [ "$(id -u)" != '0' ]; then
+		echo "$NAME must be run as root"
+		exit 1
+	fi
+}
+
+fail_unless_root
+check_resize_required
+expand_partition
