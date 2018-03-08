@@ -20,11 +20,11 @@ import (
 	"github.com/fatih/color"
 )
 
-func GetDeviceDocker(device structs.Device) (string, error) {
+func GetDeviceDocker(target structs.Device) (string, error) {
 
-	log.Printf("[helpers] generating docker file for: %s", device.Name)
+	log.Printf("[helpers] requesting docker file for: %s", target.Name)
 
-	url := fmt.Sprintf("%s/environment/devices/%d", os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS"), device.ID)
+	url := fmt.Sprintf("%s/docker/devices/%d", os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS"), target.ID)
 
 	log.Printf("[helpers] making request to: %s", url)
 

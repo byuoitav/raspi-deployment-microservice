@@ -52,34 +52,12 @@ var TIMER_DURATION = 3 * time.Minute
 
 //deploys to all pi's on the given branch with the given role
 func DeployDesignation(designation, role string) error {
-
-	rooms, err := dbo.GetRooms() // get all rooms
-	if err != nil {
-		msg := fmt.Sprintf("failed getting all rooms: %s", err.Error())
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-		return errors.New(msg)
-	}
-
-	envFile, err := retrieveEnvironmentVariables(role, designation) //	environment files are the same for a given designation and role
-	if err != nil {
-		msg := fmt.Sprintf("error fetching environment variables: %s", err.Error())
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-		return errors.New(msg)
-	}
-
-	for _, room := range rooms { //	deploy to each room with the given designation
-
-		if strings.Compare(room.RoomDesignation, designation) == 0 {
-
-			log.Printf("%s", color.HiGreenString("identified room %s", room.Name))
-			go StartRoom(room, role, envFile)
-		}
-	}
-
 	return nil
 }
 
 func DeployRoom(roomName, roleName string) error {
+
+	log.Printf("[helpers] deploying to %s", color.HiGreenString(roomName))
 
 	info := strings.Split(roomName, "-") //	splitting room name on hyphen yields building and room
 	if len(info) < 2 {
@@ -88,68 +66,58 @@ func DeployRoom(roomName, roleName string) error {
 		return errors.New(msg)
 	}
 
+	log.Printf("[helpers] getting room...")
 	room, err := dbo.GetRoomByInfo(info[0], info[1]) //	get room designation
 	if err != nil {
-		msg := fmt.Sprintf("room %s  not found: %s", roomName, err.Error())
+		msg := fmt.Sprintf("room %s not found: %s", roomName, err.Error())
 		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return errors.New(msg)
 	}
 
-	envFile, err := retrieveEnvironmentVariables(roleName, room.RoomDesignation) //	get room environment file
+	//	identify targets based on roleName
+	log.Printf("[helpers] getting role ID...")
+	roleId, err := GetRoleId(roleName)
 	if err != nil {
-		msg := fmt.Sprintf("error fetching environment variables: %s", err.Error())
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-		return errors.New(msg)
+		return err
 	}
 
-	StartRoom(room, roleName, envFile)
+	log.Printf("[helpers] identified role ID: %s", color.HiGreenString("%d", roleId))
+
+	log.Printf("[helpers] finding targets...")
+	targets, err := dbo.GetDevicesByRoomIdAndRoleId(room.ID, int(roleId))
+	if err != nil {
+		msg := fmt.Sprintf("targets not found: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return nil
+	}
+
+	for _, target := range targets {
+
+		go DeployDevice(target)
+	}
 
 	return nil
 }
 
-func StartRoom(room structs.Room, role, envFileName string) {
+func DeployDevice(target structs.Device) error {
 
-	log.Printf("%s", color.HiGreenString("[helpers] deployment to %s started", room.Name))
+	log.Printf("[helpers] deploying to target: %s", color.HiGreenString(target.Name))
 
-	docker, err := GetRoomDocker(room, role) //	build map of device IDs to YAML file names
+	docker, err := GetDeviceDocker(target)
 	if err != nil {
-		log.Printf("%s", color.HiRedString("error deploying to %s: %s", room.Name, err.Error()))
+		return err
 	}
 
-	for _, device := range room.Devices { //	start deployment for each device
+	log.Printf("%s", color.HiGreenString(docker))
 
-		if ok := structs.HasRole(device, role); ok {
-
-			log.Printf("Deploying docker-compose file: %s", color.HiYellowString(docker[device.ID]))
-
-			go SendCommand(device.Address, envFileName, docker[device.ID])
-		}
-	}
-
-}
-
-func DeployDevice(hostname string) (string, error) {
-
-	//hostname should be all caps - names in config DB are all caps
-	allCaps := strings.ToUpper(hostname)
-
-	log.Printf("[helpers] starting device deployment to %s...", allCaps)
-
-	dev, err := GetDevice(hostname)
+	env, err := GetDeviceEnvironment(target)
 	if err != nil {
-		log.Printf("error getting device")
-		return "", err
+		return err
 	}
 
-	envFileName, err := GetDeviceDocker(dev)
-	if err != nil {
-		return "", err
-	}
+	log.Printf("%s", color.HiGreenString(env))
 
-	go SendCommand(dev.Address, envFileName, "") // Start an update for the Pi
-
-	log.Printf("deployment started")
-	return "deployment started", nil
+	return SendCommand(target.Address, env, docker) // Start an update for the Pi
 }
 
 func GetDevice(hostname string) (structs.Device, error) {
@@ -312,6 +280,7 @@ func reportToELK(hostname string, err error) {
 }
 
 func SendCommand(hostname, environment, docker string) error {
+
 	connection, err := ssh.Dial("tcp", hostname+":22", sshConfig)
 	if err != nil {
 		log.Printf("Error dialing %s: %s", hostname, err.Error())
@@ -331,7 +300,7 @@ func SendCommand(hostname, environment, docker string) error {
 
 	log.Printf("SSH session established with %s", hostname)
 
-	longCommand := fmt.Sprintf("bash -c 'curl %s/%s --output /tmp/docker-compose-tmp.yml && curl %s/%s --output /home/pi/.environment-variables && curl %s/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && source /etc/environment && echo \"$(cat /tmp/docker-compose-tmp.yml)\" | envsubst > /tmp/docker-compose.yml && docker-compose -f /tmp/docker-compose.yml pull && docker stop $(docker ps -a -q) || true && docker rmi -f $(docker images -q --filter \"dangling=true\") || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d' &> /tmp/deployment_logs.txt", os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS"), docker, os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS"), environment, os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS"))
+	longCommand := fmt.Sprintf("bash -c 'curl %s/%s --output /tmp/docker-compose-tmp.yml && curl %s/%s --output /home/pi/.environment-variables && curl %s/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && source /etc/environment && echo \"$(cat /tmp/docker-compose-tmp.yml)\" | envsubst > /tmp/docker-compose.yml && docker-compose -f /tmp/docker-compose.yml pull && docker stop $(docker ps -a -q) || true && docker rmi -f $(docker images -q --filter \"dangling=true\") || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d' &> /tmp/deployment_logs.txt", os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS"), docker, os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS"), environment, os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS"))
 
 	log.Printf("Running the following command on %s: %s", hostname, longCommand)
 

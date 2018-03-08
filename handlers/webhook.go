@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/byuoitav/raspi-deployment-microservice/helpers"
-	"github.com/jessemillar/jsonresp"
+	"github.com/fatih/color"
 	"github.com/labstack/echo"
 )
 
@@ -34,39 +35,30 @@ func DeployRoomByDesignationAndRole(context echo.Context) error {
 
 	err := helpers.DeployRoom(room, role)
 	if err != nil {
-		return context.JSON(http.StatusBadRequest, err.Error())
+		msg := fmt.Sprintf("deployment to %ss in %s failed: %s", role, room, err.Error())
+		log.Printf("%s", color.HiRedString("[handlers] %s", msg))
+		return context.JSON(http.StatusBadRequest, msg)
 	}
 
-	return context.JSON(http.StatusOK, fmt.Sprintf("deployment to %ss in %s started", role, room))
+	return context.JSON(http.StatusOK, fmt.Sprintf("started deployment to %ss in %s", role, room))
 }
 
 func WebhookDevice(context echo.Context) error {
-	response, err := helpers.DeployDevice(context.Param("hostname"))
+
+	hostname := context.Param("hostname")
+	device, err := helpers.GetDevice(context.Param("hostname"))
 	if err != nil {
-		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
-		return nil
+		msg := fmt.Sprintf("device %s not found: %s", hostname, err.Error())
+		log.Printf("%s", color.HiRedString("[handlers] %s", msg))
+		return context.JSON(http.StatusBadRequest, msg)
 	}
 
-	jsonresp.New(context.Response(), http.StatusOK, response)
-	return nil
-}
-
-func EnableContacts(context echo.Context) error {
-
-	err := helpers.UpdateContactState(context.Param("hostname"), true)
+	err = helpers.DeployDevice(device)
 	if err != nil {
-		return context.JSON(http.StatusInternalServerError, map[string]string{"Response": "Failed to set state"})
+		msg := fmt.Sprintf("deployment to %s failed: %s", hostname, err.Error())
+		log.Printf("%s", color.HiRedString("[handlers] %s", msg))
+		return context.JSON(http.StatusBadRequest, msg)
 	}
 
-	return context.JSON(http.StatusOK, map[string]string{"Response": "Success"})
-}
-
-func DisableContacts(context echo.Context) error {
-
-	err := helpers.UpdateContactState(context.Param("hostname"), false)
-	if err != nil {
-		return context.JSON(http.StatusInternalServerError, map[string]string{"Response": "Failed to set state"})
-	}
-
-	return context.JSON(http.StatusOK, map[string]string{"Response": "Success"})
+	return context.JSON(http.StatusOK, fmt.Sprintf("successfully deployed to: %s", hostname))
 }
