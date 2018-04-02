@@ -12,14 +12,36 @@ date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' 
 # Fix the keyboard layout
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard
 
-echo "Type the desired hostname of this device (E.g. ITB-1006-CP2), followed by [ENTER]:"
 
-read -e desired_hostname
+while  true ; do
 
-# get static ip
-echo "Type the desired static ip-address of this device (e.g. $ip), followed by [ENTER]:"
+    # get hostname
+    echo "Type the desired hostname of this device (E.g. ITB-1006-CP2), followed by [ENTER]:"
+    read -e desired_hostname
 
-read -e desired_ip
+    #Validate hostname
+    if [[ $desired_hostname =~ ^[A-Z,0-9]{2,}-[A-Z,0-9]+-[A-Z]+[0-9]+ ]]; then
+        break
+    else
+        echo -e "\n\nHostname invalid. Try again.\n\n"
+        continue
+    fi
+done
+
+while true; do
+
+    # get static ip
+    echo "Type the desired static ip-address of this device (e.g. $ip), followed by [ENTER]:"
+    read -e desired_ip
+
+    #Validate IP
+    if [[ $desired_ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        break
+    else
+        echo -e "\n\nInvalid IP addrses. Try again.\n\n"
+        continue
+    fi
+done
 
 # check if script has already been started
 if [ -f "$started" ]; then
