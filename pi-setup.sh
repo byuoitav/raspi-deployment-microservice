@@ -39,4 +39,4 @@ if [ -f "$started" ]; then
 	sudo rm $bootfile
 fi
 	
-sudo sh -c "reboot"
+#sudo sh -c "reboot"
