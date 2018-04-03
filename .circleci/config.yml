@@ -1,0 +1,15 @@
+version: 2
+jobs:
+    build:
+        docker:
+            - image: byuoitav/build-env:master
+
+        working_directory: /go/src/github.com/byuoitav/raspi-deployment-microservice
+
+        steps:
+            - checkout
+            - run: |
+                gvt fetch github.com/byuoitav/authmiddleware
+            - setup_remote_docker
+            - run: make docker
+            - run: ./deploy.sh $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1 stage

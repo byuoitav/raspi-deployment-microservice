@@ -9,18 +9,61 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/byuoitav/configuration-database-microservice/structs"
 	"github.com/byuoitav/pi-designation-microservice/accessors"
 	"github.com/fatih/color"
 )
 
-func GetClassId(className string) (int64, error) {
+func GetDeviceEnvironment(target structs.Device) (string, error) {
 
-	log.Printf("[helpers] getting class ID corresponding to class: %s", className)
+	log.Printf("[helpers] requesting environment file for: %s", target.Name)
+
+	url := fmt.Sprintf("%s/environment/devices/%d", os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS"), target.ID)
+
+	log.Printf("[helpers] making request to: %s", url)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	err = SetToken(req)
+	if err != nil {
+		return "", err
+	}
 
 	var client http.Client
-	url := os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS") + "/classes/definitions/all"
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
 
-	log.Printf("[helplers] making request against url %s", url)
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New(fmt.Sprintf("non-200 response from designation microservice: %d", resp.StatusCode))
+	}
+
+	var fileName string
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &fileName)
+	if err != nil {
+		return "", err
+	}
+
+	return fileName, nil
+}
+
+func GetRoleId(roleName string) (int64, error) {
+
+	log.Printf("[helpers] getting class ID corresponding to class: %s", color.HiCyanString(roleName))
+
+	var client http.Client
+	url := fmt.Sprintf("%s/devices/roledefinitions", os.Getenv("CONFIGURATION_DATABASE_MICROSERVICE_ADDRESS"))
+
+	log.Printf("[helpers] making request against url %s", url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -56,18 +99,20 @@ func GetClassId(className string) (int64, error) {
 		return 0, errors.New(msg)
 	}
 
-	var classes []accessors.Class
-	err = json.Unmarshal(body, &classes)
+	var roles []structs.DeviceRoleDef
+	err = json.Unmarshal(body, &roles)
 	if err != nil {
 		msg := fmt.Sprintf("failed to unmarshal class structs from JSON: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return 0, errors.New(msg)
 	}
 
-	for _, class := range classes {
+	for _, possibleRole := range roles {
 
-		if class.Name == className { //found class ID
-			return class.ID, nil
+		log.Printf("[helpers] considering role: %s", color.HiCyanString(possibleRole.Name))
+
+		if possibleRole.Name == roleName { //found class ID
+			return int64(possibleRole.ID), nil
 		}
 	}
 
