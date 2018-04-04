@@ -85,14 +85,7 @@ apt -y dist-upgrade
 apt -y autoremove
 apt -y autoclean
 
-# Patch the Dirty COW kernel vulnerability
-apt -y install raspberrypi-kernel 
-
-# Install UI dependencies
-apt -y install xorg i3 suckless-tools chromium-browser
-
 # Install an ARM build of docker-compose
-apt -y install python-pip
 easy_install --upgrade pip
 pip install docker-compose
 
@@ -103,9 +96,6 @@ systemctl enable getty@tty1.service
 
 # Enable SSH connections
 touch /boot/ssh
-
-# Set the timezone
-cp /usr/share/zoneinfo/America/Denver /etc/localtime
 
 # Add the `pi` user to the sudoers group
 usermod -aG sudo pi
