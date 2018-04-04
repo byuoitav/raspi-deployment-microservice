@@ -52,6 +52,9 @@ if [ -f "$started" ]; then
 	exit
 fi
 
+# start
+touch $started
+
 # copy original dhcp file
 cp /etc/dhcpcd.conf /etc/dhcpcd.conf.other
 
