@@ -17,7 +17,7 @@ sudo mv minion /etc/salt/minion
 sudo setfacl -m u:pi:rwx /etc/salt/pki/minion/
 sudo setfacl -m u:pi:rwx /etc/salt/pki/minion/*
 
-sudo wget -O /usr/bin/salt-event-proxy https://github.com/byuoitav/salt-event-proxy/releases/download/v0.7/salt-event-proxy
+sudo wget -O /usr/bin/salt-event-proxy https://github.com/byuoitav/salt-event-proxy/releases/download/v0.8.2/salt-event-proxy
 sudo chmod +x /usr/bin/salt-event-proxy
 
 sudo wget -O /usr/lib/systemd/system/salt-event-proxy.service https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/image/salt-event-proxy.service
