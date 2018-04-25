@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/byuoitav/raspi-deployment-microservice/helpers"
@@ -10,7 +11,6 @@ import (
 )
 
 func WebhookDeployment(context echo.Context) error {
-
 	deviceClass := context.Param("class")
 	deploymentType := context.Param("designation")
 
@@ -41,6 +41,22 @@ func WebhookDevice(context echo.Context) error {
 	if err != nil {
 		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
 		return nil
+	}
+
+	jsonresp.New(context.Response(), http.StatusOK, response)
+	return nil
+}
+
+func WebhookSchedulingDeployment(context echo.Context) error {
+	return nil
+}
+
+func WebhookSchedulingDevice(context echo.Context) error {
+	hostname := context.Param("hostname")
+	response, err := helpers.DeploySpanelByHostname(hostname)
+	if err != nil {
+		log.Printf("error deploying spanel by hostname: %s", err)
+		return err
 	}
 
 	jsonresp.New(context.Response(), http.StatusOK, response)
