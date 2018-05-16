@@ -9,10 +9,12 @@ done
 echo "Added user pi to the docker group"
 
 # get environment variables
-echo "getting environment variables..."
-until curl http://sandbag.byu.edu:2001/deploy/$(hostname); do 
-	echo "trying again..."
-done
+#echo "getting environment variables..."
+#until curl http://sandbag.byu.edu:2001/deploy/$(hostname); do 
+#	echo "trying again..."
+#done
+
+touch /tmp/waiting-for-pi-hostname
 
 until [ $PI_HOSTNAME ]; do
 	echo "PI_HOSTNAME not set"
@@ -20,15 +22,16 @@ until [ $PI_HOSTNAME ]; do
 	sleep 5 
 done
 
+touch /tmp/got-pi-hostname
 printf "\nrecieved env. variables\n"
 
 # maria db setup
-until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh); do
-	echo "Trying again."
-done
-chmod +x /tmp/mariadb-setup.sh
+#until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh); do
+#	echo "Trying again."
+#done
+#chmod +x /tmp/mariadb-setup.sh
 
-/tmp/mariadb-setup.sh
+#/tmp/mariadb-setup.sh
 
 # salt setup
 until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/salt-setup.sh > /tmp/salt-setup.sh); do
@@ -52,7 +55,9 @@ chmod +x /usr/local/bin/togglero
 # sudo togglero on -n
 
 # docker 
-until [ $(docker ps -q | wc -l) -gt 1 ]; do
+until [ $(docker ps -q | wc -l) -gt 0 ]; do
 	echo "Waiting for docker containers to download"
 	sleep 10
 done
+
+sleep 20
