@@ -9,10 +9,10 @@ done
 echo "Added user pi to the docker group"
 
 # get environment variables
-#echo "getting environment variables..."
-#until curl http://sandbag.byu.edu:2001/deploy/$(hostname); do 
-#	echo "trying again..."
-#done
+echo "getting environment variables..."
+until curl http://sandbag.byu.edu:2001/deploy/$(hostname); do 
+	echo "trying again..."
+done
 
 touch /tmp/waiting-for-pi-hostname
 
@@ -27,10 +27,10 @@ touch /tmp/got-pi-hostname
 printf "\nrecieved env. variables\n"
 
 # maria db setup
-#until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh); do
-#	echo "Trying again."
-#done
-#chmod +x /tmp/mariadb-setup.sh
+until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh); do
+	echo "Trying again."
+done
+chmod +x /tmp/mariadb-setup.sh
 
 /tmp/mariadb-setup.sh
 
