@@ -52,6 +52,7 @@ else
 
 	echo "Removing symlink to startup script."
 	sudo rm /usr/lib/systemd/system/default.target.wants/first-boot.service
+    sleep 3
 fi
 
 clear
