@@ -38,6 +38,9 @@ func main() {
 	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts)
 	secure.GET("/webhook_contacts/disable/:hostname", handlers.DisableContacts)
 
+	secure.GET("/webhook/scheduling/:designation", handlers.WebhookSchedulingDeployment)
+	secure.GET("/webhook_device/scheduling/:hostname", handlers.WebhookSchedulingDevice)
+
 	server := http.Server{
 		Addr:           port,
 		MaxHeaderBytes: 1024 * 10,

@@ -4,7 +4,7 @@
 # For clean execution, run this script inside of the /tmp directory with `./pi-setup.sh`
 # The script assumes the username of the autologin user is "pi"
 bootfile="/usr/local/games/firstboot"
-started="/usr/logal/games/setup-started"
+started="/usr/local/games/setup-started"
 
 # Run the `sudo.sh` code block to install necessary packages and commands
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/sudo.sh > /tmp/sudo.sh
