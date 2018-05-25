@@ -9,9 +9,9 @@ expand_partition() {
 	umount /var || true
 	
 	fdisk /dev/mmcblk0 << EOF
-p
 d
 3
+p
 n
 p
 3

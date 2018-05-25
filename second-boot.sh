@@ -14,12 +14,16 @@ until curl http://sandbag.byu.edu:2001/deploy/$(hostname); do
 	echo "trying again..."
 done
 
+touch /tmp/waiting-for-pi-hostname
+
 until [ $PI_HOSTNAME ]; do
 	echo "PI_HOSTNAME not set"
 	source /etc/environment
 	sleep 5 
 done
 
+rm /tmp/waiting-for-pi-hostname
+touch /tmp/got-pi-hostname
 printf "\nrecieved env. variables\n"
 
 # maria db setup
@@ -52,7 +56,9 @@ chmod +x /usr/local/bin/togglero
 # sudo togglero on -n
 
 # docker 
-until [ $(docker ps -q | wc -l) -gt 1 ]; do
+until [ $(docker ps -q | wc -l) -gt 0 ]; do
 	echo "Waiting for docker containers to download"
 	sleep 10
 done
+
+sleep 20
