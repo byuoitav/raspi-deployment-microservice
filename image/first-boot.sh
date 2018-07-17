@@ -37,10 +37,10 @@ if [ -f "$bootfile" ]; then
 	/tmp/pi-setup.sh
 	
 else
-	echo "Second boot."
-
-	sleep 5
+	sleep 30
 	sudo chvt 2
+
+	echo "Second boot."
 
 	# download second-boot script
 	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/second-boot.sh > /tmp/second-boot.sh); do

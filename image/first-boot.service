@@ -1,11 +1,14 @@
 [Unit]
 Description=Pi setup
 After=getty@tty2.service
+Requires=getty@tty2.service
 
 [Service]
-Type=oneshot
+Type=simple
 ExecStart=/usr/bin/first-boot.sh
 StandardInput=tty
+StandardOutput=tty
+StandardError=tty
 TTYPath=/dev/tty2
 TTYReset=yes
 TTYVHangup=yes
