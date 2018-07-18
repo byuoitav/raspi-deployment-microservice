@@ -56,7 +56,7 @@ chmod +x /usr/local/bin/togglero
 # sudo togglero on -n
 
 #make sure the docker-service is enabled
-systemctl enable docker
+sudo systemctl enable docker
 
 # docker 
 until [ $(docker ps -q | wc -l) -gt 0 ]; do
