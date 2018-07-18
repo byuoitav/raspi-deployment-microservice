@@ -55,6 +55,9 @@ chmod +x /usr/local/bin/togglero
 # make fs read only
 # sudo togglero on -n
 
+#make sure the docker-service is enabled
+systemctl enable docker
+
 # docker 
 until [ $(docker ps -q | wc -l) -gt 0 ]; do
 	echo "Waiting for docker containers to download"
