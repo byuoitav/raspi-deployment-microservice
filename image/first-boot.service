@@ -5,7 +5,7 @@ Requires=getty@tty2.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/first-boot.sh
+ExecStart=/usr/bin/first-boot.sh | tee >(systemd-cat --identifier "deployment" --priority "notice")
 StandardInput=tty
 StandardOutput=tty
 StandardError=tty
