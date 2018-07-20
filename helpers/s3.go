@@ -160,19 +160,16 @@ func MakeEnvironmentRequest(endpoint string) (*http.Response, error) {
 
 func SetToken(request *http.Request) error {
 
-	if len(os.Getenv("LOCAL_ENVIRONMENT")) == 0 {
+	log.Printf("[helpers] setting bearer token...")
 
-		log.Printf("[helpers] setting bearer token...")
-
-		token, err := bearertoken.GetToken()
-		if err != nil {
-			msg := fmt.Sprintf("cannot get bearer token: %s", err.Error())
-			log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-			return errors.New(msg)
-		}
-
-		request.Header.Set("Authorization", "Bearer "+token.Token)
+	token, err := bearertoken.GetToken()
+	if err != nil {
+		msg := fmt.Sprintf("cannot get bearer token: %s", err.Error())
+		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		return errors.New(msg)
 	}
+
+	request.Header.Set("Authorization", "Bearer "+token.Token)
 
 	return nil
 }
