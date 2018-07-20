@@ -1,14 +1,12 @@
-FROM golang:1.9.2-alpine
+FROM byuoitav/amd64-alpine
+MAINTAINER Daniel Randall <danny_randall@byu.edu>
 
-RUN apk update && apk upgrade && apk add git
+ARG NAME
+ENV name=${NAME}
 
-RUN mkdir -p /go/src/github.com/byuoitav
-ADD . /go/src/github.com/byuoitav/raspi-deployment-microservice
+COPY ${name}-bin ${name}-bin 
+COPY version.txt version.txt
 
-WORKDIR /go/src/github.com/byuoitav/raspi-deployment-microservice
-RUN go get -d -v
-RUN go install -v
+# add any required files/folders here
 
-CMD ["/go/bin/raspi-deployment-microservice"]
-
-EXPOSE 8008
+ENTRYPOINT ./${name}-bin
