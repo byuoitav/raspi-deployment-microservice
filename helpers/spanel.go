@@ -6,14 +6,16 @@ import (
 	"log"
 	"strings"
 
-	"github.com/byuoitav/configuration-database-microservice/structs"
+	"github.com/byuoitav/common/db"
+
+	"github.com/byuoitav/common/structs"
 )
 
 func DeploySpanelByHostname(hostname string) (string, error) {
 	allCaps := strings.ToUpper(hostname)
 	log.Printf("[%s] Starting deployment", allCaps)
 
-	room, err := GetRoom(allCaps)
+	room, err := db.GetDB().GetRoom(allCaps)
 	if err != nil {
 		msg := fmt.Sprintf("[%s] failed to get room: %s", allCaps, err)
 		log.Printf(msg)

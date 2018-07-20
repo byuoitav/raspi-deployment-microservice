@@ -43,15 +43,15 @@ func GetClassId(className string) (int64, error) {
 		return 0, errors.New(msg)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		msg := fmt.Sprintf("non-200 response from designation microservice: %d", resp.StatusCode)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		msg := fmt.Sprintf("unable to read response body: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return 0, errors.New(msg)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		msg := fmt.Sprintf("unable to read response body: %s", err.Error())
+	if resp.StatusCode != http.StatusOK {
+		msg := fmt.Sprintf("non-200 response from designation microservice: %d, %s", resp.StatusCode, body)
 		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return 0, errors.New(msg)
 	}

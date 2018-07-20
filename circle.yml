@@ -1,24 +1,15 @@
-machine:
-    pre:
-        - printenv > /tmp/environment-variables-circle
-    services:
-        - docker
+version: 2
+jobs:
+    build:
+        docker:
+            - image: byuoitav/build-env:master
 
-dependencies:
-    pre:
-        - rm -rf ~/.go_workspace
+        working_directory: /go/src/github.com/byuoitav/raspi-deployment-microservice
 
-test:
-    override:
-        - go test -v -race $(go list ./... | grep -v /vendor/)
-
-deployment:
-    production:
-        branch: master
-        commands:
-            - docker build -t byuoitav/raspi-deployment-microservice:$CIRCLE_SHA1 .
-            - docker build -t byuoitav/raspi-deployment-microservice:latest .
-            - docker login -e $DOCKER_EMAIL -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-            - docker push byuoitav/raspi-deployment-microservice:$CIRCLE_SHA1
-            - docker push byuoitav/raspi-deployment-microservice:latest
-            - ./deploy.sh $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1
+        steps:
+            - checkout
+            - setup_remote_docker
+            - run: make deps
+            - run: make build
+            - run: make docker
+            - run: ./deploy-aws.sh $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1 $CIRCLE_BRANCH
