@@ -35,6 +35,18 @@ func EnableDeploymentsByBranch(context echo.Context) error {
 	return context.String(http.StatusOK, fmt.Sprintf("Enabled %s deployments", branch))
 }
 
+func WebhookDeploymentByBuilding(context echo.Context) error {
+	response, err := helpers.DeployBuilding(context.Param("building"), context.Param("class"), context.Param("designation"))
+	if err != nil {
+		context.JSON(http.StatusBadRequest, err.Error())
+		return nil
+	}
+
+	context.JSON(http.StatusOK, response)
+	return nil
+
+}
+
 func WebhookDevice(context echo.Context) error {
 	response, err := helpers.DeployDevice(context.Param("hostname"))
 	if err != nil {
