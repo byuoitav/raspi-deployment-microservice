@@ -34,6 +34,8 @@ func main() {
 	secure.GET("/webhook/:branch/disable", handlers.DisableDeploymentsByBranch)
 	secure.GET("/webhook/:branch/enable", handlers.EnableDeploymentsByBranch)
 
+	secure.GET("/webhook_building/:building/:class/:designation", handlers.WebhookDeploymentByBuilding)
+
 	secure.GET("/webhook_device/:hostname", handlers.WebhookDevice)
 	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts)
 	secure.GET("/webhook_contacts/disable/:hostname", handlers.DisableContacts)
