@@ -122,20 +122,17 @@ func DeployDevice(hostname string) (elkReport, error) {
 
 	log.Printf("[helpers] starting single deployment...")
 
-	//hostname should be all caps - names in config DB are all caps
-	allCaps := strings.ToUpper(hostname)
+	hostname = strings.ToUpper(hostname)
 
 	//retrieve room from configuration database
-	room, err := db.GetDB().GetRoom(hostname)
+	room, err := db.GetDB().GetRoom(hostname[:strings.LastIndex(hostname, "-")])
 	if err != nil {
 		msg := fmt.Sprintf("failed to get room: %s", err.Error())
 		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return report, errors.New(msg)
 	}
 
-	//build device name
-	deviceName := strings.Split(allCaps, "-")[2]
-	log.Printf("[helpers] looking for device: %s", deviceName)
+	log.Printf("[helpers] looking for device: %s", hostname)
 
 	//get device class
 	var deviceClass string
@@ -143,7 +140,7 @@ func DeployDevice(hostname string) (elkReport, error) {
 
 		log.Printf("[helpers] found device: %s of class: %s", device.Name, device.Type.ID)
 
-		if device.Name == deviceName { //found device
+		if device.ID == hostname { //found device
 
 			deviceClass = device.Type.ID
 		}
