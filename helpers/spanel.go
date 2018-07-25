@@ -59,7 +59,10 @@ func DeploySpanelByHostname(hostname string) (string, error) {
 		return "", errors.New(msg)
 	}
 
-	go SendCommand(device.Address, envFile, dockerCompose)
+	respChannel := make(chan elkReport, 1)
+	go SendCommand(device.Address, envFile, dockerCompose, respChannel)
+
+	<-respChannel
 
 	msg := fmt.Sprintf("[%s] deployment started", allCaps)
 	return msg, nil

@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/byuoitav/raspi-deployment-microservice/helpers"
-	"github.com/jessemillar/jsonresp"
 	"github.com/labstack/echo"
 )
 
@@ -16,11 +15,11 @@ func WebhookDeployment(context echo.Context) error {
 
 	response, err := helpers.ScheduleDeployment(deviceClass, deploymentType)
 	if err != nil {
-		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
+		context.JSON(http.StatusBadRequest, err.Error())
 		return nil
 	}
 
-	jsonresp.New(context.Response(), http.StatusOK, response)
+	context.JSON(http.StatusOK, response)
 	return nil
 }
 
@@ -39,11 +38,11 @@ func EnableDeploymentsByBranch(context echo.Context) error {
 func WebhookDevice(context echo.Context) error {
 	response, err := helpers.DeployDevice(context.Param("hostname"))
 	if err != nil {
-		jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
+		context.JSON(http.StatusBadRequest, err.Error())
 		return nil
 	}
 
-	jsonresp.New(context.Response(), http.StatusOK, response)
+	context.JSON(http.StatusOK, response)
 	return nil
 }
 
@@ -59,7 +58,7 @@ func WebhookSchedulingDevice(context echo.Context) error {
 		return err
 	}
 
-	jsonresp.New(context.Response(), http.StatusOK, response)
+	context.JSON(http.StatusOK, response)
 	return nil
 }
 

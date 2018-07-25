@@ -26,13 +26,12 @@ func HoldDeployment(branch string, status bool) {
 }
 
 // deploys/schedules deployments based on deploymentType
-func ScheduleDeployment(deviceClass, deploymentType string) (string, error) {
+func ScheduleDeployment(deviceClass, deploymentType string) ([]elkReport, error) {
 
 	if scheduledDeployments[deploymentType] {
-
-		msg := fmt.Sprintf("%s deployments are currently being held")
+		msg := fmt.Sprintf("%s deployments are currently being held", deploymentType)
 		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
-		return "", errors.New(msg)
+		return []elkReport{}, errors.New(msg)
 	}
 
 	switch deploymentType {
@@ -58,11 +57,8 @@ func ScheduleDeployment(deviceClass, deploymentType string) (string, error) {
 	*/
 
 	default:
-		err := Deploy(deviceClass, deploymentType)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("%s deployment started", deploymentType), nil
+		report, err := Deploy(deviceClass, deploymentType)
+		return report, err
 	}
 }
 
