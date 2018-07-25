@@ -9,7 +9,7 @@ EB_BUCKET=elasticbeanstalk-us-west-2-194925301021
 echo $BRANCH
 DOCKERRUN_FILE=$SHA1-Dockerrun.aws.json
 
-if [ "$BRANCH" == "production" ]; then 
+if [ "$BRANCH" == "master" ]; then 
 
 	sed "s/<TAG>/$BRANCH/" < Dockerrun.aws.json > $DOCKERRUN_FILE
 	aws configure set default.region us-west-2
@@ -19,7 +19,7 @@ if [ "$BRANCH" == "production" ]; then
 	
 	# Update Elastic Beanstalk environment to new version
 	aws elasticbeanstalk update-environment --environment-name $PROJECT_NAME-env --version-label $SHA1
-elif [ "$BRANCH" == "master" ]; then
+elif [ "$BRANCH" == "stage" ]; then
 
     #We don't have a stage area yet. 
     exit 0
