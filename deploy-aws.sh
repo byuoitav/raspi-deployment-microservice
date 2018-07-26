@@ -1,4 +1,4 @@
-#!/usr/bin/env bash 
+#!/usr/bin/env sh 
 
 PROJECT_NAME=$1
 SHA1=$2 # Nab the SHA1 of the desired build from a command-line argument
@@ -9,18 +9,18 @@ EB_BUCKET=elasticbeanstalk-us-west-2-194925301021
 echo $BRANCH
 DOCKERRUN_FILE=$PROJECT_NAME-$BRANCH-Dockerrun.aws.json
 
-if [[ "$BRANCH" == "master" ]]; then 
+if [ "$BRANCH" == "master" ]; then 
     echo "yo"
 
     TAG=development
     ENV_NAME=$PROJECT_NAME-env
 
-elif [[ "$BRANCH" == "stage" ]]; then
+elif [ "$BRANCH" == "stage" ]; then
 
     TAG=stage
     ENV_NAME=$PROJECT_NAME-stg
 
-elif [[ "$BRANCH" == "production" ]]; then
+elif [ "$BRANCH" == "production" ]; then
 
     TAG=latest
     ENV_NAME=$PROJECT_NAME-env
