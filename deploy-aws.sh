@@ -7,43 +7,33 @@ EB_BUCKET=elasticbeanstalk-us-west-2-194925301021
 
 # Create new Elastic Beanstalk version
 echo $BRANCH
-DOCKERRUN_FILE=$PROJECT_NAME-$SHA1-Dockerrun.aws.json
+DOCKERRUN_FILE=$PROJECT_NAME-$BRANCH-Dockerrun.aws.json
 
 if [ "$BRANCH" == "master" ]; then 
+    echo "yo"
 
-	sed "s/<TAG>/development/" < Dockerrun.aws.json > $DOCKERRUN_FILE
+    TAG=development
+    ENV_NAME=$PROJECT_NAME-env
+
+elif [ "$BRANCH" == "stage" ]; then
+
+    TAG=stage
+    ENV_NAME=$PROJECT_NAME-stg
+
+elif [ "$BRANCH" == "production" ]; then
+
+    TAG=latest
+    ENV_NAME=$PROJECT_NAME-env
+fi
+
+echo $ENV_NAME
+exit 0
+
+	sed "s/<TAG>/$TAG/" < Dockerrun.aws.json > $DOCKERRUN_FILE
 	aws configure set default.region us-west-2
 	aws configure set region us-west-2
-	aws s3 cp Dockerrun.aws.json s3://$EB_BUCKET/$DOCKERRUN_FILE # Copy the Dockerrun file to the S3 bucket
+	aws s3 cp $DOCKERRUN_FILE s3://$EB_BUCKET/$DOCKERRUN_FILE # Copy the Dockerrun file to the S3 bucket
 	aws elasticbeanstalk create-application-version --application-name $PROJECT_NAME --version-label $SHA1 --source-bundle S3Bucket=$EB_BUCKET,S3Key=$DOCKERRUN_FILE
 	
 	# Update Elastic Beanstalk environment to new version
-	aws elasticbeanstalk update-environment --environment-name $PROJECT_NAME-env --version-label $SHA1
-elif [ "$BRANCH" == "stage" ]; then
-
-    #We don't have a stage area yet. 
-    exit 0
-
-	sed "s/<TAG>/stage/" < Dockerrun.aws.json > $DOCKERRUN_FILE
-	aws configure set default.region us-west-2
-	aws configure set region us-west-2
-	aws s3 cp Dockerrun.aws.json s3://$EB_BUCKET/$DOCKERRUN_FILE # Copy the Dockerrun file to the S3 bucket
-    aws elasticbeanstalk create-application-version --application-name $PROJECT_NAME --version-label $SHA1 --source-bundle S3Bucket=$EB_BUCKET,S3Key=$DOCKERRUN_FILE
-	
-	# Update Elastic Beanstalk environment to new version
-	aws elasticbeanstalk update-environment --environment-name $PROJECT_NAME-stage --version-label $SHA1
-elif [ "$BRANCH" == "production" ]; then
-
-    #We don't have a stage area yet. 
-    exit 0
-
-	sed "s/<TAG>/stage/" < Dockerrun.aws.json > $DOCKERRUN_FILE
-	aws configure set default.region us-west-2
-	aws configure set region us-west-2
-	aws s3 cp Dockerrun.aws.json s3://$EB_BUCKET/$DOCKERRUN_FILE # Copy the Dockerrun file to the S3 bucket
-    aws elasticbeanstalk create-application-version --application-name $PROJECT_NAME --version-label $SHA1 --source-bundle S3Bucket=$EB_BUCKET,S3Key=$DOCKERRUN_FILE
-	
-	# Update Elastic Beanstalk environment to new version
-	aws elasticbeanstalk update-environment --environment-name $PROJECT_NAME-env --version-label $SHA1
-
-fi
+	aws elasticbeanstalk update-environment --environment-name $ENV_NAME --version-label $SHA1
