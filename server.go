@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/byuoitav/authmiddleware"
+	"github.com/byuoitav/common/db"
 	"github.com/byuoitav/hateoas"
 	"github.com/byuoitav/raspi-deployment-microservice/handlers"
 	"github.com/jessemillar/health"
@@ -29,6 +31,7 @@ func main() {
 	router.Static("/*", "public")
 	router.GET("/", echo.WrapHandler(http.HandlerFunc(hateoas.RootResponse)))
 	router.GET("/health", echo.WrapHandler(http.HandlerFunc(health.Check)))
+	router.GET("/mstatus", GetStatus)
 
 	secure.GET("/webhook/:class/:designation", handlers.WebhookDeployment)
 	secure.GET("/webhook/:branch/disable", handlers.DisableDeploymentsByBranch)
@@ -49,4 +52,27 @@ func main() {
 	}
 
 	router.StartServer(&server)
+}
+
+func GetStatus(context echo.Context) error {
+	var s si.Status
+	var err error
+
+	s.Version, err = si.GetVersion("version.txt")
+	if err != nil {
+		return context.JSON(http.StatusOK, "Failed to open version.txt")
+	}
+
+	// Test a database retrieval to assess the status.
+	vals, err := db.GetDB().GetAllBuildings()
+	if len(vals) < 1 || err != nil {
+		s.Status = si.StatusDead
+		s.StatusInfo = fmt.Sprintf("Unable to access database. Error: %s", err)
+	} else {
+		s.Status = si.StatusOK
+		s.StatusInfo = ""
+	}
+	log.L.Info("Getting Mstatus")
+
+	return context.JSON(http.StatusOK, s)
 }
