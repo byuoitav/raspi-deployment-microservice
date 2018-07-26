@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/byuoitav/authmiddleware"
 	"github.com/byuoitav/common/db"
-	"github.com/byuoitav/hateoas"
+	"github.com/byuoitav/common/log"
+	si "github.com/byuoitav/device-monitoring-microservice/statusinfrastructure"
 	"github.com/byuoitav/raspi-deployment-microservice/handlers"
 	"github.com/jessemillar/health"
 	"github.com/labstack/echo"
@@ -15,11 +15,6 @@ import (
 )
 
 func main() {
-	err := hateoas.Load("https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/swagger.json")
-	if err != nil {
-		log.Fatalln("Could not load Swagger file. Error: " + err.Error())
-	}
-
 	port := ":8008"
 	router := echo.New()
 	router.Pre(middleware.RemoveTrailingSlash())
@@ -29,7 +24,6 @@ func main() {
 	secure := router.Group("", echo.WrapMiddleware(authmiddleware.Authenticate))
 
 	router.Static("/*", "public")
-	router.GET("/", echo.WrapHandler(http.HandlerFunc(hateoas.RootResponse)))
 	router.GET("/health", echo.WrapHandler(http.HandlerFunc(health.Check)))
 	router.GET("/mstatus", GetStatus)
 
