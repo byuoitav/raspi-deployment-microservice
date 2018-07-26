@@ -17,8 +17,8 @@ import (
 const NUM_BYTES = 8
 const PORT = ":5001"                                            //port the designation microservice works on
 const ENDPOINT = "/configurations/designations/%d/%d/variables" //endpoint we use to make request against designation microservice
-const DOCKER_PATH = "/src/github.com/byuoitav/raspi-deployment-microservice/public/"
-const ENVIRO_PATH = "/src/github.com/byuoitav/raspi-deployment-microservice/public/"
+const DOCKER_PATH = "/public/"
+const ENVIRO_PATH = "/public/"
 
 // retrieveEnvironmentVariables gets the environment variables for each Pi as a file to SCP over
 func retrieveEnvironmentVariables(class, designation string) (string, error) {
