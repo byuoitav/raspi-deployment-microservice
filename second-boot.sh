@@ -27,12 +27,12 @@ touch /tmp/got-pi-hostname
 printf "\nrecieved env. variables\n"
 
 # maria db setup
-until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh); do
-	echo "Trying again."
-done
-chmod +x /tmp/mariadb-setup.sh
+#until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/mariadb-setup.sh > /tmp/mariadb-setup.sh); do
+#	echo "Trying again."
+#done
+#chmod +x /tmp/mariadb-setup.sh
 
-/tmp/mariadb-setup.sh
+#/tmp/mariadb-setup.sh
 
 # salt setup
 until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/salt-setup.sh > /tmp/salt-setup.sh); do
