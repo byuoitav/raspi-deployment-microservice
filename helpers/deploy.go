@@ -3,6 +3,7 @@ package helpers
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -136,12 +137,10 @@ func DeployDevice(hostname string) (elkReport, error) {
 	//get device class
 	var deviceClass string
 	for _, device := range room.Devices {
-
 		l.L.Infof("[helpers] found device: %s of class: %s", device.Name, device.Type.ID)
-
 		if device.ID == hostname { //found device
-
 			deviceClass = device.Type.ID
+			break
 		}
 	}
 
@@ -152,15 +151,17 @@ func DeployDevice(hostname string) (elkReport, error) {
 	}
 
 	//get environment file based on the two IDs
-	envFile, err := retrieveEnvironmentVariables(deviceClass, room.Designation)
-	if err != nil {
-		return report, errors.New(fmt.Sprintf("error fetching environment variables: %s", err.Error()))
-	}
+	/*
+		envFile, err := retrieveEnvironmentVariables(deviceClass, room.Designation)
+		if err != nil {
+			return report, errors.New(fmt.Sprintf("error fetching environment variables: %s", err.Error()))
+		}
 
-	dockerCompose, err := RetrieveDockerCompose(deviceClass, room.Designation)
-	if err != nil {
-		return report, errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
-	}
+		dockerCompose, err := RetrieveDockerCompose(deviceClass, room.Designation)
+		if err != nil {
+			return report, errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
+		}
+	*/
 
 	dev, err := db.GetDB().GetDevice(hostname)
 	if err != nil {
@@ -169,7 +170,8 @@ func DeployDevice(hostname string) (elkReport, error) {
 	}
 
 	respChan := make(chan elkReport, 1)
-	go SendCommand(dev.Address, envFile, dockerCompose, respChan) // Start an update for the Pi
+	//	go SendCommand(dev.Address, envFile, dockerCompose, respChan) // Start an update for the Pi
+	go SendCommand(dev.Address, "", "", respChan) // Start an update for the Pi
 
 	report = <-respChan
 
@@ -234,7 +236,35 @@ func reportToELK(hostname string, msg string, success bool) elkReport {
 }
 
 func SendCommand(hostname, environment, docker string, respChan chan elkReport) error {
-	connection, err := ssh.Dial("tcp", hostname+":22", sshConfig)
+	// read the private key file
+	key, err := ioutil.ReadFile("path/to/private.key")
+	if err != nil {
+		return fmt.Errorf("failed to read private key: %v", err)
+	}
+
+	l.L.Infof("Successfully read private key file")
+
+	// create the signer for the private key
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		return fmt.Errorf("unable to parse private key: %v", err)
+	}
+
+	l.L.Infof("Successfully created signer for private key")
+
+	// build ssh config
+	config := &ssh.ClientConfig{
+		User: os.Getenv("PI_SSH_USERNAME"),
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // TODO this isn't very secure but idk what else to do...?
+		Timeout:         5 * time.Second,
+	}
+
+	l.L.Infof("Created ssh config: %+v", config)
+
+	connection, err := ssh.Dial("tcp", hostname+":22", config)
 	if err != nil {
 		msg := fmt.Sprintf("Error dialing %s: %s", hostname, err.Error())
 		l.L.Infof(msg)
