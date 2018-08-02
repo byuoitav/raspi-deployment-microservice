@@ -1,183 +1,280 @@
 package helpers
 
 import (
-	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/byuoitav/common/db"
-	"github.com/byuoitav/common/events"
-	l "github.com/byuoitav/common/log"
+	"github.com/byuoitav/common/log"
+	"github.com/byuoitav/common/nerr"
 	"github.com/byuoitav/common/structs"
-	"github.com/byuoitav/event-translator-microservice/elkreporting"
-
-	"github.com/fatih/color"
-
 	"golang.org/x/crypto/ssh"
 )
 
+// DeployReport is returned after attempting a deployment
+type DeployReport struct {
+	Address   string `json:"address"`
+	Timestamp string `json:"timestamp"`
+	Message   string `json:"msg"`
+	Success   bool   `json:"success"`
+}
+
+var (
+	signer     ssh.Signer
+	piUsername = os.Getenv("PI_SSH_USERNAME")
+)
+
+func init() {
+	// read private key file
+	key, err := ioutil.ReadFile(os.Getenv("HOME") + "/.ssh/id_rsa")
+	if err != nil {
+		log.L.Fatalf("unable to read private ssh key: %v", err)
+	}
+
+	// parse the pem encoded private key
+	signer, err = ssh.ParsePrivateKey(key)
+	if err != nil {
+		log.L.Fatalf("unable to read parse private ssh key: %v", err)
+	}
+
+	// validate $PI_SSH_USERNAME is set
+	if len(piUsername) == 0 {
+		log.L.Fatalf("PI_SSH_USERNAME must be set.")
+	}
+}
+
+// DeployByHostname deploys to one specific device with the corrosponding hostname
+func DeployByHostname(hostname string) ([]DeployReport, *nerr.E) {
+	var reports []DeployReport
+	log.L.Infof("Starting DeployByHostname to %v", hostname)
+
+	// get room from database
+	room, err := db.GetDB().GetRoom(hostname[:strings.LastIndex(hostname, "-")])
+	if err != nil {
+		return reports, nerr.Translate(err).Addf("failed to get room for hostname %v", hostname)
+	}
+
+	log.L.Debugf("Got room %v, looking for hostname %v", room.ID, hostname)
+
+	// find the specific device
+	var device structs.Device
+	for i := range room.Devices {
+		log.L.Debugf("Checking %v...", room.Devices[i].ID)
+		if strings.EqualFold(room.Devices[i].ID, hostname) {
+			device = room.Devices[i]
+			break
+		}
+	}
+
+	// if the device wasn't found
+	if len(device.Type.ID) == 0 {
+		return reports, nerr.Create(fmt.Sprintf("failed to find device %v", hostname), reflect.TypeOf("").String())
+	}
+
+	log.L.Debugf("Got device %v", device.ID)
+
+	reports, err = deployHelper([]structs.Device{device}, device.Type.ID, room.Designation)
+	if err != nil {
+		return reports, nerr.Translate(err).Addf("failed to deploy to device %v", device.ID)
+	}
+
+	return reports, nil
+}
+
+// DeployByTypeAndDesignation deploys to all devices of the given type and designation
+func DeployByTypeAndDesignation(deviceType, designation string) ([]DeployReport, *nerr.E) {
+	var reports []DeployReport
+	log.L.Infof("Deploying by type %v and designation %v", deviceType, designation)
+
+	// TODO create type/designation function in db
+	allDevices, err := db.GetDB().GetDevicesByRoleAndTypeAndDesignation("ControlProcessor", deviceType, designation)
+	if err != nil {
+		return reports, nerr.Translate(err).Addf("failed to get devices by type %v and designation %v", deviceType, designation)
+	}
+
+	log.L.Debugf("Got %v devices matching type %v and designation %v", len(allDevices), deviceType, designation)
+
+	reports, err = deployHelper(allDevices, deviceType, designation)
+	if err != nil {
+		return reports, nerr.Translate(err).Addf("failed to deploy to devices by type %v and designation %v", deviceType, designation)
+	}
+
+	return reports, nil
+}
+
+// DeployByBuildingAndTypeAndDesignation deploys to all devices within the given building of the given type/designation
+func DeployByBuildingAndTypeAndDesignation(building, deviceType, designation string) ([]DeployReport, *nerr.E) {
+	var reports []DeployReport
+	log.L.Infof("Deploying to building %v, with device type %v and designation %v", building, deviceType, designation)
+
+	// TODO create type/designation function in db
+	allDevices, err := db.GetDB().GetDevicesByRoleAndTypeAndDesignation("ControlProcessor", deviceType, designation)
+	if err != nil {
+		return reports, nerr.Translate(err).Addf("failed to get devices by type %v and designation %v", deviceType, designation)
+	}
+
+	log.L.Debugf("Filtering for devices in building %s", building)
+
+	// filter out by building
+	var buildingDevices []structs.Device
+	for i := range allDevices {
+		if strings.EqualFold(allDevices[i].ID[:strings.Index(allDevices[i].ID, "-")], building) {
+			buildingDevices = append(buildingDevices, allDevices[i])
+		}
+	}
+
+	log.L.Debugf("Got %v devices in building %v, with type %v and designation %v", len(buildingDevices), building, deviceType, designation)
+
+	reports, err = deployHelper(allDevices, deviceType, designation)
+	if err != nil {
+		return reports, nerr.Translate(err).Addf("failed to deploy to devices in building %v by type %v and designation %v", building, deviceType, designation)
+	}
+
+	return reports, nil
+}
+
+// DeployHelper takes a slice of devices and gets all the data it needs to deploy
+func deployHelper(devices []structs.Device, deviceType, designation string) ([]DeployReport, *nerr.E) {
+	var reports []DeployReport
+	var reportsMu sync.Mutex
+
+	// get env vars
+	envVars, err := retrieveEnvironmentVariables(deviceType, designation)
+	if err != nil {
+		return reports, nerr.Translate(err).Addf("unable to retrieve environment variables: %v", err)
+	}
+
+	// get docker compose file
+	dockerCompose, err := RetrieveDockerCompose(deviceType, designation)
+	if err != nil {
+		return reports, nerr.Translate(err).Addf("unable to retrieve docker-compose file: %v", err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(devices))
+
+	// deploy to each device
+	for i := range devices {
+		go func() {
+			report := deploy(devices[i].Address, []byte(envVars), []byte(dockerCompose), os.Stdout)
+
+			reportsMu.Lock()
+			reports = append(reports, report)
+			reportsMu.Unlock()
+
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+	return reports, nil
+}
+
+// Deploy deploys to a single pi
+func deploy(address string, envVars, dockerCompose []byte, output io.Writer) DeployReport {
+	report := DeployReport{
+		Address:   address,
+		Timestamp: time.Now().Format(time.RFC3339),
+		Success:   false,
+	}
+
+	if len(address) == 0 {
+		report.Message = fmt.Sprintf("Address to deploy cannot be empty")
+		return report
+	}
+
+	log.L.Infof("Deploying to %s", address)
+
+	// build ssh config
+	sshConfig := &ssh.ClientConfig{
+		User: piUsername,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // TODO should we check the host key..?
+		Timeout:         5 * time.Second,
+	}
+
+	// ssh into address, on port 22
+	client, err := ssh.Dial("tcp", address+":22", sshConfig)
+	if err != nil {
+		report.Message = fmt.Sprintf("failed to ssh into %v: %v", address, err)
+		return report
+	}
+	defer client.Close()
+
+	log.L.Infof("Successfully opened connection to %s", address)
+
+	// open a new session with the client
+	session, err := client.NewSession()
+	if err != nil {
+		report.Message = fmt.Sprintf("unable to create session with %v: %v", address, err)
+		return report
+	}
+
+	// get stdout/err pipes
+	stdout, err := session.StdoutPipe()
+	if err != nil {
+		report.Message = fmt.Sprintf("failed to get stdout pipe with %v: %v", address, err)
+		return report
+	}
+
+	stderr, err := session.StderrPipe()
+	if err != nil {
+		report.Message = fmt.Sprintf("failed to get stderr pipe with %v: %v", address, err)
+		return report
+	}
+
+	// read from output pipes, and write the output to output
+	go readWrite("stdout", stdout, output, 512*1)
+	go readWrite("stderr", stderr, output, 512*1)
+
+	// execute command
+	err = session.Run("docker ps")
+	if err != nil {
+		report.Message = fmt.Sprintf("failed to run command on %v: %v", address, err)
+		return report
+	}
+
+	return report
+}
+
+func readWrite(fromName string, from io.Reader, to io.Writer, bufSize int) {
+	buffer := make([]byte, bufSize)
+	for {
+		n, err := from.Read(buffer)
+		if err != nil {
+			if err == io.EOF {
+				// write last few bytes
+				to.Write(buffer[:n])
+				to.Write([]byte(fmt.Sprintf("Finished reading from %s\n", fromName)))
+				return
+			}
+
+			// write error to to
+			to.Write([]byte(fmt.Sprintf("error reading from %s: %s\n", fromName, err)))
+			return
+		}
+
+		// write bytes to to
+		to.Write(buffer[:n])
+	}
+}
+
+/*
 type device struct {
 	Name    string `json:"name"`
 	Address string `json:"address"`
 	Type    string `json:"type"`
 }
 
-type elkReport struct {
-	Hostname  string `json:"hostname"`
-	Timestamp string `json:"timestamp"`
-	Message   string `json:"msg"`
-	Success   bool   `json:"success"`
-}
-
-var sshConfig = &ssh.ClientConfig{
-	User: os.Getenv("PI_SSH_USERNAME"),
-	Auth: []ssh.AuthMethod{
-		ssh.Password(os.Getenv("PI_SSH_PASSWORD")),
-	},
-	Timeout: 5 * time.Second,
-}
-
 var TIMER_DURATION = 3 * time.Minute
-
-func deployHelper(allDevices []structs.Device, class, designation string) ([]elkReport, error) {
-	l.SetLevel("debug")
-
-	var report []elkReport
-
-	environment, err := retrieveEnvironmentVariables(class, designation)
-	if err != nil {
-		return report, err
-	}
-
-	dockerCompose, err := RetrieveDockerCompose(class, designation)
-	if err != nil {
-		return report, errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
-	}
-
-	//make the channel to get the responses down
-	respChan := make(chan elkReport, len(allDevices))
-	l.L.Debugf("Sending %v comands", len(allDevices))
-	for _, k := range allDevices {
-		l.L.Debugf("sending to %v", k.ID)
-	}
-
-	for i := range allDevices {
-		go SendCommand(allDevices[i].Address, environment, dockerCompose, respChan) // Start an update for each Pi
-	}
-
-	for i := 0; i < len(allDevices); i++ {
-		cur := <-respChan
-
-		l.L.Debugf("Got response from %v", cur.Hostname)
-		l.L.Debugf("Waiting on %v more", len(allDevices)-(i+1))
-		report = append(report, cur)
-	}
-
-	l.SetLevel("info")
-	return report, nil
-
-}
-
-//deploys to all pi's with the given class and designation
-//e.g. class = "av-control"
-//e.g. desigation = "development"
-func Deploy(class, designation string) ([]elkReport, error) {
-	var report []elkReport
-
-	l.L.Infof("%s", color.HiGreenString("[helpers] deployment started"))                                       //scheduledDeployments[deploymentType] = false //why?? it seems like this code doesn't get executed if this line evaluates to true
-	allDevices, er := db.GetDB().GetDevicesByRoleAndTypeAndDesignation("ControlProcessor", class, designation) //TODO: Make the deployment process role-dependent.
-	if er != nil {
-		return report, er
-	}
-
-	return deployHelper(allDevices, class, designation)
-}
-
-func DeployBuilding(building, class, designation string) ([]elkReport, error) {
-	var report []elkReport
-
-	l.L.Infof("%s", color.HiGreenString("[helpers] deployment started"))                                       //scheduledDeployments[deploymentType] = false //why?? it seems like this code doesn't get executed if this line evaluates to true
-	allDevices, er := db.GetDB().GetDevicesByRoleAndTypeAndDesignation("ControlProcessor", class, designation) //TODO: Make the deployment process role-dependent.
-	if er != nil {
-		return report, er
-	}
-
-	var toDeploy []structs.Device
-
-	//filter by building
-	for i := range allDevices {
-		if strings.EqualFold(allDevices[i].ID[:strings.Index(allDevices[i].ID, "-")], building) {
-			toDeploy = append(toDeploy, allDevices[i])
-		}
-	}
-
-	return deployHelper(toDeploy, class, designation)
-}
-
-func DeployDevice(hostname string) (elkReport, error) {
-	var report elkReport
-
-	l.L.Infof("[helpers] starting single deployment...")
-
-	hostname = strings.ToUpper(hostname)
-
-	//retrieve room from configuration database
-	room, err := db.GetDB().GetRoom(hostname[:strings.LastIndex(hostname, "-")])
-	if err != nil {
-		msg := fmt.Sprintf("failed to get room: %s", err.Error())
-		l.L.Infof("%s", color.HiRedString("[helpers] %s", msg))
-		return report, errors.New(msg)
-	}
-
-	l.L.Infof("[helpers] looking for device: %s", hostname)
-
-	//get device class
-	var deviceClass string
-	for _, device := range room.Devices {
-		l.L.Infof("[helpers] found device: %s of class: %s", device.Name, device.Type.ID)
-		if device.ID == hostname { //found device
-			deviceClass = device.Type.ID
-			break
-		}
-	}
-
-	if len(deviceClass) == 0 { //if we don't find anything
-		msg := "device class not found"
-		l.L.Infof("%s", color.HiRedString("[helpers] %s", msg))
-		return report, errors.New(msg)
-	}
-
-	//get environment file based on the two IDs
-	/*
-		envFile, err := retrieveEnvironmentVariables(deviceClass, room.Designation)
-		if err != nil {
-			return report, errors.New(fmt.Sprintf("error fetching environment variables: %s", err.Error()))
-		}
-
-		dockerCompose, err := RetrieveDockerCompose(deviceClass, room.Designation)
-		if err != nil {
-			return report, errors.New(fmt.Sprintf("error fetching docker-compose file: %s", err.Error()))
-		}
-	*/
-
-	dev, err := db.GetDB().GetDevice(hostname)
-	if err != nil {
-		l.L.Infof("error getting device")
-		return report, err
-	}
-
-	respChan := make(chan elkReport, 1)
-	//	go SendCommand(dev.Address, envFile, dockerCompose, respChan) // Start an update for the Pi
-	go SendCommand(dev.Address, "", "", respChan) // Start an update for the Pi
-
-	report = <-respChan
-
-	l.L.Infof("deployment started")
-	return report, nil
-}
 
 func reportToELK(hostname string, msg string, success bool) elkReport {
 
@@ -229,92 +326,9 @@ func reportToELK(hostname string, msg string, success bool) elkReport {
 		}
 	}
 
-	l.L.Debugf("Sending event to %v", os.Getenv("ELASTIC_API_EVENTS"))
+	log.L.Debugf("Sending event to %v", os.Getenv("ELASTIC_API_EVENTS"))
 	elkreporting.SendElkEvent(os.Getenv("ELASTIC_API_EVENTS"), e, 3*time.Second)
 
 	return report
 }
-
-func SendCommand(hostname, environment, docker string, respChan chan elkReport) error {
-	// read the private key file
-	key, err := ioutil.ReadFile("path/to/private.key")
-	if err != nil {
-		return fmt.Errorf("failed to read private key: %v", err)
-	}
-
-	l.L.Infof("Successfully read private key file")
-
-	// create the signer for the private key
-	signer, err := ssh.ParsePrivateKey(key)
-	if err != nil {
-		return fmt.Errorf("unable to parse private key: %v", err)
-	}
-
-	l.L.Infof("Successfully created signer for private key")
-
-	// build ssh config
-	config := &ssh.ClientConfig{
-		User: os.Getenv("PI_SSH_USERNAME"),
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // TODO this isn't very secure but idk what else to do...?
-		Timeout:         5 * time.Second,
-	}
-
-	l.L.Infof("Created ssh config: %+v", config)
-
-	connection, err := ssh.Dial("tcp", hostname+":22", config)
-	if err != nil {
-		msg := fmt.Sprintf("Error dialing %s: %s", hostname, err.Error())
-		l.L.Infof(msg)
-
-		val := reportToELK(hostname, msg, false)
-		val.Success = false
-		respChan <- val
-		return err
-	}
-
-	l.L.Infof("ssh connection established to %s", hostname)
-	defer connection.Close()
-
-	magicSession, err := connection.NewSession()
-	if err != nil {
-		msg := fmt.Sprintf("error starting a session with %s: %s", hostname, err.Error())
-		l.L.Infof(msg)
-
-		val := reportToELK(hostname, msg, false)
-		val.Success = false
-		respChan <- val
-		return err
-	}
-
-	//report that we started a connection and issued command
-
-	respChan <- elkReport{
-		Message:   "Connection started and command isssued.",
-		Hostname:  hostname,
-		Success:   true,
-		Timestamp: time.Now().Format(time.RFC3339),
-	}
-
-	l.L.Infof("SSH session established with %s", hostname)
-
-	longCommand := fmt.Sprintf("bash -c 'curl %s/%s --output /tmp/docker-compose-tmp.yml && curl %s/%s --output /home/pi/.environment-variables && curl %s/move-environment-variables.sh --output /home/pi/move-environment-variables.sh && chmod +x /home/pi/move-environment-variables.sh && /home/pi/move-environment-variables.sh && source /etc/environment && echo \"$(cat /tmp/docker-compose-tmp.yml)\" | envsubst > /tmp/docker-compose.yml && docker-compose -f /tmp/docker-compose.yml pull && docker stop $(docker ps -a -q) || true && docker rmi -f $(docker images -q --filter \"dangling=true\") || true && docker rm $(docker ps -a -q) || true && docker-compose -f /tmp/docker-compose.yml up -d' &> /tmp/deployment_logs.txt", os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS"), docker, os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS"), environment, os.Getenv("RASPI_DEPLOYMENT_MICROSERVICE_ADDRESS"))
-
-	l.L.Infof("Running the following command on %s: %s", hostname, longCommand)
-
-	err = magicSession.Run(longCommand)
-	if err != nil {
-		msg := fmt.Sprintf("%s", color.HiRedString("[helpers] error updating %s: %s", hostname, err.Error()))
-		l.L.Infof(msg)
-		reportToELK(hostname, msg, false)
-		return errors.New(msg)
-	}
-
-	l.L.Infof("%s", color.HiGreenString("[helpers] finished updating %s", hostname))
-
-	reportToELK(hostname, "Command successfully executed.", true)
-
-	return nil
-}
+*/

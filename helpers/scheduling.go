@@ -1,13 +1,6 @@
 package helpers
 
-import (
-	"errors"
-	"fmt"
-	"log"
-	"time"
-
-	"github.com/fatih/color"
-)
+/*
 
 const STAGE_DEPLOYMENT_HOUR = 0
 const PROD_DEPLOYMENT_HOUR = 0
@@ -35,7 +28,7 @@ func ScheduleDeployment(deviceClass, deploymentType string) ([]elkReport, error)
 	}
 
 	switch deploymentType {
-	/*
+	/
 			case "stage":
 				t := GetTimeTomorrowByHour(STAGE_DEPLOYMENT_HOUR)
 				schedule, err := Schedule(t, ACCURACY)
@@ -54,10 +47,10 @@ func ScheduleDeployment(deviceClass, deploymentType string) ([]elkReport, error)
 
 			go DeployOnSchedule(schedule, deploymentType)
 			return fmt.Sprintf("%s deployment scheduled for %s", deploymentType, t), nil
-	*/
+	/
 
 	default:
-		report, err := Deploy(deviceClass, deploymentType)
+		report, err := DeployByClass(deviceClass, deploymentType)
 		return report, err
 	}
 }
@@ -73,7 +66,7 @@ func DeployOnSchedule(s chan time.Time, deviceClass, deploymentType string) {
 	<-s
 	close(s)
 
-	Deploy(deviceClass, deploymentType)
+	DeployByClass(deviceClass, deploymentType)
 }
 
 // schedules a timer that returns when the specified time is reached
@@ -117,3 +110,4 @@ func GetTimeTomorrowByHour(hour int) time.Time {
 	t = time.Date(t.Year(), t.Month(), t.Day(), hour, 0, 0, 0, t.Location())
 	return t
 }
+*/
