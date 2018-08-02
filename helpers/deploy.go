@@ -25,10 +25,7 @@ type DeployReport struct {
 	Success   bool   `json:"success"`
 }
 
-var (
-	signer     ssh.Signer
-	piUsername = os.Getenv("PI_SSH_USERNAME")
-)
+var sshConfig *ssh.ClientConfig
 
 func init() {
 	// read private key file
@@ -38,14 +35,25 @@ func init() {
 	}
 
 	// parse the pem encoded private key
-	signer, err = ssh.ParsePrivateKey(key)
+	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
 		log.L.Fatalf("unable to read parse private ssh key: %v", err)
 	}
 
-	// validate $PI_SSH_USERNAME is set
-	if len(piUsername) == 0 {
+	// get pi username
+	uname := os.Getenv("PI_SSH_USERNAME")
+	if len(uname) == 0 {
 		log.L.Fatalf("PI_SSH_USERNAME must be set.")
+	}
+
+	// build ssh config
+	sshConfig = &ssh.ClientConfig{
+		User: uname,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // TODO should we check the host key..?
+		Timeout:         5 * time.Second,
 	}
 }
 
@@ -79,7 +87,7 @@ func DeployByHostname(hostname string) ([]DeployReport, *nerr.E) {
 
 	log.L.Debugf("Got device %v", device.ID)
 
-	reports, err = deployHelper([]structs.Device{device}, device.Type.ID, room.Designation)
+	reports, err = DeployToDevices([]structs.Device{device}, device.Type.ID, room.Designation)
 	if err != nil {
 		return reports, nerr.Translate(err).Addf("failed to deploy to device %v", device.ID)
 	}
@@ -100,7 +108,7 @@ func DeployByTypeAndDesignation(deviceType, designation string) ([]DeployReport,
 
 	log.L.Debugf("Got %v devices matching type %v and designation %v", len(allDevices), deviceType, designation)
 
-	reports, err = deployHelper(allDevices, deviceType, designation)
+	reports, err = DeployToDevices(allDevices, deviceType, designation)
 	if err != nil {
 		return reports, nerr.Translate(err).Addf("failed to deploy to devices by type %v and designation %v", deviceType, designation)
 	}
@@ -131,7 +139,7 @@ func DeployByBuildingAndTypeAndDesignation(building, deviceType, designation str
 
 	log.L.Debugf("Got %v devices in building %v, with type %v and designation %v", len(buildingDevices), building, deviceType, designation)
 
-	reports, err = deployHelper(allDevices, deviceType, designation)
+	reports, err = DeployToDevices(allDevices, deviceType, designation)
 	if err != nil {
 		return reports, nerr.Translate(err).Addf("failed to deploy to devices in building %v by type %v and designation %v", building, deviceType, designation)
 	}
@@ -139,8 +147,8 @@ func DeployByBuildingAndTypeAndDesignation(building, deviceType, designation str
 	return reports, nil
 }
 
-// DeployHelper takes a slice of devices and gets all the data it needs to deploy
-func deployHelper(devices []structs.Device, deviceType, designation string) ([]DeployReport, *nerr.E) {
+// DeployToDevices takes a slice of devices and gets all the data it needs to deploy
+func DeployToDevices(devices []structs.Device, deviceType, designation string) ([]DeployReport, *nerr.E) {
 	var reports []DeployReport
 	var reportsMu sync.Mutex
 
@@ -161,15 +169,15 @@ func deployHelper(devices []structs.Device, deviceType, designation string) ([]D
 
 	// deploy to each device
 	for i := range devices {
-		go func() {
-			report := deploy(devices[i].Address, []byte(envVars), []byte(dockerCompose), os.Stdout)
+		go func(idx int) {
+			report := Deploy(devices[idx].Address, []byte(envVars), []byte(dockerCompose), os.Stdout)
 
 			reportsMu.Lock()
 			reports = append(reports, report)
 			reportsMu.Unlock()
 
 			wg.Done()
-		}()
+		}(i)
 	}
 
 	wg.Wait()
@@ -177,7 +185,7 @@ func deployHelper(devices []structs.Device, deviceType, designation string) ([]D
 }
 
 // Deploy deploys to a single pi
-func deploy(address string, envVars, dockerCompose []byte, output io.Writer) DeployReport {
+func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) DeployReport {
 	report := DeployReport{
 		Address:   address,
 		Timestamp: time.Now().Format(time.RFC3339),
@@ -191,80 +199,14 @@ func deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 
 	log.L.Infof("Deploying to %s", address)
 
-	// build ssh config
-	sshConfig := &ssh.ClientConfig{
-		User: piUsername,
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // TODO should we check the host key..?
-		Timeout:         5 * time.Second,
-	}
-
-	// ssh into address, on port 22
-	client, err := ssh.Dial("tcp", address+":22", sshConfig)
+	err := SSHAndRunCommand(address, "docker ps", os.Stdout)
 	if err != nil {
-		report.Message = fmt.Sprintf("failed to ssh into %v: %v", address, err)
-		return report
-	}
-	defer client.Close()
-
-	log.L.Infof("Successfully opened connection to %s", address)
-
-	// open a new session with the client
-	session, err := client.NewSession()
-	if err != nil {
-		report.Message = fmt.Sprintf("unable to create session with %v: %v", address, err)
-		return report
+		report.Message = fmt.Sprintf("failed to deploy to %v", address)
 	}
 
-	// get stdout/err pipes
-	stdout, err := session.StdoutPipe()
-	if err != nil {
-		report.Message = fmt.Sprintf("failed to get stdout pipe with %v: %v", address, err)
-		return report
-	}
-
-	stderr, err := session.StderrPipe()
-	if err != nil {
-		report.Message = fmt.Sprintf("failed to get stderr pipe with %v: %v", address, err)
-		return report
-	}
-
-	// read from output pipes, and write the output to output
-	go readWrite("stdout", stdout, output, 512*1)
-	go readWrite("stderr", stderr, output, 512*1)
-
-	// execute command
-	err = session.Run("docker ps")
-	if err != nil {
-		report.Message = fmt.Sprintf("failed to run command on %v: %v", address, err)
-		return report
-	}
+	report.Success = true
 
 	return report
-}
-
-func readWrite(fromName string, from io.Reader, to io.Writer, bufSize int) {
-	buffer := make([]byte, bufSize)
-	for {
-		n, err := from.Read(buffer)
-		if err != nil {
-			if err == io.EOF {
-				// write last few bytes
-				to.Write(buffer[:n])
-				to.Write([]byte(fmt.Sprintf("Finished reading from %s\n", fromName)))
-				return
-			}
-
-			// write error to to
-			to.Write([]byte(fmt.Sprintf("error reading from %s: %s\n", fromName, err)))
-			return
-		}
-
-		// write bytes to to
-		to.Write(buffer[:n])
-	}
 }
 
 /*
@@ -273,8 +215,6 @@ type device struct {
 	Address string `json:"address"`
 	Type    string `json:"type"`
 }
-
-var TIMER_DURATION = 3 * time.Minute
 
 func reportToELK(hostname string, msg string, success bool) elkReport {
 
