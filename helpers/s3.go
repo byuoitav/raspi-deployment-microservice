@@ -15,8 +15,8 @@ import (
 
 //const FILE_NAME = "environment-variables"                       //name of file we use later
 const NUM_BYTES = 8
-const PORT = ":5001"                                            //port the designation microservice works on
-const ENDPOINT = "/configurations/designations/%d/%d/variables" //endpoint we use to make request against designation microservice
+const PORT = ":5001"                                            // port the designation microservice works on
+const ENDPOINT = "/configurations/designations/%d/%d/variables" // endpoint we use to make request against designation microservice
 const DOCKER_PATH = "/public/"
 const ENVIRO_PATH = "/public/"
 

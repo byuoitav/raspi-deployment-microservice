@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/raspi-deployment-microservice/helpers"
@@ -13,12 +12,13 @@ import (
 func DeployByHostname(ctx echo.Context) error {
 	hostname := ctx.Param("hostname")
 
-	err := helpers.Deploy(hostname, []byte{}, []byte{}, os.Stdout)
+	reports, err := helpers.DeployByHostname(hostname)
 	if err != nil {
 		log.L.Warnf(err.Error())
+		return ctx.JSON(http.StatusInternalServerError, err)
 	}
 
-	return ctx.JSON(http.StatusOK, nil)
+	return ctx.JSON(http.StatusOK, reports)
 }
 
 // DeployByTypeAndDesignation handles the echo request to deploy to a type/designation
@@ -26,25 +26,46 @@ func DeployByTypeAndDesignation(ctx echo.Context) error {
 	deviceType := ctx.Param("type")
 	deviceDesignation := ctx.Param("designation")
 
-	/*
-		err := helpers.Deploy("itb-1101-cp2.byu.edu", "stage", []byte{}, []byte{})
-		if err != nil {
-			log.L.Warnf(err.Addf("failed to deploy to", deviceType).Error())
-		}
-	*/
+	reports, err := helpers.DeployByTypeAndDesignation(deviceType, deviceDesignation)
+	if err != nil {
+		log.L.Warnf(err.Error())
+		return ctx.JSON(http.StatusInternalServerError, err)
+	}
 
-	/*
-		response, err := helpers.ScheduleDeployment(deviceClass, deploymentType)
-		if err != nil {
-			context.JSON(http.StatusBadRequest, err.Error())
-			return nil
-		}
-	*/
-
-	return ctx.JSON(http.StatusOK, nil)
+	return ctx.JSON(http.StatusOK, reports)
 }
 
 // DeployByBuildingAndTypeAndDesignation handles the echo request to deploy to a building/type/designation
 func DeployByBuildingAndTypeAndDesignation(ctx echo.Context) error {
-	return nil
+	building := ctx.Param("building")
+	deviceType := ctx.Param("type")
+	deviceDesignation := ctx.Param("designation")
+
+	reports, err := helpers.DeployByBuildingAndTypeAndDesignation(building, deviceType, deviceDesignation)
+	if err != nil {
+		log.L.Warnf(err.Error())
+		return ctx.JSON(http.StatusInternalServerError, err)
+	}
+
+	return ctx.JSON(http.StatusOK, reports)
+}
+
+// EnableContacts handles the echo request to enable the contacts service on a specific hostname
+func EnableContacts(context echo.Context) error {
+	err := helpers.UpdateContactState(context.Param("hostname"), true)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, map[string]string{"Response": "Failed to set state"})
+	}
+
+	return context.JSON(http.StatusOK, map[string]string{"Response": "Success"})
+}
+
+// DisableContacts handles the echo request to disable the contacts service on a specific hostname
+func DisableContacts(context echo.Context) error {
+	err := helpers.UpdateContactState(context.Param("hostname"), false)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, map[string]string{"Response": "Failed to set state"})
+	}
+
+	return context.JSON(http.StatusOK, map[string]string{"Response": "Success"})
 }

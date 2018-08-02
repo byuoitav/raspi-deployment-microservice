@@ -16,6 +16,8 @@ func main() {
 	router.Pre(middleware.RemoveTrailingSlash())
 	router.Use(middleware.CORS())
 
+	//
+
 	// unautheticated routes
 	router.Static("/*", "public")
 	router.GET("/health", health)
@@ -23,12 +25,18 @@ func main() {
 
 	secure := router.Group("", echo.WrapMiddleware(authmiddleware.Authenticate))
 
-	// secure routes
+	/* secure routes */
+	// deployment
 	secure.GET("/webhook_device/:hostname", handlers.DeployByHostname)
 	secure.GET("/webhook/:type/:designation", handlers.DeployByTypeAndDesignation)
-	secure.GET("/webhook_building/:building/:class/:designation", handlers.DeployByBuildingAndTypeAndDesignation)
+	secure.GET("/webhook_building/:building/:type/:designation", handlers.DeployByBuildingAndTypeAndDesignation)
+
+	// divider sensor contacts enable/disable
+	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts)
+	secure.GET("/webhook_contacts/disable/:hostname", handlers.DisableContacts)
 
 	// TODO websocket and ui endpoints
+	// websocket/ui
 
 	err := router.StartServer(&http.Server{
 		Addr:           port,
@@ -49,17 +57,6 @@ func mstatus(ctx echo.Context) error {
 }
 
 /*
-func main() {
-	secure.GET("/webhook/:branch/disable", handlers.DisableDeploymentsByBranch)
-	secure.GET("/webhook/:branch/enable", handlers.EnableDeploymentsByBranch)
-
-	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts)
-	secure.GET("/webhook_contacts/disable/:hostname", handlers.DisableContacts)
-
-	secure.GET("/webhook/scheduling/:designation", handlers.WebhookSchedulingDeployment)
-	secure.GET("/webhook_device/scheduling/:hostname", handlers.WebhookSchedulingDevice)
-}
-
 func GetStatus(context echo.Context) error {
 	var s si.Status
 	var err error
