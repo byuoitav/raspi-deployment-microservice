@@ -87,9 +87,9 @@ func DeployByHostname(hostname string) ([]DeployReport, *nerr.E) {
 
 	log.L.Debugf("Got device %v", device.ID)
 
-	reports, err = DeployToDevices([]structs.Device{device}, device.Type.ID, room.Designation)
+	reports, er := DeployToDevices([]structs.Device{device}, device.Type.ID, room.Designation)
 	if err != nil {
-		return reports, nerr.Translate(err).Addf("failed to deploy to device %v", device.ID)
+		return reports, er.Addf("failed to deploy to device %v", device.ID)
 	}
 
 	return reports, nil
@@ -108,9 +108,9 @@ func DeployByTypeAndDesignation(deviceType, designation string) ([]DeployReport,
 
 	log.L.Debugf("Got %v devices matching type %v and designation %v", len(allDevices), deviceType, designation)
 
-	reports, err = DeployToDevices(allDevices, deviceType, designation)
+	reports, er := DeployToDevices(allDevices, deviceType, designation)
 	if err != nil {
-		return reports, nerr.Translate(err).Addf("failed to deploy to devices by type %v and designation %v", deviceType, designation)
+		return reports, er.Addf("failed to deploy to devices by type %v and designation %v", deviceType, designation)
 	}
 
 	return reports, nil
@@ -139,9 +139,9 @@ func DeployByBuildingAndTypeAndDesignation(building, deviceType, designation str
 
 	log.L.Debugf("Got %v devices in building %v, with type %v and designation %v", len(buildingDevices), building, deviceType, designation)
 
-	reports, err = DeployToDevices(allDevices, deviceType, designation)
+	reports, er := DeployToDevices(allDevices, deviceType, designation)
 	if err != nil {
-		return reports, nerr.Translate(err).Addf("failed to deploy to devices in building %v by type %v and designation %v", building, deviceType, designation)
+		return reports, er.Addf("failed to deploy to devices in building %v by type %v and designation %v", building, deviceType, designation)
 	}
 
 	return reports, nil
@@ -170,7 +170,7 @@ func DeployToDevices(devices []structs.Device, deviceType, designation string) (
 	// deploy to each device
 	for i := range devices {
 		go func(idx int) {
-			report := Deploy(devices[idx].Address, []byte(envVars), []byte(dockerCompose), os.Stdout)
+			report := Deploy(devices[idx].Address, envVars, dockerCompose, os.Stdout)
 
 			reportsMu.Lock()
 			reports = append(reports, report)
@@ -199,13 +199,38 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 
 	log.L.Infof("Deploying to %s", address)
 
-	err := SSHAndRunCommand(address, "docker ps", os.Stdout)
+	client, err := ssh.Dial("tcp", address+":22", sshConfig)
 	if err != nil {
-		report.Message = fmt.Sprintf("failed to deploy to %v", address)
+		report.Message = fmt.Sprintf("failed to open connection with %v: %v", address, err)
+		return report
+	}
+	defer client.Close()
+
+	log.SetLevel("debug")
+	log.L.Debugf("Successfully connected to %v", address)
+
+	// scp files over
+	files := []file{
+		file{
+			Path:        "/tmp/envvars",
+			Permissions: 0644,
+			Bytes:       envVars,
+		},
+		file{
+			Path:        "/tmp/docker-compose.yml.tmp",
+			Permissions: 0644,
+			Bytes:       dockerCompose,
+		},
+	}
+	er := scp(client, os.Stdout, files...)
+	if err != nil {
+		report.Message = er.Error()
+		return report
 	}
 
-	report.Success = true
+	log.SetLevel("info")
 
+	report.Success = true
 	return report
 }
 

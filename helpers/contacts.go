@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"reflect"
 	"strings"
 	"time"
 
 	"github.com/byuoitav/common/db"
+	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/common/nerr"
 )
 
@@ -45,10 +45,14 @@ func UpdateContactState(hostname string, active bool, output io.Writer) (DeployR
 		command = fmt.Sprintf("sudo systemctl stop contacts && sudo systemctl disable contacts")
 	}
 
-	er := SSHAndRunCommand(device.Address, command, os.Stdout)
-	if er != nil {
-		return report, er.Addf("failed to update contact state on %v", device.Address)
-	}
+	log.L.Infof(command)
+
+	/*
+		er := SSHAndRunCommand(device.Address, command, os.Stdout)
+		if er != nil {
+			return report, er.Addf("failed to update contact state on %v", device.Address)
+		}
+	*/
 
 	report.Success = true
 	return report, nil
