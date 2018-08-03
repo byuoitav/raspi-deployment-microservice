@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/raspi-deployment-microservice/helpers"
@@ -52,20 +53,22 @@ func DeployByBuildingAndTypeAndDesignation(ctx echo.Context) error {
 
 // EnableContacts handles the echo request to enable the contacts service on a specific hostname
 func EnableContacts(context echo.Context) error {
-	err := helpers.UpdateContactState(context.Param("hostname"), true)
+	report, err := helpers.UpdateContactState(context.Param("hostname"), true, os.Stdout)
 	if err != nil {
-		return context.JSON(http.StatusInternalServerError, map[string]string{"Response": "Failed to set state"})
+		log.L.Warnf(err.Error())
+		return context.JSON(http.StatusInternalServerError, err)
 	}
 
-	return context.JSON(http.StatusOK, map[string]string{"Response": "Success"})
+	return context.JSON(http.StatusOK, report)
 }
 
 // DisableContacts handles the echo request to disable the contacts service on a specific hostname
 func DisableContacts(context echo.Context) error {
-	err := helpers.UpdateContactState(context.Param("hostname"), false)
+	report, err := helpers.UpdateContactState(context.Param("hostname"), false, os.Stderr)
 	if err != nil {
-		return context.JSON(http.StatusInternalServerError, map[string]string{"Response": "Failed to set state"})
+		log.L.Warnf(err.Error())
+		return context.JSON(http.StatusInternalServerError, err)
 	}
 
-	return context.JSON(http.StatusOK, map[string]string{"Response": "Success"})
+	return context.JSON(http.StatusOK, report)
 }
