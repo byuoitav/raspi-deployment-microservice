@@ -9,6 +9,7 @@ import (
 	"github.com/byuoitav/common/log"
 	si "github.com/byuoitav/device-monitoring-microservice/statusinfrastructure"
 	"github.com/byuoitav/raspi-deployment-microservice/handlers"
+	"github.com/byuoitav/raspi-deployment-microservice/socket"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -36,8 +37,9 @@ func main() {
 	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts)
 	secure.GET("/webhook_contacts/disable/:hostname", handlers.DisableContacts)
 
-	// TODO websocket and ui endpoints
+	// TODO ui endpoint
 	// websocket/ui
+	secure.GET("/ws", socket.EchoServeWS)
 
 	// TODO new pi endpoint
 
