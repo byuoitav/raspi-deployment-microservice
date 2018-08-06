@@ -17,6 +17,11 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+const (
+	dockerComposeFile = "/tmp/docker-compose.yml"
+	envVarsFile       = "/tmp/environment"
+)
+
 // DeployReport is returned after attempting a deployment
 type DeployReport struct {
 	Address   string `json:"address"`
@@ -204,31 +209,75 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 		report.Message = fmt.Sprintf("failed to open connection with %v: %v", address, err)
 		return report
 	}
-	defer client.Close()
 
-	log.SetLevel("debug")
 	log.L.Debugf("Successfully connected to %v", address)
 
-	// scp files over
-	files := []file{
-		file{
-			Path:        "/tmp/envvars",
-			Permissions: 0644,
-			Bytes:       envVars,
-		},
-		file{
-			Path:        "/tmp/docker-compose.yml.tmp",
-			Permissions: 0644,
-			Bytes:       dockerCompose,
-		},
-	}
-	er := scp(client, os.Stdout, files...)
-	if err != nil {
-		report.Message = er.Error()
-		return report
-	}
+	go func() {
+		// TODO write error message to log
+		defer client.Close()
+		// scp files over
+		files := []file{
+			file{
+				Path:        envVarsFile,
+				Permissions: 0644,
+				Bytes:       envVars,
+			},
+			file{
+				Path:        dockerComposeFile + ".tmp",
+				Permissions: 0644,
+				Bytes:       dockerCompose,
+			},
+		}
+		er := scp(client, os.Stdout, files...)
+		if er != nil {
+			return
+		}
 
-	log.SetLevel("info")
+		log.L.Debugf("Successfully scp'd files to %s", address)
+
+		session, er := NewSession(client, os.Stdout)
+		if er != nil {
+			return
+		}
+
+		stdin, err := session.StdinPipe()
+		if err != nil {
+			return
+		}
+
+		err = session.Shell()
+		if err != nil {
+			return
+		}
+
+		log.L.Debugf("Started new shell on %s", address)
+
+		// write all script execution to a file
+		fmt.Fprintln(stdin, `script -f /tmp/deployment.log`)
+
+		// set up env vars
+		fmt.Fprintf(stdin, `echo "export PI_HOSTNAME=\"$(hostname)\"" >> %s`+"\n", envVarsFile)
+		fmt.Fprintf(stdin, `sudo cp %s /etc/environment`+"\n", envVarsFile)
+		fmt.Fprintln(stdin, `source /etc/environment`)
+		fmt.Fprintf(stdin, `cat "%s" | envsubst > %s`+"\n", dockerComposeFile+".tmp", dockerComposeFile)
+
+		// clean up docker containers
+		fmt.Fprintln(stdin, `docker stop $(docker ps -a -q)`)
+		fmt.Fprintln(stdin, `docker system prune -af`)
+
+		// spin up new containers
+		fmt.Fprintf(stdin, `docker-compose -f %s pull`+"\n", dockerComposeFile)
+		fmt.Fprintf(stdin, `docker-compose -f %s up -d`+"\n", dockerComposeFile)
+
+		fmt.Fprintln(stdin, `exit`)
+		stdin.Close()
+
+		// wait for all commands to execute
+		err = session.Wait()
+		if err != nil {
+			return
+		}
+	}()
 
 	report.Success = true
 	return report

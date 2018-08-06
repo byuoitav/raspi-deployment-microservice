@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/byuoitav/authmiddleware"
+	"github.com/byuoitav/common/db"
 	"github.com/byuoitav/common/log"
+	si "github.com/byuoitav/device-monitoring-microservice/statusinfrastructure"
 	"github.com/byuoitav/raspi-deployment-microservice/handlers"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -15,8 +18,6 @@ func main() {
 	router := echo.New()
 	router.Pre(middleware.RemoveTrailingSlash())
 	router.Use(middleware.CORS())
-
-	//
 
 	// unautheticated routes
 	router.Static("/*", "public")
@@ -38,6 +39,8 @@ func main() {
 	// TODO websocket and ui endpoints
 	// websocket/ui
 
+	// TODO new pi endpoint
+
 	err := router.StartServer(&http.Server{
 		Addr:           port,
 		MaxHeaderBytes: 1024 * 10,
@@ -51,19 +54,15 @@ func health(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, "Did you ever hear the tragedy of Darth Plagueis The Wise?")
 }
 
-// TODO
 func mstatus(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, "Did you ever hear the tragedy of Darth Plagueis The Wise?")
-}
+	log.L.Info("Getting Mstatus")
 
-/*
-func GetStatus(context echo.Context) error {
 	var s si.Status
 	var err error
 
 	s.Version, err = si.GetVersion("version.txt")
 	if err != nil {
-		return context.JSON(http.StatusOK, "Failed to open version.txt")
+		return ctx.JSON(http.StatusOK, "Failed to open version.txt")
 	}
 
 	// Test a database retrieval to assess the status.
@@ -73,10 +72,8 @@ func GetStatus(context echo.Context) error {
 		s.StatusInfo = fmt.Sprintf("Unable to access database. Error: %s", err)
 	} else {
 		s.Status = si.StatusOK
-		s.StatusInfo = ""
+		s.StatusInfo = "Able to reach database"
 	}
-	log.L.Info("Getting Mstatus")
 
-	return context.JSON(http.StatusOK, s)
+	return ctx.JSON(http.StatusOK, s)
 }
-*/
