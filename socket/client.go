@@ -7,6 +7,7 @@ import (
 
 	"github.com/byuoitav/common/log"
 	"github.com/gorilla/websocket"
+	"github.com/labstack/echo"
 )
 
 const (
@@ -31,15 +32,19 @@ var (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		// allow all origins
+		return true
+	},
 }
 
 type Client struct {
-	hub *Hub
+	hub *hub
 
 	// websocket connection
 	conn *websocket.Conn
 
-	// bufferend channel of messages
+	// channel of messsages to send
 	send chan []byte
 }
 
@@ -93,8 +98,9 @@ func (c *Client) writePump() {
 			}
 			w.Write(message)
 
-			// write queued chat messages?
-
+			if err := w.Close(); err != nil {
+				return
+			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
@@ -104,7 +110,7 @@ func (c *Client) writePump() {
 	}
 }
 
-func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func serveWS(hub *hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.L.Warnf("failed to upgrade connection to websocket: %v", err)
@@ -120,4 +126,9 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	go client.writePump()
 	go client.readPump()
+}
+
+func EchoServeWS(ctx echo.Context) error {
+	serveWS(socketHub, ctx.Response(), ctx.Request())
+	return nil
 }

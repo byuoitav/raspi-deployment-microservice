@@ -14,6 +14,7 @@ import (
 	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/common/nerr"
 	"github.com/byuoitav/common/structs"
+	"github.com/byuoitav/raspi-deployment-microservice/socket"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -175,7 +176,7 @@ func DeployToDevices(devices []structs.Device, deviceType, designation string) (
 	// deploy to each device
 	for i := range devices {
 		go func(idx int) {
-			report := Deploy(devices[idx].Address, envVars, dockerCompose, os.Stdout)
+			report := Deploy(devices[idx].Address, envVars, dockerCompose, socket.Writer(devices[idx].Address))
 
 			reportsMu.Lock()
 			reports = append(reports, report)
@@ -228,14 +229,14 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 				Bytes:       dockerCompose,
 			},
 		}
-		er := scp(client, os.Stdout, files...)
+		er := scp(client, output, files...)
 		if er != nil {
 			return
 		}
 
 		log.L.Debugf("Successfully scp'd files to %s", address)
 
-		session, er := NewSession(client, os.Stdout)
+		session, er := NewSession(client, output)
 		if er != nil {
 			return
 		}
