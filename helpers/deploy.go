@@ -10,10 +10,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/byuoitav/common/db"
+	"github.com/byuoitav/common/events"
 	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/common/nerr"
 	"github.com/byuoitav/common/structs"
+	"github.com/byuoitav/event-translator-microservice/elkreporting"
 	"github.com/byuoitav/raspi-deployment-microservice/socket"
 	"golang.org/x/crypto/ssh"
 )
@@ -34,8 +39,22 @@ type DeployReport struct {
 var sshConfig *ssh.ClientConfig
 
 func init() {
-	// read private key file
-	key, err := ioutil.ReadFile(os.Getenv("HOME") + "/.ssh/id_rsa")
+	// get ssh key
+	bucket := s3.New(session.New(), &aws.Config{
+		Region: aws.String(os.Getenv("AWS_BUCKET_REGION")),
+	})
+
+	resp, err := bucket.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(os.Getenv("RASPI_DEPLOYMENT_S3_BUCKET")),
+		Key:    aws.String(os.Getenv("AWS_DEPLOYMENT_KEY")),
+	})
+	if err != nil {
+		log.L.Fatalf("failed to get aws deployment key")
+	}
+	defer resp.Body.Close()
+
+	// read key from response
+	key, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.L.Fatalf("unable to read private ssh key: %v", err)
 	}
@@ -214,7 +233,6 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 	log.L.Debugf("Successfully connected to %v", address)
 
 	go func() {
-		// TODO write error message to log
 		defer client.Close()
 		// scp files over
 		files := []file{
@@ -231,6 +249,9 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 		}
 		er := scp(client, output, files...)
 		if er != nil {
+			msg := fmt.Sprintf("failed to scp files to %v: %v", address, er.String())
+			fmt.Fprintf(output, msg)
+			reportToELK(address, msg, false)
 			return
 		}
 
@@ -238,107 +259,106 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 
 		session, er := NewSession(client, output)
 		if er != nil {
+			msg := fmt.Sprintf("unable to open new session with %v: %v", address, er.String())
+			fmt.Fprintf(output, msg)
+			reportToELK(address, msg, false)
 			return
 		}
 
 		stdin, err := session.StdinPipe()
 		if err != nil {
+			msg := fmt.Sprintf("unable to open stdin pipe on %v: %v", address, err)
+			fmt.Fprintf(output, msg)
+			reportToELK(address, msg, false)
 			return
 		}
 
 		err = session.Shell()
 		if err != nil {
+			msg := fmt.Sprintf("unable to start shell on %v: %v", address, err)
+			fmt.Fprintf(output, msg)
+			reportToELK(address, msg, false)
 			return
 		}
 
 		log.L.Debugf("Started new shell on %s", address)
 
 		// write all script execution to a file
-		fmt.Fprintln(stdin, `script -f /tmp/deployment.log`)
+		fmt.Fprintf(stdin, `script -f /tmp/deployment.log`+"\n")
 
 		// set up env vars
 		fmt.Fprintf(stdin, `echo "export PI_HOSTNAME=\"$(hostname)\"" >> %s`+"\n", envVarsFile)
 		fmt.Fprintf(stdin, `sudo cp %s /etc/environment`+"\n", envVarsFile)
-		fmt.Fprintln(stdin, `source /etc/environment`)
+		fmt.Fprintf(stdin, `source /etc/environment`+"\n")
 		fmt.Fprintf(stdin, `cat "%s" | envsubst > %s`+"\n", dockerComposeFile+".tmp", dockerComposeFile)
 
-		// clean up docker containers
-		fmt.Fprintln(stdin, `docker stop $(docker ps -a -q)`)
-		fmt.Fprintln(stdin, `docker system prune -af`)
-
-		// spin up new containers
+		// docker stuff
 		fmt.Fprintf(stdin, `docker-compose -f %s pull`+"\n", dockerComposeFile)
+		fmt.Fprintf(stdin, `docker stop $(docker ps -aq)`+"\n")
 		fmt.Fprintf(stdin, `docker-compose -f %s up -d`+"\n", dockerComposeFile)
+		fmt.Fprintf(stdin, `docker system prune -af`+"\n")
 
+		// stop printing script output
 		fmt.Fprintln(stdin, `exit`)
 		stdin.Close()
 
 		// wait for all commands to execute
 		err = session.Wait()
 		if err != nil {
+			msg := fmt.Sprintf("failed to deploy to %v: %v", address, err)
+			fmt.Fprintf(output, msg)
+			reportToELK(address, msg, false)
 			return
 		}
+
+		// send success to elk
+		msg := fmt.Sprintf("Successfully deployed to %v", address)
+		fmt.Fprintf(output, msg)
+		reportToELK(address, msg, true)
 	}()
 
 	report.Success = true
 	return report
 }
 
-/*
-type device struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Type    string `json:"type"`
-}
-
-func reportToELK(hostname string, msg string, success bool) elkReport {
+func reportToELK(address, msg string, success bool) DeployReport {
 
 	var key string
-
 	if success {
 		key = "Successful"
 	} else {
 		key = "Failed"
 	}
 
-	report := elkReport{Hostname: hostname, Timestamp: time.Now().Format(time.RFC3339), Message: key + ": " + msg}
+	report := DeployReport{
+		Address:   address,
+		Timestamp: time.Now().Format(time.RFC3339),
+		Message:   msg,
+		Success:   success,
+	}
 
-	splitName := strings.Split(hostname, "-")
+	e := events.Event{
+		Hostname:         address,
+		Timestamp:        time.Now().Format(time.RFC3339),
+		LocalEnvironment: false,
+		Building:         "",
+		Room:             "",
+		Event: events.EventInfo{
+			Type:           events.DEPLOYMENT,
+			Requestor:      "",
+			EventCause:     events.AUTOGENERATED,
+			Device:         address,
+			EventInfoKey:   key,
+			EventInfoValue: msg,
+		},
+	}
 
-	var e events.Event
+	splitName := strings.Split(address, "-")
 
-	if len(splitName) != 3 {
-		e = events.Event{
-			Hostname:         hostname,
-			Timestamp:        time.Now().Format(time.RFC3339),
-			LocalEnvironment: false,
-			Building:         "",
-			Room:             "",
-			Event: events.EventInfo{
-				Type:           events.DEPLOYMENT,
-				Requestor:      "",
-				EventCause:     events.AUTOGENERATED,
-				Device:         hostname,
-				EventInfoKey:   key,
-				EventInfoValue: msg,
-			},
-		}
-	} else {
-		e = events.Event{
-			Hostname:         hostname,
-			Timestamp:        time.Now().Format(time.RFC3339),
-			LocalEnvironment: false,
-			Building:         splitName[0],
-			Room:             splitName[0] + "-" + splitName[1],
-			Event: events.EventInfo{
-				Type:           events.DEPLOYMENT,
-				Requestor:      "",
-				EventCause:     events.AUTOGENERATED,
-				Device:         splitName[2][:strings.Index(splitName[2], ".")],
-				EventInfoKey:   key,
-				EventInfoValue: msg,
-			},
-		}
+	if len(splitName) == 3 {
+		e.Building = splitName[0]
+		e.Room = splitName[0] + "-" + splitName[1]
+		e.Event.Device = splitName[2][:strings.Index(splitName[2], ".")]
 	}
 
 	log.L.Debugf("Sending event to %v", os.Getenv("ELASTIC_API_EVENTS"))
@@ -346,4 +366,3 @@ func reportToELK(hostname string, msg string, success bool) elkReport {
 
 	return report
 }
-*/

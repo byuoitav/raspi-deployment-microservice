@@ -37,11 +37,11 @@ func main() {
 	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts)
 	secure.GET("/webhook_contacts/disable/:hostname", handlers.DisableContacts)
 
-	// TODO ui endpoint
 	// websocket/ui
 	secure.GET("/ws", socket.EchoServeWS)
 
-	// TODO new pi endpoint
+	// TODO new pi endpoint (for showing provision number thing)
+	secure.GET("/newpi", handlers.NewPI)
 
 	err := router.StartServer(&http.Server{
 		Addr:           port,

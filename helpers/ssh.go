@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// NewSession opens a new session with the <client>, and writes stdout/err to a <output>
 func NewSession(client *ssh.Client, output io.Writer) (*ssh.Session, *nerr.E) {
 	// open a new session with the client
 	session, err := client.NewSession()
@@ -37,45 +38,6 @@ func NewSession(client *ssh.Client, output io.Writer) (*ssh.Session, *nerr.E) {
 
 	return session, nil
 }
-
-/*
-// SSH ssh's into an address, executes the given function on the session, and writes all the output to the given <output>
-func SSH(address string) *ssh.Client {
-	// ssh into address
-	client, err := ssh.Dial("tcp", address+":22", sshConfig)
-	if err != nil {
-		return nerr.Translate(err).Addf("failed to ssh into %v", address)
-	}
-	defer client.Close()
-
-	log.L.Debugf("Successfully connected to %v", address)
-
-		log.L.Debugf("Successfully opened new session with %v", address)
-
-		log.L.Debugf("Reading from stdout/stderr pipes (address %v)", address)
-
-		// start a new shell with the address
-		err = session.Shell()
-		if err != nil {
-			return nerr.Translate(err).Addf("failed to start shell with %v", address)
-		}
-
-		er := exec(stdin)
-		if er != nil {
-			return er.Addf("Failed to execute commands on session with %v", address)
-		}
-
-		stdin.Close()
-
-		// wait for all commands to finish
-		err = session.Wait()
-		if err != nil {
-			return nerr.Translate(err).Addf("something went wrong sending commands to %v", address)
-		}
-
-		return nil
-}
-*/
 
 type file struct {
 	Path        string
