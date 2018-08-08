@@ -54,28 +54,7 @@ func retrieveEnvironmentVariables(class, designation string) ([]byte, error) {
 		}
 		return resp, errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, message: %s", response.StatusCode, string(msg)))
 	}
-	/*
 
-		fileName, err := GenerateRandomString(NUM_BYTES)
-		if err != nil {
-			return "", err
-		}
-
-		outFile, err := os.OpenFile(filePath+fileName, os.O_RDWR|os.O_CREATE, 0777)
-		if err != nil {
-			return "", err
-		}
-
-		_, err = io.Copy(outFile, response.Body)
-		if err != nil {
-			return "", err
-		}
-
-		outFile.Close()
-		TrackFile(fileName, filePath)
-
-		return fileName, nil
-	*/
 	b, err := ioutil.ReadAll(response.Body)
 	return b, err
 }
@@ -101,27 +80,6 @@ func RetrieveDockerCompose(class, designation string) ([]byte, error) {
 		return bytes, errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d", resp.StatusCode))
 	}
 
-	/*
-		fileName, err := GenerateRandomString(NUM_BYTES)
-		if err != nil {
-			return "", err
-		}
-
-		outFile, err := os.OpenFile(filePath+fileName, os.O_RDWR|os.O_CREATE, 0777)
-		if err != nil {
-			return "", err
-		}
-
-		_, err = io.Copy(outFile, resp.Body)
-		if err != nil {
-			return "", err
-		}
-
-		outFile.Close()
-		TrackFile(fileName, filePath)
-
-		return fileName, nil
-	*/
 	b, err := ioutil.ReadAll(resp.Body)
 	return b, err
 }
