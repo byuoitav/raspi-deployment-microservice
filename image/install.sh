@@ -51,7 +51,7 @@ else
 	/tmp/second-boot.sh
 
 	echo "Removing symlink to startup script."
-	sudo rm /usr/lib/systemd/system/default.target.wants/first-boot.service
+	sudo systemctl disable first-boot.service
     sleep 3
 fi
 
