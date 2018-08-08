@@ -1,9 +1,9 @@
 source /etc/environment
 
-wget -O - http://repo.saltstack.com/apt/debian/8/armhf/2016.11/SALTSTACK-GPG-KEY.pub | sudo apt-key add -
-echo "deb http://repo.saltstack.com/apt/debian/8/armhf/2016.11 jessie main" | sudo tee --append /etc/apt/sources.list.d/saltstack.list
-sudo apt update
-sudo apt -y install salt-minion 
+#wget -O - http://repo.saltstack.com/apt/debian/9/armhf/2018.3/SALTSTACK-GPG-KEY.pub | sudo apt-key add -
+#echo "deb http://repo.saltstack.com/apt/debian/9/armhf/2018.3 jessie main" | sudo tee --append /etc/apt/sources.list.d/saltstack.list
+#sudo apt update
+#sudo apt -y install salt-minion 
 
 #Get the Minion Addr
 wget https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/minion

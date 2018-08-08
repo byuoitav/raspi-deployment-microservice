@@ -1,29 +1,11 @@
 #!/bin/bash
 # This script should live in /usr/bin/ on the rasbian img. It will run once on the first boot of the pi, and then disable the service.
 
-sleep 15
-
 printf "\n\nHi From Danny\n\n"
 
 sudo chvt 2
 
 bootfile="/usr/local/games/firstboot"
-resizefile="/usr/local/games/resize"
-
-if [ -f "$resizefile" ]; then
-    echo "0th boot. resizing /var partition"
-    sleep 3
-
-	until $(curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/image/resizevar > /tmp/resizevar); do
-		echo "Downloading resize script"
-	done
-	chmod +x /tmp/resizevar
-
-    sudo /tmp/resizevar
-
-    # make sure it doesn't get past here
-    sudo reboot
-fi
 
 if [ -f "$bootfile" ]; then
 	echo "First boot."
