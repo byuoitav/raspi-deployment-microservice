@@ -1,53 +1,59 @@
 package helpers
 
 import (
-	"log"
+	"errors"
+	"fmt"
+	"io"
+	"reflect"
+	"strings"
+	"time"
 
-	"golang.org/x/crypto/ssh"
+	"github.com/byuoitav/common/db"
+	"github.com/byuoitav/common/log"
+	"github.com/byuoitav/common/nerr"
 )
 
-//@param active - true indicates monitoring the contact points, false indicates not monitoring the contact points
-func UpdateContactState(hostname string, active bool) error {
-
-	state := "Disabling"
-	if active {
-		state = "Enabling"
+// UpdateContactState executes a divider sensor to enable/disable the contacts service
+func UpdateContactState(hostname string, active bool, output io.Writer) (DeployReport, *nerr.E) {
+	report := DeployReport{
+		Address:   hostname,
+		Timestamp: time.Now().Format(time.RFC3339),
+		Success:   false,
 	}
 
-	log.Printf("%s contact point monitoring on %s...", state, hostname)
-
-	connection, err := ssh.Dial("tcp", hostname+":22", sshConfig)
+	// get device from database
+	device, err := db.GetDB().GetDevice(hostname)
 	if err != nil {
-		log.Printf("Error dialing %s: %s", hostname, err.Error())
-		return err
+		return report, nerr.Translate(err).Addf("failed to get %v from the database", hostname)
 	}
 
-	log.Printf("TCP connection established to %s", hostname)
-	defer connection.Close()
-
-	session, err := connection.NewSession()
-	if err != nil {
-		log.Printf("Error starting session with %s: %s", hostname, err.Error())
-		return err
-	}
-
-	log.Printf("SSH session established with %s", hostname)
-
-	if active {
-		err = session.Run("sudo systemctl enable contacts && sudo systemctl start contacts")
-		if err != nil {
-			log.Printf("Error enabling contacts service: %s", err.Error())
-			return err
-		}
-
-	} else {
-		err = session.Run("sudo systemctl stop contacts && sudo systemctl disable contacts")
-		if err != nil {
-			log.Printf("Error disabling contacts service: %s", err.Error())
-			return err
+	// validate it has the divider sensor role
+	valid := false
+	for i := range device.Roles {
+		if strings.EqualFold(device.Roles[i].ID, "DividerSensor") {
+			valid = true
+			break
 		}
 	}
 
-	return nil
+	if !valid {
+		return report, nerr.Create(fmt.Sprintf("device %v isn't a divider sensor.", device.ID), reflect.TypeOf(errors.New("")).String())
+	}
 
+	command := fmt.Sprintf("sudo systemctl enable contacts && sudo systemctl start contacts")
+	if !active {
+		command = fmt.Sprintf("sudo systemctl stop contacts && sudo systemctl disable contacts")
+	}
+
+	log.L.Infof(command)
+
+	/*
+		er := SSHAndRunCommand(device.Address, command, os.Stdout)
+		if er != nil {
+			return report, er.Addf("failed to update contact state on %v", device.Address)
+		}
+	*/
+
+	report.Success = true
+	return report, nil
 }

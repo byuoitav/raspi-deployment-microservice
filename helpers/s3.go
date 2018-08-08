@@ -3,108 +3,85 @@ package helpers
 import (
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/byuoitav/authmiddleware/bearertoken"
-	"github.com/fatih/color"
+	"github.com/byuoitav/common/log"
 )
 
 //const FILE_NAME = "environment-variables"                       //name of file we use later
 const NUM_BYTES = 8
-const PORT = ":5001"                                            //port the designation microservice works on
-const ENDPOINT = "/configurations/designations/%d/%d/variables" //endpoint we use to make request against designation microservice
-const DOCKER_PATH = "/public/"
-const ENVIRO_PATH = "/public/"
+const PORT = ":5001"                                            // port the designation microservice works on
+const ENDPOINT = "/configurations/designations/%d/%d/variables" // endpoint we use to make request against designation microservice
+
+var (
+	filePath string
+)
+
+func init() {
+	ex, err := os.Executable()
+	if err != nil {
+		log.L.Fatalf("Failed to get location of executable: %v", err)
+	}
+
+	filePath = filepath.Dir(ex)
+}
 
 // retrieveEnvironmentVariables gets the environment variables for each Pi as a file to SCP over
-func retrieveEnvironmentVariables(class, designation string) (string, error) {
+//func retrieveEnvironmentVariables(class, designation string) (string, error) {
+func retrieveEnvironmentVariables(class, designation string) ([]byte, error) {
+	var resp []byte
 
-	log.Printf("[helpers] fetching environment variables...")
+	//	log.Printf("[helpers] fetching environment variables...")
 
 	classId, desigId, err := GetClassAndDesignationID(class, designation)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
+		return resp, errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
 	}
 
 	response, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/variables", classId, desigId))
 	if err != nil {
-		return "", err
+		return resp, err
 	}
 
 	if response.StatusCode != http.StatusOK {
 		msg, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			return "", errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, unable to read response: %s", response.StatusCode, err.Error()))
+			return resp, errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, unable to read response: %s", response.StatusCode, err.Error()))
 		}
-		return "", errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, message: %s", response.StatusCode, string(msg)))
+		return resp, errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, message: %s", response.StatusCode, string(msg)))
 	}
 
-	fileName, err := GenerateRandomString(NUM_BYTES)
-	if err != nil {
-		return "", err
-	}
-
-	fileLocation := os.Getenv("GOPATH") + ENVIRO_PATH
-	outFile, err := os.OpenFile(fileLocation+fileName, os.O_RDWR|os.O_CREATE, 0777)
-	if err != nil {
-		return "", err
-	}
-
-	_, err = io.Copy(outFile, response.Body)
-	if err != nil {
-		return "", err
-	}
-
-	outFile.Close()
-	TrackFile(fileName, fileLocation)
-
-	return fileName, nil
+	b, err := ioutil.ReadAll(response.Body)
+	return b, err
 }
 
-func RetrieveDockerCompose(class, designation string) (string, error) {
+//func RetrieveDockerCompose(class, designation string) (string, error) {
+func RetrieveDockerCompose(class, designation string) ([]byte, error) {
+	var bytes []byte
 
-	log.Printf("[helpers] retrieving docker-compose file for devices of class: %s, designation: %s", class, designation)
+	//	log.Printf("[helpers] retrieving docker-compose file for devices of class: %s, designation: %s", class, designation)
 
 	//get class and designation IDs
 	classID, desigId, err := GetClassAndDesignationID(class, designation)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
+		return bytes, errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
 	}
 
 	resp, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/docker-compose", classID, desigId))
 	if err != nil {
-		return "", err
+		return bytes, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d", resp.StatusCode))
+		return bytes, errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d", resp.StatusCode))
 	}
 
-	fileName, err := GenerateRandomString(NUM_BYTES)
-	if err != nil {
-		return "", err
-	}
-
-	fileLocation := os.Getenv("GOPATH") + DOCKER_PATH
-
-	outFile, err := os.OpenFile(fileLocation+fileName, os.O_RDWR|os.O_CREATE, 0777)
-	if err != nil {
-		return "", err
-	}
-
-	_, err = io.Copy(outFile, resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	outFile.Close()
-	TrackFile(fileName, fileLocation)
-
-	return fileName, nil
+	b, err := ioutil.ReadAll(resp.Body)
+	return b, err
 }
 
 func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
@@ -117,7 +94,7 @@ func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
 	classId, err := GetClassId(class)
 	if err != nil {
 		msg := fmt.Sprintf("class ID not found: %s", err.Error())
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		//		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return 0, 0, errors.New(msg)
 	}
 
@@ -125,7 +102,7 @@ func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
 	desigId, err := GetDesignationId(designation)
 	if err != nil {
 		msg := fmt.Sprintf("designation ID not found: %s", err.Error())
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		//		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return 0, 0, errors.New(msg)
 	}
 
@@ -138,7 +115,7 @@ func MakeEnvironmentRequest(endpoint string) (*http.Response, error) {
 
 	url := os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS") + endpoint
 
-	log.Printf("[helplers] making request against url %s", url)
+	//	log.Printf("[helplers] making request against url %s", url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -160,12 +137,12 @@ func MakeEnvironmentRequest(endpoint string) (*http.Response, error) {
 
 func SetToken(request *http.Request) error {
 
-	log.Printf("[helpers] setting bearer token...")
+	//	log.Printf("[helpers] setting bearer token...")
 
 	token, err := bearertoken.GetToken()
 	if err != nil {
 		msg := fmt.Sprintf("cannot get bearer token: %s", err.Error())
-		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
+		//		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return errors.New(msg)
 	}
 
