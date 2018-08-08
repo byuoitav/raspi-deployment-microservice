@@ -13,6 +13,8 @@ import (
 	"github.com/fatih/color"
 )
 
+const TIMER_DURATION = 3 * time.Minute
+
 var fileTimers sync.Map
 
 func AddEntry(fileName string, timer *time.Timer) {
