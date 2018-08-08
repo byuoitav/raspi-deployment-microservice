@@ -52,6 +52,7 @@ func init() {
 		log.L.Fatalf("failed to get aws deployment key")
 	}
 	defer resp.Body.Close()
+	log.L.Infof("Successfully got AWS deployment key.")
 
 	// read key from response
 	key, err := ioutil.ReadAll(resp.Body)
