@@ -296,6 +296,7 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 		// docker stuff
 		fmt.Fprintf(stdin, `docker-compose -f %s pull`+"\n", dockerComposeFile)
 		fmt.Fprintf(stdin, `docker stop $(docker ps -aq)`+"\n")
+		fmt.Fprintf(stdin, `docker rm $(docker ps -aq)`+"\n")
 		fmt.Fprintf(stdin, `docker-compose -f %s up -d`+"\n", dockerComposeFile)
 		fmt.Fprintf(stdin, `docker system prune -af`+"\n")
 
