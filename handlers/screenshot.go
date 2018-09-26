@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -27,13 +26,15 @@ func GetScreenshot(context echo.Context) error {
 
 	var respObj Message
 	log.L.Infof("%s", body)
-	err = json.Unmarshal(body, &respObj)
+
+	err = context.Request().ParseForm()
 	if err != nil {
-		log.L.Infof("Failed to Unmarshal: %s", err.Error())
+		log.L.Infof("Failed to Parse Form: %s", err.Error())
 		return context.JSON(http.StatusInternalServerError, err)
 	}
-	log.L.Infof(respObj.Text)
-	img, err := helpers.MakeScreenshot(respObj.Text, address)
+	text := context.Request().FormValue("&text")
+	log.L.Infof(text)
+	img, err := helpers.MakeScreenshot(text, address)
 
 	if err != nil {
 		log.L.Infof("Failed to MakeScreenshot: %s", err.Error())
