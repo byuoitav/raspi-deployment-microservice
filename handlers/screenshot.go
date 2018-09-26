@@ -21,18 +21,21 @@ func GetScreenshot(context echo.Context) error {
 	log.L.Infof(address)
 	body, err := ioutil.ReadAll(context.Request().Body)
 	if err != nil {
+		log.L.Infof("Failed to read Request body: %s", err.Error())
 		return context.JSON(http.StatusInternalServerError, err)
 	}
 
 	var respObj Message
 	err = json.Unmarshal(body, &respObj)
 	if err != nil {
+		log.L.Infof("Failed to Unmarshal: %s", err.Error())
 		return context.JSON(http.StatusInternalServerError, err)
 	}
 	log.L.Infof(respObj.Text)
 	img, err := helpers.MakeScreenshot(respObj.Text, address)
 
 	if err != nil {
+		log.L.Infof("Failed to MakeScreenshot: %s", err.Error())
 		return context.JSON(http.StatusInternalServerError, err)
 	}
 
