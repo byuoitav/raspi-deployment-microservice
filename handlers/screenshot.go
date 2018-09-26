@@ -37,6 +37,7 @@ func GetScreenshot(context echo.Context) error {
 	sections := strings.Split(string(body), "&text=")
 	sections = strings.Split(sections[1], "&")
 	text := sections[0]
+	text = text + ".byu.edu"
 	log.L.Infof(text)
 	img, err := helpers.MakeScreenshot(text, address)
 
