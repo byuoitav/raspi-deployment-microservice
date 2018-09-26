@@ -3,6 +3,7 @@ package handlers
 import (
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/raspi-deployment-microservice/helpers"
@@ -26,13 +27,16 @@ func GetScreenshot(context echo.Context) error {
 
 	log.L.Infof("%s", body)
 
-	err = context.Request().ParseForm()
+	//	err = context.Request().ParseForm()
 	if err != nil {
 		log.L.Infof("Failed to Parse Form: %s", err.Error())
 		return context.JSON(http.StatusInternalServerError, err)
 	}
-	log.L.Infof("%s", context.Request().PostForm)
-	text := context.Request().PostFormValue("&text")
+	//	log.L.Infof("%s", context.Request().PostForm)
+	//	text := context.Request().PostFormValue("&text")
+	sections := strings.Split(string(body), "&text=")
+	sections = strings.Split(sections[1], "&")
+	text := sections[0]
 	log.L.Infof(text)
 	img, err := helpers.MakeScreenshot(text, address)
 
