@@ -24,7 +24,6 @@ func GetScreenshot(context echo.Context) error {
 		return context.JSON(http.StatusInternalServerError, err)
 	}
 
-	var respObj Message
 	log.L.Infof("%s", body)
 
 	err = context.Request().ParseForm()
