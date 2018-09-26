@@ -31,7 +31,7 @@ func GetScreenshot(context echo.Context) error {
 		log.L.Infof("Failed to Parse Form: %s", err.Error())
 		return context.JSON(http.StatusInternalServerError, err)
 	}
-	text := context.Request().FormValue("&text")
+	text := context.Request().FormValue("text")
 	log.L.Infof(text)
 	img, err := helpers.MakeScreenshot(text, address)
 
