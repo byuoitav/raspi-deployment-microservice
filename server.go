@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	log.SetLevel("debug")
 	port := ":8008"
 	router := echo.New()
 	router.Pre(middleware.RemoveTrailingSlash())
@@ -42,6 +43,11 @@ func main() {
 
 	// TODO new pi endpoint (for showing provision number thing)
 	secure.GET("/newpi", handlers.NewPI)
+
+	//Screenshots
+	secure.GET("/screenshot/:hostname", handlers.GetScreenshot)
+	//	secure.GET("/screenshot/:hostname/slack/:channelID", handlers.SendScreenshotToSlack)
+	secure.POST("/ReceiveScreenshot/:ScreenshotName", handlers.ReceiveScreenshot)
 
 	err := router.StartServer(&http.Server{
 		Addr:           port,
