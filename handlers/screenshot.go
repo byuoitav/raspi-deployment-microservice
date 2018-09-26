@@ -26,6 +26,7 @@ func GetScreenshot(context echo.Context) error {
 	}
 
 	var respObj Message
+	log.L.Infof(body)
 	err = json.Unmarshal(body, &respObj)
 	if err != nil {
 		log.L.Infof("Failed to Unmarshal: %s", err.Error())
