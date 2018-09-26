@@ -106,7 +106,7 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	//Take the Screenshot
 	fmt.Fprintf(stdin, `xwd -out %s.xwd -root -display :0.0`+"\n", ScreenshotName)
 	//TODO -> Put this on AWS
-	fmt.Fprintf(stdin, `curl -XPOST %s:8008/ReceiveScreenshot/%s -T ./%s.xwd`+"\n", address, ScreenshotName, ScreenshotName)
+	fmt.Fprintf(stdin, `curl -XPOST https://byuoitav-raspi-deployment-microservice.avs.byu.edu/ReceiveScreenshot/%s -T ./%s.xwd`+"\n", ScreenshotName, ScreenshotName)
 	//Remove the Screenshot
 	fmt.Fprintf(stdin, `rm %s.xwd`+"\n", ScreenshotName)
 	fmt.Fprintln(stdin, `exit`)
