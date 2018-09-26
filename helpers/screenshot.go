@@ -63,7 +63,7 @@ func init() {
 	}
 }
 
-func MakeScreenshot(hostname string) ([]byte, error) {
+func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	img := []byte{}
 	//Make our ssh client, writer, and session
 
@@ -106,7 +106,7 @@ func MakeScreenshot(hostname string) ([]byte, error) {
 	//Take the Screenshot
 	fmt.Fprintf(stdin, `xwd -out %s.xwd -root -display :0.0`+"\n", ScreenshotName)
 	//TODO -> Put this on AWS
-	fmt.Fprintf(stdin, `curl -XPOST 10.5.34.7:8008/ReceiveScreenshot/%s -T ./%s.xwd`+"\n", ScreenshotName, ScreenshotName)
+	fmt.Fprintf(stdin, `curl -XPOST %s:8008/ReceiveScreenshot/%s -T ./%s.xwd`+"\n", address, ScreenshotName, ScreenshotName)
 	//Remove the Screenshot
 	fmt.Fprintf(stdin, `rm %s.xwd`+"\n", ScreenshotName)
 	fmt.Fprintln(stdin, `exit`)
@@ -115,13 +115,15 @@ func MakeScreenshot(hostname string) ([]byte, error) {
 	if err != nil {
 		log.L.Warnf("failed to screenshot %v: %v", hostname, err)
 	}
-	log.L.Infof(ScreenshotName)
 	//Convert the Screenshot to a .png
 	FullScreenshotName := fmt.Sprintf("%s.xwd", ScreenshotName)
 	cmd := exec.Command("convert", FullScreenshotName, "screenshot.png")
 	cmd.Run()
+	cmd = exec.Command("rm", FullScreenshotName)
+	cmd.Run()
 	//Read in the Screenshot
 	img, err = ioutil.ReadFile("screenshot.png")
+
 	if err != nil {
 		log.L.Infof("Failed to read Screenshot file %v: %v", ScreenshotName, err)
 	}

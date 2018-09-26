@@ -1,16 +1,36 @@
 package handlers
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/raspi-deployment-microservice/helpers"
 	"github.com/labstack/echo"
 )
 
+type Message struct {
+	ChannelID string `json:"channel_id"`
+	Text      string `json:"text"`
+}
+
 func GetScreenshot(context echo.Context) error {
-	hostname := context.Param("hostname")
-	img, err := helpers.MakeScreenshot(hostname)
+	log.L.Infof("WE MADE IT!")
+	address := context.Request().RemoteAddr
+	log.L.Infof(address)
+	body, err := ioutil.ReadAll(context.Request().Body)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err)
+	}
+
+	var respObj Message
+	err = json.Unmarshal(body, &respObj)
+	if err != nil {
+		return context.JSON(http.StatusInternalServerError, err)
+	}
+	log.L.Infof(respObj.Text)
+	img, err := helpers.MakeScreenshot(respObj.Text, address)
 
 	if err != nil {
 		return context.JSON(http.StatusInternalServerError, err)
