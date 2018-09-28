@@ -69,14 +69,15 @@ func ReceiveScreenshot(context echo.Context) error {
 	img, err := ioutil.ReadAll(context.Request().Body)
 	defer context.Request().Body.Close()
 	if err != nil {
-		//TODO I think this is wrong
-
-		return err
+		log.L.ErrorF("Could not read in the screenshot")
+		return context.JSON(http.StatusInternalServerError, err)
 	}
-	//TODO -> Store img Somewhere
 	//0644 is the OS.FileMode
-	ioutil.WriteFile(ScreenshotName+".xwd", img, 0644)
+	err = ioutil.WriteFile("/tmp/"+ScreenshotName+".xwd", img, 0644)
+	if err != nil {
+		log.L.Infof("Could not write out the screenshot")
+		return context.JSON(http.StatusInteralServerError, err)
+	}
 
-	//TODO -> Make this return thing make sense
 	return context.JSON(http.StatusOK, "Hooray!")
 }
