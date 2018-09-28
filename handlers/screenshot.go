@@ -49,34 +49,19 @@ func GetScreenshot(context echo.Context) error {
 	return context.Blob(http.StatusOK, "image/png", img)
 }
 
-/*
-func SendScreenshotToSlack(context echo.Context) error {
-	hostname := context.Param("hostname")
-	channelID := context.Param("channelID")
-
-	err := helpers.MakeScreenshotGoToSlack(hostname, channelID)
-
-	if err != nil {
-		return context.JSON(http.StatusInternalServerError, err)
-	}
-
-	return context.JSON(http.StatusOK, nil)
-
-}
-*/
 func ReceiveScreenshot(context echo.Context) error {
 	ScreenshotName := context.Param("ScreenshotName")
 	img, err := ioutil.ReadAll(context.Request().Body)
 	defer context.Request().Body.Close()
 	if err != nil {
-		log.L.ErrorF("Could not read in the screenshot")
+		log.L.Errorf("Could not read in the screenshot")
 		return context.JSON(http.StatusInternalServerError, err)
 	}
 	//0644 is the OS.FileMode
 	err = ioutil.WriteFile("/tmp/"+ScreenshotName+".xwd", img, 0644)
 	if err != nil {
-		log.L.Infof("Could not write out the screenshot")
-		return context.JSON(http.StatusInteralServerError, err)
+		log.L.Errorf("Could not write out the screenshot")
+		return context.JSON(http.StatusInternalServerError, err)
 	}
 
 	return context.JSON(http.StatusOK, "Hooray!")
