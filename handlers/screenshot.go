@@ -50,6 +50,7 @@ func GetScreenshot(context echo.Context) error {
 }
 
 func ReceiveScreenshot(context echo.Context) error {
+	log.L.Infof("I have entered ReceiveScreenshot")
 	ScreenshotName := context.Param("ScreenshotName")
 	img, err := ioutil.ReadAll(context.Request().Body)
 	defer context.Request().Body.Close()
