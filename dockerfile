@@ -4,6 +4,9 @@ MAINTAINER Daniel Randall <danny_randall@byu.edu>
 ARG NAME
 ENV name=${NAME}
 
+RUN apk update
+RUN apk add imagemagick
+
 COPY ${name}-bin ${name}-bin 
 COPY version.txt version.txt
 
