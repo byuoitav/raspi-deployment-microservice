@@ -46,7 +46,7 @@ func main() {
 	//Screenshots
 	router.POST("/screenshot", handlers.GetScreenshot)
 	//secure.GET("/screenshot/:hostname/slack/:channelID", handlers.SendScreenshotToSlack)
-	secure.POST("/ReceiveScreenshot/:ScreenshotName", handlers.ReceiveScreenshot)
+	router.POST("/ReceiveScreenshot/:ScreenshotName", handlers.ReceiveScreenshot)
 
 	err := router.StartServer(&http.Server{
 		Addr:           port,

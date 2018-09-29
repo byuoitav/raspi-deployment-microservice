@@ -5,7 +5,7 @@
         "Key": ".dockercfg"
     },
     "Image": {
-        "Name": "byuoitav/raspi-deployment-microservice:<TAG>",
+        "Name": "byuoitav/raspi-deployment-microservice:development",
         "Update": "true"
     },
     "Ports": [{

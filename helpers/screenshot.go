@@ -116,11 +116,12 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 		log.L.Warnf("failed to screenshot %v: %v", hostname, err)
 	}
 	//Convert the Screenshot to a .png
-	FullScreenshotName := fmt.Sprintf("%s.xwd", ScreenshotName)
+	time.Sleep(250 * time.Millisecond)
+	FullScreenshotName := fmt.Sprintf("/tmp/%s.xwd", ScreenshotName)
 	cmd := exec.Command("convert", FullScreenshotName, "screenshot.png")
 	cmd.Run()
-	cmd = exec.Command("rm", FullScreenshotName)
-	cmd.Run()
+	//	cmd = exec.Command("rm", FullScreenshotName)
+	//	cmd.Run()
 	//Read in the Screenshot
 	img, err = ioutil.ReadFile("screenshot.png")
 

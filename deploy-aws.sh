@@ -27,9 +27,9 @@ elif [ "$BRANCH" == "production" ]; then
 fi
 
 echo $ENV_NAME
-
-sed "s/<TAG>/$TAG/" < eb-source-bundle/Dockerrun.aws.json > eb-source-bundle/Dockerrun.aws.json
-zip -r $DOCKERRUN_FILE eb-source-bundle
+echo $DOCKERRUN_FILE
+sed "s/<TAG>/$TAG/" < Dockerrun.aws.json > eb-source-bundle/Dockerrun.aws.json
+cd ./eb-source-bundle/ ; zip -r ../$DOCKERRUN_FILE .ebextensions Dockerrun.aws.json; cd ..
 aws configure set default.region us-west-2
 aws configure set region us-west-2
 
