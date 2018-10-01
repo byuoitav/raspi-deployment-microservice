@@ -64,6 +64,6 @@ func ReceiveScreenshot(context echo.Context) error {
 		log.L.Errorf("Could not write out the screenshot")
 		return context.JSON(http.StatusInternalServerError, err)
 	}
-
+	log.L.Infof("We are finishing receiving the screenshot")
 	return context.JSON(http.StatusOK, "Hooray!")
 }

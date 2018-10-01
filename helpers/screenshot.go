@@ -14,8 +14,18 @@ import (
 	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/common/nerr"
 	"github.com/byuoitav/raspi-deployment-microservice/socket"
+	"github.com/nlopes/slack"
 	"golang.org/x/crypto/ssh"
 )
+
+/*
+type slackResponse struct {
+	Token      string            `json:"token"`
+	Channel    string            `json:"channel"`
+	Text       string            `json:"text"`
+	Attachment map[string]string `json:"attachment"`
+}
+*/
 
 var sshConfiguration *ssh.ClientConfig
 
@@ -107,7 +117,9 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	//Take the Screenshot
 	fmt.Fprintf(stdin, `xwd -out %s.xwd -root -display :0.0`+"\n", ScreenshotName)
 	//Puts the Screenshot onto AWS
+
 	fmt.Fprintf(stdin, `curl -XPOST https://byuoitav-raspi-deployment-microservice.avs.byu.edu/ReceiveScreenshot/%s -T ./%s.xwd`+"\n", ScreenshotName, ScreenshotName)
+	//	fmt.Fprintf(stdin, `curl -XPOST http://10.5.34.7:8008/ReceiveScreenshot/%s -T ./%s.xwd`+"\n", ScreenshotName, ScreenshotName)
 	//Remove the Screenshot
 	fmt.Fprintf(stdin, `rm %s.xwd`+"\n", ScreenshotName)
 	fmt.Fprintln(stdin, `exit`)
@@ -120,21 +132,24 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	time.Sleep(250 * time.Millisecond)
 	FullScreenshotName := fmt.Sprintf("/tmp/%s.xwd", ScreenshotName)
 	cmd := exec.Command("convert", FullScreenshotName, ScreenshotName+".png")
-	cmd.Run()
+	err = cmd.Run()
+	if err != nil {
+		log.L.Errorf("Failed to execute convert command: %v", err.Error())
+	}
 	//	cmd = exec.Command("rm", FullScreenshotName)
 	//	cmd.Run()
 	//Read in the Screenshot
-	//img, err = ioutil.ReadFile("screenshot.png")
+	img, err = ioutil.ReadFile(ScreenshotName + ".png")
 
 	if err != nil {
-		log.L.Infof("Failed to read Screenshot file %v: %v", ScreenshotName, err)
+		log.L.Infof("Failed to read Screenshot file %v: %v", ScreenshotName, err.Error())
 	}
 
 	//TODO Put the screenshot into a public s3 bucket and then send that url back thus pulling the picture down to slack
 	svc := s3.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
 
 	_, err = svc.PutObject(&s3.PutObjectInput{
-		Bucket:        aws.String("byu-oit-av-screenshot-bucket"), //TODO CHANGE BUCKET
+		Bucket:        aws.String("byu-oit-av-screenshot-bucket"),
 		Key:           aws.String(ScreenshotName),
 		Body:          bytes.NewReader(img),
 		ContentLength: aws.Int64(int64(len(img))), //Size of Image
@@ -145,6 +160,53 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 		log.L.Infof("Everything about Amazon has failed: %v", err)
 		return img, err
 	}
+	//New Slack thing with my token
+	api := slack.New("xoxp-3035630932-436086122837-447145441445-0481b211a9171a46b9441a370c9aa564")
+	params := slack.PostMessageParameters{}
+	attachment := slack.Attachment{
+		Text:     "Here is the screenshot for " + hostname,
+		ImageURL: "http://s3-us-west-2.amazonaws.com/byu-oit-av-screenshot-bucket/" + ScreenshotName,
+	}
 
+	params.Attachments = []slack.Attachment{attachment}
+	channelID, timestamp, err := api.PostMessage("G8N8J2WJ0", "Ahoy!", params)
+	if err != nil {
+		log.L.Errorf("We failed to send to Slack: %s", err.Error())
+	}
+	log.L.Infof("Message successfully sent to channel %s at %s", channelID, timestamp)
+
+	/*	//Build attachment of the image url
+		t := &url.URL{Path: "http://s3-us-west-2.amazonaws.com/byu-oit-av-screenshot-bucket/" + ScreenshotName}
+		image_url := t.String()
+		atchmnt := map[string]string{
+			"Fallback":  "Here is the Screenshot for " + hostname,
+			"Image_url": "http://s3-us-west-2.amazonaws.com/byu-oit-av-screenshot-bucket/" + ScreenshotName,
+		}
+
+		//Make the entire messge
+		jsonMsg := &slackResponse{
+			Token:      "xoxp-3035630932-436086122837-447145441445-0481b211a9171a46b9441a370c9aa564",
+			Channel:    "G8N8J2WJ0",
+			Text:       "Here is your image!",
+			Attachment: atchmnt,
+		}
+		log.L.Infof("%s", jsonMsg)
+		msgToSend, err := json.Marshal(jsonMsg)
+		if err != nil {
+			log.L.Errorf("Could not Marshal the JSON: %s", err.Error())
+		}
+		msgToSendURL := &url.URL{Path: msgToSend}
+		msgToSend = msgToSendURL.String()
+		log.L.Infof("%s", msgToSend)
+		cmd = exec.Command("curl -X POST -H 'Content-type: application/json' --data", msgToSend, "https://hooks.slack.com/services/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")
+		err = cmd.Run()
+		if err != nil {
+			log.L.Errorf("Could not execute curl to Slack: %s", err.Error())
+		}
+		//	curl Post https://slack.com/api/chat.postMessage
+		//We need token, channel, text, and the attachment
+	*/
+
+	log.L.Infof("We made it to the end boys. It is done.")
 	return img, nil
 }
