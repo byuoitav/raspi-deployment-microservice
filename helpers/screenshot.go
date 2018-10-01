@@ -144,8 +144,7 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	if err != nil {
 		log.L.Infof("Failed to read Screenshot file %v: %v", ScreenshotName, err.Error())
 	}
-
-	//TODO Put the screenshot into a public s3 bucket and then send that url back thus pulling the picture down to slack
+	//Puts the Picture into the Bucket
 	svc := s3.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
 
 	_, err = svc.PutObject(&s3.PutObjectInput{
@@ -208,5 +207,5 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	*/
 
 	log.L.Infof("We made it to the end boys. It is done.")
-	return img, nil
+	return []byte{}, nil
 }
