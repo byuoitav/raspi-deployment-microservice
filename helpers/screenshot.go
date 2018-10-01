@@ -160,7 +160,7 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 		return img, err
 	}
 	//New Slack thing with my token
-	myToken := "xoxp-3035630932-436086122837-447100449573-59afddc9b15dd4b82247bbf9459067be"
+	myToken := "xoxp-3035630932-436086122837-448074483207-1ec5d7883f99014d3475271557560f38"
 	api := slack.New(myToken)
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
