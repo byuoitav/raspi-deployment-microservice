@@ -148,7 +148,7 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	svc := s3.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
 
 	_, err = svc.PutObject(&s3.PutObjectInput{
-		Bucket:        aws.String("byu-oit-av-screenshot-bucket"),
+		Bucket:        aws.String(os.Getenv("SLACK_AHOY_BUCKET")),
 		Key:           aws.String(ScreenshotName),
 		Body:          bytes.NewReader(img),
 		ContentLength: aws.Int64(int64(len(img))), //Size of Image
@@ -160,16 +160,16 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 		return img, err
 	}
 	//New Slack thing with my token
-	myToken := "xoxp-3035630932-436086122837-446926382483-8e5eee21d2ece9e74d11d090cd8a82a2"
+	myToken := os.Getenv("SLACK_AHOY_TOKEN")
 	api := slack.New(myToken)
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
 		Text:     "Here is the screenshot for " + hostname,
-		ImageURL: "http://s3-us-west-2.amazonaws.com/byu-oit-av-screenshot-bucket/" + ScreenshotName,
+		ImageURL: "http://s3-us-west-2.amazonaws.com/" + os.Getenv("SLACK_AHOY_BUCKET") + "/" + ScreenshotName,
 	}
 
 	params.Attachments = []slack.Attachment{attachment}
-	channelID, timestamp, err := api.PostMessage("G8N8J2WJ0", "Ahoy!", params)
+	channelID, timestamp, err := api.PostMessage(os.Getenv("SLACK_AHOY_CHANNEL_ID"), "Ahoy!", params)
 	if err != nil {
 		log.L.Errorf("We failed to send to Slack: %s", err.Error())
 	}
