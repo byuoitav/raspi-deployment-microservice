@@ -45,7 +45,7 @@ func GetScreenshot(context echo.Context) error {
 	userName := userSection[0]
 
 	channelSection := strings.Split(sections[0], "&channel_id=")
-	channelSection = strings.Split(userSection[1], "&")
+	channelSection = strings.Split(channelSection[1], "&")
 	channelID := channelSection[0]
 
 	log.L.Infof(text)
