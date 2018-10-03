@@ -27,28 +27,30 @@ func GetScreenshot(context echo.Context) error {
 
 	log.L.Infof("%s", body)
 
-	//	err = context.Request().ParseForm()
 	if err != nil {
 		log.L.Infof("Failed to Parse Form: %s", err.Error())
 		return context.JSON(http.StatusInternalServerError, err)
 	}
-	//	log.L.Infof("%s", context.Request().PostForm)
-	//	text := context.Request().PostFormValue("&text")
+
+	//Parse Input Body for Parameters
 	sections := strings.Split(string(body), "&text=")
 
+	//Parse for Text (which is the hostname)
 	textSection := strings.Split(sections[1], "&")
 	text := textSection[0]
 	text = text + ".byu.edu"
 
+	//Parse for the User Name
 	userSection := strings.Split(sections[0], "&user_name=")
 	userSection = strings.Split(userSection[1], "&")
 	userName := userSection[0]
 
+	//Parse for the Channel ID
 	channelSection := strings.Split(sections[0], "&channel_id=")
 	channelSection = strings.Split(channelSection[1], "&")
 	channelID := channelSection[0]
 
-	log.L.Infof(text)
+	//Make the Screenshot
 	err = helpers.MakeScreenshot(text, address, userName, channelID)
 
 	if err != nil {
