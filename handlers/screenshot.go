@@ -55,7 +55,6 @@ func GetScreenshot(context echo.Context) error {
 		err = helpers.MakeScreenshot(text, address, userName, channelID)
 		if err != nil {
 			log.L.Infof("Failed to MakeScreenshot: %s", err.Error())
-			return context.JSON(http.StatusInternalServerError, err)
 		}
 	}()
 	log.L.Infof("We are exiting GetScreenshot")
