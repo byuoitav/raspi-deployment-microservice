@@ -44,8 +44,12 @@ func GetScreenshot(context echo.Context) error {
 	userSection = strings.Split(userSection[1], "&")
 	userName := userSection[0]
 
+	channelSection := strings.Split(sections[0], "&channel_id=")
+	channelSection = strings.Split(userSection[1], "&")
+	channelID := channelSection[0]
+
 	log.L.Infof(text)
-	err = helpers.MakeScreenshot(text, address, userName)
+	err = helpers.MakeScreenshot(text, address, userName, channelID)
 
 	if err != nil {
 		log.L.Infof("Failed to MakeScreenshot: %s", err.Error())
