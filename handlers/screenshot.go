@@ -16,7 +16,7 @@ type Message struct {
 }
 
 func GetScreenshot(context echo.Context) error {
-	log.L.Infof("WE MADE IT!")
+	log.L.Infof("We are entering GetScreenshot!")
 	address := context.Request().RemoteAddr
 	log.L.Infof(address)
 	body, err := ioutil.ReadAll(context.Request().Body)
@@ -35,18 +35,26 @@ func GetScreenshot(context echo.Context) error {
 	//	log.L.Infof("%s", context.Request().PostForm)
 	//	text := context.Request().PostFormValue("&text")
 	sections := strings.Split(string(body), "&text=")
-	sections = strings.Split(sections[1], "&")
-	text := sections[0]
+
+	textSection := strings.Split(sections[1], "&")
+	text := textSection[0]
 	text = text + ".byu.edu"
+
+	userSection := strings.Split(sections[0], "&user_name=")
+	userSection = strings.Split(userSection[1], "&")
+	userName := userSection[0]
+
 	log.L.Infof(text)
-	img, err := helpers.MakeScreenshot(text, address)
+	err = helpers.MakeScreenshot(text, address, userName)
 
 	if err != nil {
 		log.L.Infof("Failed to MakeScreenshot: %s", err.Error())
 		return context.JSON(http.StatusInternalServerError, err)
 	}
 
-	return context.Blob(http.StatusOK, "image/png", img)
+	log.L.Infof("We are exiting GetScreenshot")
+
+	return context.JSON(http.StatusOK, "Screenshot confirmed")
 }
 
 func ReceiveScreenshot(context echo.Context) error {

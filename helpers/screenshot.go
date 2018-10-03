@@ -74,17 +74,18 @@ func init() {
 	}
 }
 
-func MakeScreenshot(hostname string, address string) ([]byte, error) {
+func MakeScreenshot(hostname string, address string, userName string) error {
+
 	img := []byte{}
 	//Make our ssh client, writer, and sesh
 
 	client, err := ssh.Dial("tcp", hostname+":22", sshConfiguration)
 	if err != nil {
-		return img, nerr.Translate(err).Addf("Client could not be created")
+		return nerr.Translate(err).Addf("Client could not be created")
 	}
 	output := socket.Writer(hostname)
 	if err != nil {
-		return img, nerr.Translate(err).Addf("Ssh sesh could not be opened")
+		return nerr.Translate(err).Addf("Ssh sesh could not be opened")
 	}
 
 	defer client.Close()
@@ -93,14 +94,14 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	if er != nil {
 		msg := fmt.Sprintf("unable to open sesh with %v: %v", hostname, er.Error())
 		fmt.Fprintf(output, msg)
-		return img, er
+		return er
 	}
 	//Try to Open (Warp) Pipe
 	stdin, err := sesh.StdinPipe()
 	if err != nil {
 		msg := fmt.Sprintf("unable to open stdin pipe on %v: %v", hostname, err)
 		fmt.Fprintf(output, msg)
-		return img, err
+		return err
 	}
 
 	//Try to Create a (Koopa) Shell
@@ -108,7 +109,7 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	if err != nil {
 		msg := fmt.Sprintf("unable to start shell on %v: %v", output, err)
 		fmt.Fprintf(output, msg)
-		return img, err
+		return err
 	}
 
 	log.L.Debugf("Started new shell on %s", hostname)
@@ -157,14 +158,14 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 
 	if err != nil {
 		log.L.Infof("Everything about Amazon has failed: %v", err)
-		return img, err
+		return err
 	}
 	//New Slack thing with my token
 	myToken := os.Getenv("SLACK_AHOY_TOKEN")
 	api := slack.New(myToken)
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
-		Text:     "Here is the screenshot for " + hostname,
+		Text:     "Here is " + userName + "'s screenshot for " + hostname,
 		ImageURL: "http://s3-us-west-2.amazonaws.com/" + os.Getenv("SLACK_AHOY_BUCKET") + "/" + ScreenshotName,
 	}
 
@@ -208,5 +209,5 @@ func MakeScreenshot(hostname string, address string) ([]byte, error) {
 	*/
 
 	log.L.Infof("We made it to the end boys. It is done.")
-	return []byte{}, nil
+	return nil
 }
