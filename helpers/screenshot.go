@@ -74,7 +74,7 @@ func init() {
 	}
 }
 
-func MakeScreenshot(hostname string, address string, userName string) error {
+func MakeScreenshot(hostname string, address string, userName string, outputChannelID string) error {
 
 	img := []byte{}
 	//Make our ssh client, writer, and sesh
@@ -165,12 +165,13 @@ func MakeScreenshot(hostname string, address string, userName string) error {
 	api := slack.New(myToken)
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
-		Text:     "Here is " + userName + "'s screenshot for " + hostname,
+		Text:     "Here is " + userName + "'s screenshot of " + hostname,
 		ImageURL: "http://s3-us-west-2.amazonaws.com/" + os.Getenv("SLACK_AHOY_BUCKET") + "/" + ScreenshotName,
 	}
 
 	params.Attachments = []slack.Attachment{attachment}
-	channelID, timestamp, err := api.PostMessage(os.Getenv("SLACK_AHOY_CHANNEL_ID"), "Ahoy!", params)
+	channelID, timestamp, err := api.PostMessage(outputChannelID, "Ahoy!", params)
+
 	if err != nil {
 		log.L.Errorf("We failed to send to Slack: %s", err.Error())
 	}
