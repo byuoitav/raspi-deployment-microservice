@@ -170,6 +170,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	}
 
 	params.Attachments = []slack.Attachment{attachment}
+	log.L.Infof(outputChannelID)
 	channelID, timestamp, err := api.PostMessage(outputChannelID, "Ahoy!", params)
 
 	if err != nil {
