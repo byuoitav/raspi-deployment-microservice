@@ -18,79 +18,21 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-/*
-type slackResponse struct {
-	Token      string            `json:"token"`
-	Channel    string            `json:"channel"`
-	Text       string            `json:"text"`
-	Attachment map[string]string `json:"attachment"`
-}
-*/
-
-var sshConfiguration *ssh.ClientConfig
-
-//Builds the sshConfig
-func init() {
-	// get ssh key
-	bucket := s3.New(session.New(), &aws.Config{
-		Region: aws.String(os.Getenv("AWS_BUCKET_REGION")),
-	})
-
-	resp, err := bucket.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(os.Getenv("RASPI_DEPLOYMENT_S3_BUCKET")),
-		Key:    aws.String(os.Getenv("AWS_DEPLOYMENT_KEY")),
-	})
-	if err != nil {
-		log.L.Fatalf("failed to get aws deployment key")
-	}
-	defer resp.Body.Close()
-	log.L.Infof("Successfully got AWS deployment key.")
-	// read key from response
-	key, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.L.Fatalf("unable to read private ssh key: %v", err)
-	}
-
-	// parse the pem encoded private key
-	signer, err := ssh.ParsePrivateKey(key)
-	if err != nil {
-		log.L.Fatalf("unable to read parse private ssh key: %v", err)
-	}
-
-	// get pi username
-	uname := os.Getenv("PI_SSH_USERNAME")
-	if len(uname) == 0 {
-		log.L.Fatalf("PI_SSH_USERNAME must be set.")
-	}
-
-	// build ssh config
-	sshConfiguration = &ssh.ClientConfig{
-		User: uname,
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // TODO should we check the host key..?
-		Timeout:         5 * time.Second,
-	}
-}
-
+// MakeScreenshot takes a screenshot on device and posts it to a slack channel
 func MakeScreenshot(hostname string, address string, userName string, outputChannelID string) error {
-
 	img := []byte{}
 
 	//Make our ssh client, writer, and sesh
-
-	client, err := ssh.Dial("tcp", hostname+":22", sshConfiguration)
+	client, err := ssh.Dial("tcp", hostname+":22", sshConfig)
 	if err != nil {
 		return nerr.Translate(err).Addf("Client could not be created")
 	}
+	defer client.Close()
 
 	output := socket.Writer(hostname)
 	if err != nil {
 		return nerr.Translate(err).Addf("Ssh sesh could not be opened")
 	}
-
-	defer client.Close()
 
 	//Try to Open Session
 	sesh, er := NewSession(client, output)
@@ -156,7 +98,6 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 
 	//Puts the Picture into the s3 Bucket
 	svc := s3.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
-
 	_, err = svc.PutObject(&s3.PutObjectInput{
 		Bucket:        aws.String(os.Getenv("SLACK_AHOY_BUCKET")),
 		Key:           aws.String(ScreenshotName), //Image Name
@@ -182,12 +123,13 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 
 	//Make the Parameters Official
 	params.Attachments = []slack.Attachment{attachment}
-	//Post the Message to Slack
-	channelID, timestamp, err := api.PostMessage(outputChannelID, "Ahoy!", params)
 
+	//Post the Message to Slack
+	channelID, timestamp, err := api.PostMessage(outputChannelID, slack.MsgOptionText("Ahoy!", false), slack.MsgOptionPostMessageParameters(params))
 	if err != nil {
 		log.L.Errorf("We failed to send to Slack: %s", err.Error())
 	}
+
 	//Log if we succeeded and where we succeeded
 	log.L.Infof("Message successfully sent to channel %s at %s", channelID, timestamp)
 
