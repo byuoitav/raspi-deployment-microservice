@@ -115,23 +115,28 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	api := slack.New(myToken)
 
 	//Initialize Paramters and Create them
-	params := slack.PostMessageParameters{}
+	//	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
 		Text:     "Here is " + userName + "'s screenshot of " + hostname,
 		ImageURL: "http://s3-us-west-2.amazonaws.com/" + os.Getenv("SLACK_AHOY_BUCKET") + "/" + ScreenshotName,
 	}
 
 	//Make the Parameters Official
-	params.Attachments = []slack.Attachment{attachment}
+	//params.Attachments = []slack.Attachment{attachment}
 
 	//Post the Message to Slack
-	channelID, timestamp, err := api.PostMessage(outputChannelID, "Ahoy!", params)
+	channelID, timestamp, err := api.PostMessage(outputChannelID, slack.MsgOptionText("Ahoy!", false), slack.MsgOptionAttachments(attachment))
 	if err != nil {
 		log.L.Errorf("We failed to send to Slack: %s", err.Error())
 	}
 
 	//Log if we succeeded and where we succeeded
-	log.L.Infof("Message successfully sent to channel %s at %s", channelID, timestamp)
+	goTime, err := time.Parse("1539365107.000100", timestamp)
+	if err != nil {
+		log.L.Infof("Message successfully sent to channel %s at %s", channelID, timestamp)
+	} else {
+		log.L.Infof("Message successfully sent to channel %s at %s", channelID, goTime.Format(time.RFC3339))
+	}
 
 	log.L.Infof("We made it to the end boys. It is done.")
 	return nil
