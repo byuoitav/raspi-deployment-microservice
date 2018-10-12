@@ -125,7 +125,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	params.Attachments = []slack.Attachment{attachment}
 
 	//Post the Message to Slack
-	channelID, timestamp, err := api.PostMessage(outputChannelID, slack.MsgOptionText("Ahoy!", false), slack.MsgOptionPostMessageParameters(params))
+	channelID, timestamp, err := api.PostMessage(outputChannelID, "Ahoy!", params)
 	if err != nil {
 		log.L.Errorf("We failed to send to Slack: %s", err.Error())
 	}
