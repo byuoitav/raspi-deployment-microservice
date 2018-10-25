@@ -28,6 +28,13 @@ const (
 	envVarsFile       = "/tmp/environment"
 )
 
+var (
+	sshConfig *ssh.ClientConfig
+	services  = [...]string{
+		"device-monitoring",
+	}
+)
+
 // DeployReport is returned after attempting a deployment
 type DeployReport struct {
 	Address   string `json:"address"`
@@ -35,8 +42,6 @@ type DeployReport struct {
 	Message   string `json:"msg"`
 	Success   bool   `json:"success"`
 }
-
-var sshConfig *ssh.ClientConfig
 
 func init() {
 	// get ssh key
@@ -177,17 +182,43 @@ func DeployByBuildingAndTypeAndDesignation(building, deviceType, designation str
 func DeployToDevices(devices []structs.Device, deviceType, designation string) ([]DeployReport, *nerr.E) {
 	var reports []DeployReport
 	var reportsMu sync.Mutex
+	var toScp []file
+	var servicesToDeploy []string
 
 	// get env vars
 	envVars, err := retrieveEnvironmentVariables(deviceType, designation)
 	if err != nil {
 		return reports, nerr.Translate(err).Addf("unable to retrieve environment variables: %v", err)
 	}
+	toScp = append(toScp, file{
+		Path:        envVarsFile,
+		Permissions: 0644,
+		Bytes:       envVars,
+	})
 
 	// get docker compose file
 	dockerCompose, err := RetrieveDockerCompose(deviceType, designation)
 	if err != nil {
 		return reports, nerr.Translate(err).Addf("unable to retrieve docker-compose file: %v", err)
+	}
+	toScp = append(toScp, file{
+		Path:        dockerComposeFile + ".tmp",
+		Permissions: 0644,
+		Bytes:       dockerCompose,
+	})
+
+	// get files for services
+	for _, service := range services {
+		files, serviceFileExists, err := GetServiceFromS3(service, designation)
+		if err != nil {
+			return reports, nerr.Translate(err).Addf("unable to get service %v", service)
+		}
+
+		if serviceFileExists {
+			servicesToDeploy = append(servicesToDeploy, service)
+		}
+
+		toScp = append(toScp, files...)
 	}
 
 	var wg sync.WaitGroup
@@ -196,7 +227,7 @@ func DeployToDevices(devices []structs.Device, deviceType, designation string) (
 	// deploy to each device
 	for i := range devices {
 		go func(idx int) {
-			report := Deploy(devices[idx].Address, envVars, dockerCompose, socket.Writer(devices[idx].Address))
+			report := Deploy(devices[idx].Address, socket.Writer(devices[idx].Address), servicesToDeploy, toScp...)
 
 			reportsMu.Lock()
 			reports = append(reports, report)
@@ -211,7 +242,7 @@ func DeployToDevices(devices []structs.Device, deviceType, designation string) (
 }
 
 // Deploy deploys to a single pi
-func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) DeployReport {
+func Deploy(address string, output io.Writer, servicesToDeploy []string, files ...file) DeployReport {
 	report := DeployReport{
 		Address:   address,
 		Timestamp: time.Now().Format(time.RFC3339),
@@ -223,7 +254,7 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 		return report
 	}
 
-	log.L.Infof("Deploying to %s", address)
+	log.L.Infof("Deploying to %s. Deploying services: %s", address, servicesToDeploy)
 
 	client, err := ssh.Dial("tcp", address+":22", sshConfig)
 	if err != nil {
@@ -235,32 +266,11 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 
 	go func() {
 		defer client.Close()
-		// scp files over
-		files := []file{
-			file{
-				Path:        envVarsFile,
-				Permissions: 0644,
-				Bytes:       envVars,
-			},
-			file{
-				Path:        dockerComposeFile + ".tmp",
-				Permissions: 0644,
-				Bytes:       dockerCompose,
-			},
-		}
-		er := scp(client, output, files...)
-		if er != nil {
-			msg := fmt.Sprintf("failed to scp files to %v: %v", address, er.String())
-			fmt.Fprintf(output, msg)
-			reportToELK(address, msg, false)
-			return
-		}
-
-		log.L.Debugf("Successfully scp'd files to %s", address)
 
 		session, er := NewSession(client, output)
 		if er != nil {
 			msg := fmt.Sprintf("unable to open new session with %v: %v", address, er.String())
+			log.L.Warnf(msg)
 			fmt.Fprintf(output, msg)
 			reportToELK(address, msg, false)
 			return
@@ -269,6 +279,7 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 		stdin, err := session.StdinPipe()
 		if err != nil {
 			msg := fmt.Sprintf("unable to open stdin pipe on %v: %v", address, err)
+			log.L.Warnf(msg)
 			fmt.Fprintf(output, msg)
 			reportToELK(address, msg, false)
 			return
@@ -277,6 +288,7 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 		err = session.Shell()
 		if err != nil {
 			msg := fmt.Sprintf("unable to start shell on %v: %v", address, err)
+			log.L.Warnf(msg)
 			fmt.Fprintf(output, msg)
 			reportToELK(address, msg, false)
 			return
@@ -284,12 +296,32 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 
 		log.L.Debugf("Started new shell on %s", address)
 
+		// execute everything as root
+		fmt.Fprintf(stdin, `/usr/bin/sudo su`+"\n")
+
 		// write all script execution to a file
 		fmt.Fprintf(stdin, `script -f /tmp/deployment.log`+"\n")
 
+		// kill all services
+		for _, service := range servicesToDeploy {
+			fmt.Fprintf(stdin, `systemctl stop %s.service`+"\n", service)
+		}
+
+		// scp files over
+		er = scp(client, output, files...)
+		if er != nil {
+			msg := fmt.Sprintf("failed to scp files to %v: %v", address, er.String())
+			log.L.Warnf(msg)
+			fmt.Fprintf(output, msg)
+			reportToELK(address, msg, false)
+			return
+		}
+
+		log.L.Infof("Successfully scp'd files to %s", address)
+
 		// set up env vars
 		fmt.Fprintf(stdin, `echo "export PI_HOSTNAME=\"$(hostname)\"" >> %s`+"\n", envVarsFile)
-		fmt.Fprintf(stdin, `sudo cp %s /etc/environment`+"\n", envVarsFile)
+		fmt.Fprintf(stdin, `cp -f %s /etc/environment`+"\n", envVarsFile)
 		fmt.Fprintf(stdin, `source /etc/environment`+"\n")
 		fmt.Fprintf(stdin, `cat "%s" | envsubst > %s`+"\n", dockerComposeFile+".tmp", dockerComposeFile)
 
@@ -300,6 +332,20 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 		fmt.Fprintf(stdin, `docker-compose -f %s up -d`+"\n", dockerComposeFile)
 		fmt.Fprintf(stdin, `docker system prune -af`+"\n")
 
+		// services
+		for _, service := range servicesToDeploy {
+			serviceFile := fmt.Sprintf(`%s.service`, service)
+			serviceFilePath := fmt.Sprintf(`/byu/%s/%s`, service, serviceFile)
+			systemdFilePath := fmt.Sprintf(`/lib/systemd/system/%s`, serviceFile)
+
+			fmt.Fprintf(stdin, `. /etc/environment && cat %s.tmpl | envsubst > %s`+"\n", serviceFilePath, serviceFilePath)
+			fmt.Fprintf(stdin, `cp -f %s %s`+"\n", serviceFilePath, systemdFilePath)
+			fmt.Fprintf(stdin, `systemctl daemon-reload`+"\n")
+			fmt.Fprintf(stdin, `systemctl enable %s`+"\n", systemdFilePath)
+			fmt.Fprintf(stdin, `systemctl stop %s`+"\n", serviceFile)
+			fmt.Fprintf(stdin, `systemctl start %s`+"\n", serviceFile)
+		}
+
 		// stop printing script output
 		fmt.Fprintln(stdin, `exit`)
 		stdin.Close()
@@ -308,6 +354,7 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 		err = session.Wait()
 		if err != nil {
 			msg := fmt.Sprintf("failed to deploy to %v: %v", address, err)
+			log.L.Warnf(msg)
 			fmt.Fprintf(output, msg)
 			reportToELK(address, msg, false)
 			return
@@ -315,6 +362,7 @@ func Deploy(address string, envVars, dockerCompose []byte, output io.Writer) Dep
 
 		// send success to elk
 		msg := fmt.Sprintf("Successfully deployed to %v", address)
+		log.L.Infof(msg)
 		fmt.Fprintf(output, msg)
 		reportToELK(address, msg, true)
 	}()

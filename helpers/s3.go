@@ -7,15 +7,22 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/byuoitav/authmiddleware/bearertoken"
 	"github.com/byuoitav/common/log"
 )
 
-//const FILE_NAME = "environment-variables"                       //name of file we use later
-const NUM_BYTES = 8
-const PORT = ":5001"                                            // port the designation microservice works on
-const ENDPOINT = "/configurations/designations/%d/%d/variables" // endpoint we use to make request against designation microservice
+// NumBytes .
+// const NumBytes = 8
+
+// Port .
+// const Port = ":5001" // port the designation microservice works on
 
 var (
 	filePath string
@@ -37,12 +44,12 @@ func retrieveEnvironmentVariables(class, designation string) ([]byte, error) {
 
 	//	log.Printf("[helpers] fetching environment variables...")
 
-	classId, desigId, err := GetClassAndDesignationID(class, designation)
+	classID, desigID, err := GetClassAndDesignationID(class, designation)
 	if err != nil {
-		return resp, errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
+		return resp, fmt.Errorf("invalid class or designation: %s", err.Error())
 	}
 
-	response, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/variables", classId, desigId))
+	response, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/variables", classID, desigID))
 	if err != nil {
 		return resp, err
 	}
@@ -50,48 +57,48 @@ func retrieveEnvironmentVariables(class, designation string) ([]byte, error) {
 	if response.StatusCode != http.StatusOK {
 		msg, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			return resp, errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, unable to read response: %s", response.StatusCode, err.Error()))
+			return resp, fmt.Errorf("non-200 response from pi-designation-microservice: %d, unable to read response: %s", response.StatusCode, err.Error())
 		}
-		return resp, errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d, message: %s", response.StatusCode, string(msg)))
+		return resp, fmt.Errorf("non-200 response from pi-designation-microservice: %d, message: %s", response.StatusCode, string(msg))
 	}
 
 	b, err := ioutil.ReadAll(response.Body)
 	return b, err
 }
 
-//func RetrieveDockerCompose(class, designation string) (string, error) {
+// RetrieveDockerCompose .
 func RetrieveDockerCompose(class, designation string) ([]byte, error) {
 	var bytes []byte
 
 	//	log.Printf("[helpers] retrieving docker-compose file for devices of class: %s, designation: %s", class, designation)
 
 	//get class and designation IDs
-	classID, desigId, err := GetClassAndDesignationID(class, designation)
+	classID, desigID, err := GetClassAndDesignationID(class, designation)
 	if err != nil {
-		return bytes, errors.New(fmt.Sprintf("invalid class or designation: %s", err.Error()))
+		return bytes, fmt.Errorf("invalid class or designation: %s", err.Error())
 	}
 
-	resp, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/docker-compose", classID, desigId))
+	resp, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/docker-compose", classID, desigID))
 	if err != nil {
 		return bytes, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return bytes, errors.New(fmt.Sprintf("non-200 response from pi-designation-microservice: %d", resp.StatusCode))
+		return bytes, fmt.Errorf("non-200 response from pi-designation-microservice: %d", resp.StatusCode)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
 	return b, err
 }
 
+// GetClassAndDesignationID .
 func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
-
 	if (len(class) == 0) || (len(designation) == 0) {
 		return 0, 0, errors.New("invalid class or designation")
 	}
 
 	//get class ID
-	classId, err := GetClassId(class)
+	classID, err := GetClassId(class)
 	if err != nil {
 		msg := fmt.Sprintf("class ID not found: %s", err.Error())
 		//		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
@@ -99,18 +106,18 @@ func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
 	}
 
 	//get designation ID
-	desigId, err := GetDesignationId(designation)
+	desigID, err := GetDesignationId(designation)
 	if err != nil {
 		msg := fmt.Sprintf("designation ID not found: %s", err.Error())
 		//		log.Printf("%s", color.HiRedString("[helpers] %s", msg))
 		return 0, 0, errors.New(msg)
 	}
 
-	return classId, desigId, nil
+	return classID, desigID, nil
 }
 
+// MakeEnvironmentRequest .
 func MakeEnvironmentRequest(endpoint string) (*http.Response, error) {
-
 	var client http.Client
 
 	url := os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS") + endpoint
@@ -119,12 +126,12 @@ func MakeEnvironmentRequest(endpoint string) (*http.Response, error) {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return &http.Response{}, errors.New(fmt.Sprintf("unable to request docker-compose or etc/environment file: %s", err.Error()))
+		return &http.Response{}, fmt.Errorf("unable to request docker-compose or etc/environment file: %s", err.Error())
 	}
 
 	err = SetToken(req)
 	if err != nil {
-		return &http.Response{}, errors.New(fmt.Sprintf("unable to request docker-compose or etc/environment file: %s", err.Error()))
+		return &http.Response{}, fmt.Errorf("unable to request docker-compose or etc/environment file: %s", err.Error())
 	}
 
 	resp, err := client.Do(req)
@@ -135,6 +142,7 @@ func MakeEnvironmentRequest(endpoint string) (*http.Response, error) {
 	return resp, nil
 }
 
+// SetToken .
 func SetToken(request *http.Request) error {
 
 	//	log.Printf("[helpers] setting bearer token...")
@@ -149,4 +157,96 @@ func SetToken(request *http.Request) error {
 	request.Header.Set("Authorization", "Bearer "+token.Token)
 
 	return nil
+}
+
+// GetServiceFromS3 .
+func GetServiceFromS3(service, designation string) ([]file, bool, error) {
+	files := []file{}
+	serviceFileExists := false
+
+	log.L.Infof("Getting files in s3 from %s/%s", designation, service)
+	objects, err := GetS3Folder(os.Getenv("AWS_BUCKET_REGION"), os.Getenv("AWS_S3_SERVICES_BUCKET"), fmt.Sprintf("%s/device-monitoring", designation))
+	if err != nil {
+		return nil, serviceFileExists, fmt.Errorf("unable to download s3 service %s (designation: %s): %s", service, designation, err)
+	}
+
+	for name, bytes := range objects {
+		file := file{
+			Path:  fmt.Sprintf("/byu/%s/%s", service, name),
+			Bytes: bytes,
+		}
+
+		if name == service {
+			file.Permissions = 0100
+		} else if name == fmt.Sprintf("%s.service.tmpl", service) {
+			serviceFileExists = true
+			file.Permissions = 0644
+		} else {
+			file.Permissions = 0644
+		}
+
+		log.L.Debugf("added file %v, permissions %v", file.Path, file.Permissions)
+		files = append(files, file)
+	}
+
+	log.L.Infof("Successfully got %v files.", len(files))
+	return files, serviceFileExists, nil
+}
+
+// GetS3Folder .
+func GetS3Folder(region, bucket, prefix string) (map[string][]byte, error) {
+	sess := session.Must(session.NewSession())
+	svc := s3.New(sess, &aws.Config{
+		Region: aws.String(region),
+	})
+
+	// get list of objects
+	listObjectsResp, err := svc.ListObjects(&s3.ListObjectsInput{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(prefix),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get s3 folder: %v", err)
+	}
+
+	// build a downloader for s3
+	downloader := s3manager.NewDownloaderWithClient(svc)
+
+	wg := sync.WaitGroup{}
+	objects := make(map[string][]byte)
+	objectsMu := sync.Mutex{}
+	errors := []error{}
+
+	for _, key := range listObjectsResp.Contents {
+		log.L.Debugf("Downloading %v from bucket %v", *key.Key, bucket)
+		wg.Add(1)
+
+		go func(key *string) {
+			var bytes []byte
+			buffer := aws.NewWriteAtBuffer(bytes)
+			_, err := downloader.Download(buffer, &s3.GetObjectInput{
+				Bucket: aws.String(bucket),
+				Key:    key,
+			})
+			if err != nil {
+				errors = append(errors, err)
+			}
+
+			name := strings.TrimPrefix(*key, prefix)
+			name = strings.TrimPrefix(name, "/")
+
+			objectsMu.Lock()
+			objects[name] = buffer.Bytes()
+			objectsMu.Unlock()
+
+			wg.Done()
+		}(key.Key)
+	}
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, fmt.Errorf("errors downloading folder from s3: %s", errors)
+	}
+
+	return objects, nil
 }

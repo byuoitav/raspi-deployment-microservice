@@ -66,7 +66,7 @@ func scp(c *ssh.Client, output io.Writer, files ...file) *nerr.E {
 		}
 
 		// run command
-		err = session.Start("/usr/bin/scp -t " + dir)
+		err = session.Start(fmt.Sprintf("/usr/bin/sudo /bin/mkdir -p %s && /usr/bin/sudo /usr/bin/scp -t %s", dir, dir))
 		if err != nil {
 			return nerr.Translate(err).Addf("failed to run scp command on %s", c.RemoteAddr())
 		}
