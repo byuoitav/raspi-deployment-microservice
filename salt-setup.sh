@@ -11,6 +11,7 @@ wget https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/ma
 sed -i 's/\$SALT_MASTER_HOST/'$SALT_MASTER_HOST'/' minion
 sed -i 's/\$SALT_MASTER_FINGER/'$SALT_MASTER_FINGER'/' minion
 sed -i 's/\$PI_HOSTNAME/'$PI_HOSTNAME'/' minion
+sed -i 's/\$ROOM_SYSTEM/'$ROOM_SYSTEM'/' minion
 
 sudo mv minion /etc/salt/minion 
 
