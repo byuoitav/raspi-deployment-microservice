@@ -321,6 +321,8 @@ func Deploy(address string, output io.Writer, servicesToDeploy []string, files .
 
 		// set up env vars
 		fmt.Fprintf(stdin, `echo "export PI_HOSTNAME=\"$(hostname)\"" >> %s`+"\n", envVarsFile)
+		fmt.Fprintf(stdin, `echo "export SYSTEM_ID=\"$(hostname)\"" >> %s`+"\n", envVarsFile)
+		fmt.Fprintf(stdin, `echo "export ROOM_SYSTEM=\"$(hostname)\"" >> %s`+"\n", envVarsFile)
 		fmt.Fprintf(stdin, `cp -f %s /etc/environment`+"\n", envVarsFile)
 		fmt.Fprintf(stdin, `source /etc/environment`+"\n")
 		fmt.Fprintf(stdin, `cat "%s" | envsubst > %s`+"\n", dockerComposeFile+".tmp", dockerComposeFile)
