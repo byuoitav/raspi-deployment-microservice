@@ -1,30 +1,57 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
 
-	"github.com/byuoitav/authmiddleware"
 	"github.com/byuoitav/common"
 	"github.com/byuoitav/common/log"
+	"github.com/byuoitav/raspi-deployment-microservice/deploy"
 	"github.com/byuoitav/raspi-deployment-microservice/handlers"
-	"github.com/byuoitav/raspi-deployment-microservice/socket"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 )
 
+// TODO rename to deployment service
+func main() {
+	port := ":10000"
+	router := common.NewRouter()
+
+	bytes, er := deploy.GenerateDockerCompose("development")
+	if er != nil {
+		log.L.Fatalf("error: %s", er.Error())
+	}
+
+	log.L.Infof("Compose:\n%s\n", bytes)
+	err := ioutil.WriteFile("gen-docker-compose.yml", bytes, 0644)
+	if err != nil {
+		log.L.Fatalf("error: %s", err)
+	}
+
+	// endpoints for raspi to login to the pi and manage the update of it
+	// managed := router.Group("/force", auth.AuthorizeRequest("SOMETHING", "SOMETHING_ELSE", auth.LookupResourceFromAddress))
+	router.GET("/deploy/id/:id", handlers.DeployToID)
+	router.GET("/deploy/group/:group/", handlers.DeployToGroup)
+
+	// endpoints where the pi's will check in and update if they are allowed to
+	// automated := router.Group("/auto", auth.AuthorizeRequest("SOMETHING", "SOMETHING_ELSE", auth.LookupResourceFromAddress))
+
+	err = router.StartServer(&http.Server{
+		Addr:           port,
+		MaxHeaderBytes: 1024 * 10,
+	})
+	if err != nil {
+		log.L.Errorf("failed to start http server: %v", err)
+	}
+}
+
+/*
 func main() {
 	port := ":8008"
-	router := common.NewRouter()
-	router.Pre(middleware.RemoveTrailingSlash())
-	router.Use(middleware.CORS())
-
 	// unautheticated routes
-	router.Static("/*", "public")
 	router.GET("/health", health)
 
 	secure := router.Group("", echo.WrapMiddleware(authmiddleware.Authenticate))
 
-	/* secure routes */
+	/* secure routes
 	// deployment
 	secure.GET("/webhook_device/:hostname", handlers.DeployByHostname)
 	secure.GET("/webhook/:type/:designation", handlers.DeployByTypeAndDesignation)
@@ -57,3 +84,4 @@ func main() {
 func health(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, "Did you ever hear the tragedy of Darth Plagueis The Wise?")
 }
+*/

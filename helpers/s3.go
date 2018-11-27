@@ -3,7 +3,6 @@ package helpers
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -35,60 +34,6 @@ func init() {
 	}
 
 	filePath = filepath.Dir(ex)
-}
-
-// retrieveEnvironmentVariables gets the environment variables for each Pi as a file to SCP over
-//func retrieveEnvironmentVariables(class, designation string) (string, error) {
-func retrieveEnvironmentVariables(class, designation string) ([]byte, error) {
-	var resp []byte
-
-	//	log.Printf("[helpers] fetching environment variables...")
-
-	classID, desigID, err := GetClassAndDesignationID(class, designation)
-	if err != nil {
-		return resp, fmt.Errorf("invalid class or designation: %s", err.Error())
-	}
-
-	response, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/variables", classID, desigID))
-	if err != nil {
-		return resp, err
-	}
-
-	if response.StatusCode != http.StatusOK {
-		msg, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			return resp, fmt.Errorf("non-200 response from pi-designation-microservice: %d, unable to read response: %s", response.StatusCode, err.Error())
-		}
-		return resp, fmt.Errorf("non-200 response from pi-designation-microservice: %d, message: %s", response.StatusCode, string(msg))
-	}
-
-	b, err := ioutil.ReadAll(response.Body)
-	return b, err
-}
-
-// RetrieveDockerCompose .
-func RetrieveDockerCompose(class, designation string) ([]byte, error) {
-	var bytes []byte
-
-	//	log.Printf("[helpers] retrieving docker-compose file for devices of class: %s, designation: %s", class, designation)
-
-	//get class and designation IDs
-	classID, desigID, err := GetClassAndDesignationID(class, designation)
-	if err != nil {
-		return bytes, fmt.Errorf("invalid class or designation: %s", err.Error())
-	}
-
-	resp, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/docker-compose", classID, desigID))
-	if err != nil {
-		return bytes, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return bytes, fmt.Errorf("non-200 response from pi-designation-microservice: %d", resp.StatusCode)
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	return b, err
 }
 
 // GetClassAndDesignationID .

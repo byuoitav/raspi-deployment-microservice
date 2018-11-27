@@ -7,7 +7,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,7 +18,6 @@ import (
 	"github.com/byuoitav/common/structs"
 	"github.com/byuoitav/common/v2/events"
 	"github.com/byuoitav/event-translator-microservice/reporters"
-	"github.com/byuoitav/raspi-deployment-microservice/socket"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -181,63 +179,65 @@ func DeployByBuildingAndTypeAndDesignation(building, deviceType, designation str
 // DeployToDevices takes a slice of devices and gets all the data it needs to deploy
 func DeployToDevices(devices []structs.Device, deviceType, designation string) ([]DeployReport, *nerr.E) {
 	var reports []DeployReport
-	var reportsMu sync.Mutex
-	var toScp []file
-	var servicesToDeploy []string
+	// var reportsMu sync.Mutex
+	// var toScp []file
+	// var servicesToDeploy []string
 
 	// get env vars
-	envVars, err := retrieveEnvironmentVariables(deviceType, designation)
-	if err != nil {
-		return reports, nerr.Translate(err).Addf("unable to retrieve environment variables: %v", err)
-	}
-	toScp = append(toScp, file{
-		Path:        envVarsFile,
-		Permissions: 0644,
-		Bytes:       envVars,
-	})
+	/*
+			envVars, err := retrieveEnvironmentVariables(deviceType, designation)
+			if err != nil {
+				return reports, nerr.Translate(err).Addf("unable to retrieve environment variables: %v", err)
+			}
+			toScp = append(toScp, file{
+				Path:        envVarsFile,
+				Permissions: 0644,
+				Bytes:       envVars,
+			})
 
-	// get docker compose file
-	dockerCompose, err := RetrieveDockerCompose(deviceType, designation)
-	if err != nil {
-		return reports, nerr.Translate(err).Addf("unable to retrieve docker-compose file: %v", err)
-	}
-	toScp = append(toScp, file{
-		Path:        dockerComposeFile + ".tmp",
-		Permissions: 0644,
-		Bytes:       dockerCompose,
-	})
+			// get docker compose file
+			dockerCompose, err := RetrieveDockerCompose(deviceType, designation)
+			if err != nil {
+				return reports, nerr.Translate(err).Addf("unable to retrieve docker-compose file: %v", err)
+			}
+			toScp = append(toScp, file{
+				Path:        dockerComposeFile + ".tmp",
+				Permissions: 0644,
+				Bytes:       dockerCompose,
+			})
 
-	// get files for services
-	for _, service := range services {
-		files, serviceFileExists, err := GetServiceFromS3(service, designation)
-		if err != nil {
-			return reports, nerr.Translate(err).Addf("unable to get service %v", service)
-		}
+			// get files for services
+			for _, service := range services {
+				files, serviceFileExists, err := GetServiceFromS3(service, designation)
+				if err != nil {
+					return reports, nerr.Translate(err).Addf("unable to get service %v", service)
+				}
 
-		if serviceFileExists {
-			servicesToDeploy = append(servicesToDeploy, service)
-		}
+				if serviceFileExists {
+					servicesToDeploy = append(servicesToDeploy, service)
+				}
 
-		toScp = append(toScp, files...)
-	}
+				toScp = append(toScp, files...)
+			}
 
-	var wg sync.WaitGroup
-	wg.Add(len(devices))
+			var wg sync.WaitGroup
+			wg.Add(len(devices))
 
-	// deploy to each device
-	for i := range devices {
-		go func(idx int) {
-			report := Deploy(devices[idx].Address, socket.Writer(devices[idx].Address), servicesToDeploy, toScp...)
+			// deploy to each device
+			for i := range devices {
+				go func(idx int) {
+					report := Deploy(devices[idx].Address, socket.Writer(devices[idx].Address), servicesToDeploy, toScp...)
 
-			reportsMu.Lock()
-			reports = append(reports, report)
-			reportsMu.Unlock()
+					reportsMu.Lock()
+					reports = append(reports, report)
+					reportsMu.Unlock()
 
-			wg.Done()
-		}(i)
-	}
+					wg.Done()
+				}(i)
+			}
 
-	wg.Wait()
+		wg.Wait()
+	*/
 	return reports, nil
 }
 
