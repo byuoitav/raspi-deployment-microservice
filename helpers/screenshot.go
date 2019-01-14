@@ -2,8 +2,10 @@ package helpers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"time"
@@ -14,9 +16,20 @@ import (
 	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/common/nerr"
 	"github.com/byuoitav/raspi-deployment-microservice/socket"
-	"github.com/nlopes/slack"
 	"golang.org/x/crypto/ssh"
 )
+
+type Attachment struct {
+	Title    string `json:"title"`
+	ImageURL string `json:"image_url"`
+}
+
+type Message struct {
+	Token       string       `json:"token"`
+	Channel     string       `json:"channel"`
+	Text        string       `json:"text"`
+	Attachments []Attachment `json:"attachments"`
+}
 
 // MakeScreenshot takes a screenshot on device and posts it to a slack channel
 func MakeScreenshot(hostname string, address string, userName string, outputChannelID string) error {
@@ -112,30 +125,40 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	}
 	//New Slack thing with token
 	myToken := os.Getenv("SLACK_AHOY_TOKEN")
-	api := slack.New(myToken)
 
-	//Initialize Paramters and Create them
-	//	params := slack.PostMessageParameters{}
-	attachment := slack.Attachment{
-		Text:     "Here is " + userName + "'s screenshot of " + hostname,
+	attachment := Attachment{
+		Title:    "Here is " + userName + "'s screenshot of " + hostname,
 		ImageURL: "http://s3-us-west-2.amazonaws.com/" + os.Getenv("SLACK_AHOY_BUCKET") + "/" + ScreenshotName,
 	}
 
-	//Make the Parameters Official
-	//params.Attachments = []slack.Attachment{attachment}
+	var attachments []Attachment
+	attachments = append(attachments, attachment)
 
-	//Post the Message to Slack
-	channelID, timestamp, err := api.PostMessage(outputChannelID, slack.MsgOptionText("Ahoy!", false), slack.MsgOptionAttachments(attachment))
-	if err != nil {
-		log.L.Errorf("We failed to send to Slack: %s", err.Error())
+	message := Message{
+		Token:       myToken,
+		Channel:     outputChannelID,
+		Text:        "Ahoy!",
+		Attachments: attachments,
 	}
 
-	//Log if we succeeded and where we succeeded
-	goTime, err := time.Parse("1539365107.000100", timestamp)
+	//Marshal it
+	json, err := json.Marshal(message)
 	if err != nil {
-		log.L.Infof("Message successfully sent to channel %s at %s", channelID, timestamp)
-	} else {
-		log.L.Infof("Message successfully sent to channel %s at %s", channelID, goTime.Format(time.RFC3339))
+		log.L.Errorf("failed to marshal message: %v", message)
+		return err
+	}
+
+	//Make the request
+	req, err := http.NewRequest("POST", "https://slack.com/api/chat.postMessage", bytes.NewBuffer(json))
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("Authorization", myToken)
+
+	//We don't really care about this response because it has no nutrients! (useful information)
+	slackClient := &http.Client{}
+	_, err = slackClient.Do(req)
+
+	if err != nil {
+		log.L.Errorf("We failed to send to Slack: %s", err.Error())
 	}
 
 	log.L.Infof("We made it to the end boys. It is done.")
