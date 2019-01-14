@@ -170,7 +170,7 @@ func DeployByBuildingAndTypeAndDesignation(building, deviceType, designation str
 
 	log.L.Debugf("Got %v devices in building %v, with type %v and designation %v", len(buildingDevices), building, deviceType, designation)
 
-	reports, er := DeployToDevices(allDevices, deviceType, designation)
+	reports, er := DeployToDevices(buildingDevices, deviceType, designation)
 	if err != nil {
 		return reports, er.Addf("failed to deploy to devices in building %v by type %v and designation %v", building, deviceType, designation)
 	}
@@ -222,18 +222,18 @@ func DeployToDevices(devices []structs.Device, deviceType, designation string) (
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(len(devices))
 
 	// deploy to each device
 	for i := range devices {
+		wg.Add(1)
+
 		go func(idx int) {
+			defer wg.Done()
 			report := Deploy(devices[idx].Address, socket.Writer(devices[idx].Address), servicesToDeploy, toScp...)
 
 			reportsMu.Lock()
 			reports = append(reports, report)
 			reportsMu.Unlock()
-
-			wg.Done()
 		}(i)
 	}
 
@@ -338,12 +338,12 @@ func Deploy(address string, output io.Writer, servicesToDeploy []string, files .
 		for _, service := range servicesToDeploy {
 			serviceFile := fmt.Sprintf(`%s.service`, service)
 			serviceFilePath := fmt.Sprintf(`/byu/%s/%s`, service, serviceFile)
-			systemdFilePath := fmt.Sprintf(`/lib/systemd/system/%s`, serviceFile)
+			// systemdFilePath := fmt.Sprintf(`/lib/systemd/system/%s`, serviceFile)
 
 			fmt.Fprintf(stdin, `. /etc/environment && cat %s.tmpl | envsubst > %s`+"\n", serviceFilePath, serviceFilePath)
-			fmt.Fprintf(stdin, `cp -f %s %s`+"\n", serviceFilePath, systemdFilePath)
+			// fmt.Fprintf(stdin, `cp -f %s %s`+"\n", serviceFilePath, systemdFilePath)
 			fmt.Fprintf(stdin, `systemctl daemon-reload`+"\n")
-			fmt.Fprintf(stdin, `systemctl enable %s`+"\n", systemdFilePath)
+			fmt.Fprintf(stdin, `systemctl enable %s`+"\n", serviceFilePath)
 			fmt.Fprintf(stdin, `systemctl stop %s`+"\n", serviceFile)
 			fmt.Fprintf(stdin, `systemctl start %s`+"\n", serviceFile)
 		}
