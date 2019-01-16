@@ -94,6 +94,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 		}
 
 		//Read in the Screenshot
+
 		img, err = ioutil.ReadFile(ScreenshotName + ".png")
 
 		if err != nil {
@@ -107,13 +108,13 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	}
 
 	log.L.Infof("Response: %v", resp)
-	img, err = ioutil.ReadFile(resp)
-
-	if err != nil {
-		log.L.Infof("Failed to read Screenshot file %v: %v", ScreenshotName, err.Error())
-	}
-
 	ScreenshotName := hostname + "*" + time.Now().Format(time.RFC3339)
+
+	defer resp.Body.Close()
+	img, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.L.Errorf("We couldn't read in the response body: %s", err)
+	}
 
 	//Puts the Picture into the s3 Bucket
 	svc := s3.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
