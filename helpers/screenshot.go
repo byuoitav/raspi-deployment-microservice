@@ -100,11 +100,11 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 		}
 	*/
 
-	screenReq, err := http.NewRequest("POST", "http://%s.byu.edu:10000/device/screenshot", hostname, bytes.NewBuffer(json))
+	screenReq, err := http.NewRequest("POST", "http://"+hostname+".byu.edu:10000/device/screenshot", bytes.NewBuffer(json))
 
 	//We don't really care about this response because it has no nutrients! (useful information)
 	screenClient := &http.Client{}
-	resp, err = slackClient.Do(screenReq)
+	resp, err := screenClient.Do(screenReq)
 
 	if err != nil {
 		log.L.Errorf("We failed to get the screenshot: %s", err.Error())
