@@ -21,7 +21,7 @@ func GetScreenshot(context echo.Context) error {
 	log.L.Infof(address)
 	body, err := ioutil.ReadAll(context.Request().Body)
 	if err != nil {
-		log.L.Infof("[Screenshot] Failed to read Request body: %s", err.Error())
+		log.L.Warnf("[Screenshot] Failed to read Request body: %s", err.Error())
 		return context.JSON(http.StatusInternalServerError, err)
 	}
 
@@ -54,7 +54,7 @@ func GetScreenshot(context echo.Context) error {
 	go func() {
 		err = helpers.MakeScreenshot(text, address, userName, channelID)
 		if err != nil {
-			log.L.Infof("[Screenshot] Failed to MakeScreenshot: %s", err.Error())
+			log.L.Warnf("[Screenshot] Failed to MakeScreenshot: %s", err.Error())
 		}
 	}()
 	log.L.Infof("We are exiting GetScreenshot")

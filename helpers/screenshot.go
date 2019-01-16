@@ -107,7 +107,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 		log.L.Errorf("[Screenshot] We failed to get the screenshot: %s", err.Error())
 	}
 
-	log.L.Infof("[Screenshot] Response: %v", resp)
+	log.L.Warnf("[Screenshot] Response: %v", resp)
 	ScreenshotName := hostname + "*" + time.Now().Format(time.RFC3339)
 
 	defer resp.Body.Close()
@@ -127,7 +127,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	})
 
 	if err != nil {
-		log.L.Infof("[Screenshot] Everything about Amazon has failed: %v", err)
+		log.L.Errorf("[Screenshot] Everything about Amazon has failed: %v", err)
 		return err
 	}
 	//New Slack thing with token
