@@ -99,12 +99,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 			log.L.Infof("Failed to read Screenshot file %v: %v", ScreenshotName, err.Error())
 		}
 	*/
-
-	screenReq, err := http.NewRequest("POST", "http://"+hostname+".byu.edu:10000/device/screenshot", bytes.NewBuffer(json))
-
-	//We don't really care about this response because it has no nutrients! (useful information)
-	screenClient := &http.Client{}
-	resp, err := screenClient.Do(screenReq)
+	resp, err := http.Get("http://" + hostname + ".byu.edu:10000/device/screenshot")
 
 	if err != nil {
 		log.L.Errorf("We failed to get the screenshot: %s", err.Error())
