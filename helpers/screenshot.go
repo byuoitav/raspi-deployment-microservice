@@ -104,16 +104,16 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	resp, err := http.Get("http://" + hostname + ":10000/device/screenshot")
 
 	if err != nil {
-		log.L.Errorf("We failed to get the screenshot: %s", err.Error())
+		log.L.Errorf("[Screenshot] We failed to get the screenshot: %s", err.Error())
 	}
 
-	log.L.Infof("Response: %v", resp)
+	log.L.Infof("[Screenshot] Response: %v", resp)
 	ScreenshotName := hostname + "*" + time.Now().Format(time.RFC3339)
 
 	defer resp.Body.Close()
 	img, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.L.Errorf("We couldn't read in the response body: %s", err)
+		log.L.Errorf("[Screenshot] We couldn't read in the response body: %s", err)
 	}
 
 	//Puts the Picture into the s3 Bucket
@@ -127,7 +127,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	})
 
 	if err != nil {
-		log.L.Infof("Everything about Amazon has failed: %v", err)
+		log.L.Infof("[Screenshot] Everything about Amazon has failed: %v", err)
 		return err
 	}
 	//New Slack thing with token
@@ -151,7 +151,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	//Marshal it
 	json, err := json.Marshal(message)
 	if err != nil {
-		log.L.Errorf("failed to marshal message: %v", message)
+		log.L.Errorf("[Screenshot] failed to marshal message: %v", message)
 		return err
 	}
 
@@ -165,7 +165,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	_, err = slackClient.Do(req)
 
 	if err != nil {
-		log.L.Errorf("We failed to send to Slack: %s", err.Error())
+		log.L.Errorf("[Screenshot] We failed to send to Slack: %s", err.Error())
 	}
 
 	log.L.Infof("We made it to the end boys. It is done.")
