@@ -3,6 +3,7 @@ package helpers
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -99,13 +100,18 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 			log.L.Infof("Failed to read Screenshot file %v: %v", ScreenshotName, err.Error())
 		}
 	*/
-	resp, err := http.Get("http://" + hostname + ".byu.edu:10000/device/screenshot")
+	resp, err := http.Get("http://" + hostname + ":10000/device/screenshot")
 
 	if err != nil {
 		log.L.Errorf("We failed to get the screenshot: %s", err.Error())
 	}
 
-	log.L.Infof("Response: %s", resp)
+	log.L.Infof("Response: %v", resp)
+	img, err = ioutil.ReadFile(resp)
+
+	if err != nil {
+		log.L.Infof("Failed to read Screenshot file %v: %v", ScreenshotName, err.Error())
+	}
 
 	ScreenshotName := hostname + "*" + time.Now().Format(time.RFC3339)
 
