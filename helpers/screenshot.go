@@ -123,7 +123,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 		Key:           aws.String(ScreenshotName), //Image Name
 		Body:          bytes.NewReader(img),       //The Image
 		ContentLength: aws.Int64(int64(len(img))), //Size of Image
-		ContentType:   aws.String(".png"),
+		ContentType:   aws.String(".jpg"),
 	})
 
 	if err != nil {
@@ -162,11 +162,13 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 
 	//We don't really care about this response because it has no nutrients! (useful information)
 	slackClient := &http.Client{}
-	_, err = slackClient.Do(req)
+	resp, err = slackClient.Do(req)
 
 	if err != nil {
 		log.L.Errorf("[Screenshot] We failed to send to Slack: %s", err.Error())
 	}
+
+	log.L.Warnf("[Screenshot] Slack Response: %v", resp)
 
 	log.L.Infof("We made it to the end boys. It is done.")
 	return nil
