@@ -157,10 +157,9 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 
 	//Make the request
 	req, err := http.NewRequest("POST", "https://slack.com/api/chat.postMessage", bytes.NewBuffer(json))
-	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", myToken)
 
-	//We don't really care about this response because it has no nutrients! (useful information)
 	slackClient := &http.Client{}
 	resp, err = slackClient.Do(req)
 
