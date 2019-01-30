@@ -3,6 +3,7 @@ package helpers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -94,21 +95,29 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 
 	if err != nil {
 		log.L.Errorf("[Screenshot] We failed to send to Slack: %s", err.Error())
+		return err
 	}
 
-	log.L.Warnf("[Screenshot] Slack Response: %+v", resp.Body)
-	var p []byte
-	_, err = resp.Body.Read(p)
+	p, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.L.Errorf("[Screenshot] Couldn't read the Slack Response: %s", err.Error())
+		return err
 	}
+	log.L.Warnf("[Screenshot] Slack Response: %s", p)
+
+	if resp.StatusCode/100 != 2 {
+		log.L.Error("[Screenshot] Non-200 Response")
+		return errors.New(string(p))
+	}
+
 	var i interface{}
 	err = json.Unmarshal(p, i)
 	if err != nil {
 		log.L.Errorf("[Screenshot] Couldn't unmarshal: %s", err.Error())
+		return err
 	}
 
-	log.L.Warnf("[Screenshot] Unmarshalled body: %+v", err.Error())
+	log.L.Warnf("[Screenshot] Unmarshalled body: %+v", i)
 
 	log.L.Warnf("We made it to the end boys. It is done.")
 	return nil
