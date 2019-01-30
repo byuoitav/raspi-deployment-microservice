@@ -62,6 +62,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	}
 	//New Slack thing with token
 	myToken := os.Getenv("SLACK_AHOY_TOKEN")
+	myWebHook := os.Getenv("SLACK_AHOY_WEBHOOK")
 
 	attachment := Attachment{
 		Title:    "Here is " + userName + "'s screenshot of " + hostname,
@@ -86,9 +87,8 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 	}
 
 	//Make the request
-	req, err := http.NewRequest("POST", "https://slack.com/api/chat.postMessage", bytes.NewBuffer(j))
+	req, err := http.NewRequest("POST", myWebHook, bytes.NewBuffer(j))
 	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Authorization", myToken)
 
 	slackClient := &http.Client{}
 	resp, err = slackClient.Do(req)
