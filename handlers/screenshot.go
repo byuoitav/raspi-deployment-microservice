@@ -16,7 +16,7 @@ type Message struct {
 }
 
 func GetScreenshot(context echo.Context) error {
-	log.L.Infof("We are entering GetScreenshot!")
+	log.L.Warnf("[Screenshot] We are entering GetScreenshot!")
 	address := context.Request().RemoteAddr
 	log.L.Infof(address)
 	body, err := ioutil.ReadAll(context.Request().Body)
@@ -25,7 +25,7 @@ func GetScreenshot(context echo.Context) error {
 		return context.JSON(http.StatusInternalServerError, err)
 	}
 
-	log.L.Infof("%s", body)
+	log.L.Warnf("%s", body)
 
 	if err != nil {
 		log.L.Infof("[Screenshot] Failed to Parse Form: %s", err.Error())
@@ -57,7 +57,7 @@ func GetScreenshot(context echo.Context) error {
 			log.L.Warnf("[Screenshot] Failed to MakeScreenshot: %s", err.Error())
 		}
 	}()
-	log.L.Infof("We are exiting GetScreenshot")
+	log.L.Warnf("[Screenshot] We are exiting GetScreenshot")
 
 	return context.JSON(http.StatusOK, "Screenshot confirmed")
 }

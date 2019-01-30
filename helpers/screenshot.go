@@ -96,7 +96,7 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 		log.L.Errorf("[Screenshot] We failed to send to Slack: %s", err.Error())
 	}
 
-	log.L.Debugf("[Screenshot] Slack Response: %+v", resp.Body)
+	log.L.Warnf("[Screenshot] Slack Response: %+v", resp.Body)
 	var p []byte
 	_, err = resp.Body.Read(p)
 	if err != nil {
@@ -108,8 +108,8 @@ func MakeScreenshot(hostname string, address string, userName string, outputChan
 		log.L.Errorf("[Screenshot] Couldn't unmarshal: %s", err.Error())
 	}
 
-	log.L.Debugf("[Screenshot] Unmarshalled body: %+v", err.Error())
+	log.L.Warnf("[Screenshot] Unmarshalled body: %+v", err.Error())
 
-	log.L.Infof("We made it to the end boys. It is done.")
+	log.L.Warnf("We made it to the end boys. It is done.")
 	return nil
 }
