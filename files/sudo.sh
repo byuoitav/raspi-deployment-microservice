@@ -13,6 +13,7 @@ date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' 
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/files/keyboard > /etc/default/keyboard
 
 
+# Get the hostname of the pi
 while  true ; do
 
     # get hostname
@@ -28,6 +29,21 @@ while  true ; do
     fi
 done
 
+# By default we will set a pi to not use WiFi
+isWireless = false
+
+# Check if the pi will use ethernet or WiFi
+while true ; do
+	echo "Will this pi be wireless? [Y/n]"
+	read ans
+
+	if [[ $ans == "Y" ]]
+		# Change the pi to use wireless
+		isWireless = true
+	fi
+done
+
+# Get the static IP address of the pi
 while true; do
 
     # get static ip
@@ -57,17 +73,26 @@ touch $started
 
 # copy original dhcp file
 cp /etc/dhcpcd.conf /etc/dhcpcd.conf.other
-
+ 
 # setup hostname
 echo $desired_hostname > /etc/hostname
 echo "127.0.1.1    $desired_hostname" >> /etc/hosts
 
-# setup static ip
-echo "interface eth0" >> /etc/dhcpcd.conf
-echo "static ip_address=$desired_ip/24" >> /etc/dhcpcd.conf
-routers=$(echo "static routers=$desired_ip" | cut -d "." -f -3)
-echo "$routers.1" >> /etc/dhcpcd.conf
-echo "static domain_name_servers=10.8.0.19 10.8.0.26" >> /etc/dhcpcd.conf
+# setup static ip, start by checking if the pi will use wlan0 (wireless) or eht0 (wired)
+if [[ isWireless == true ]]
+	echo "interface wlan0" >> /etc/dhcpcd.conf
+	echo "metric 200" >> /etc/dhcpcd.conf
+	echo "static ip_address=$desired_ip/24" >> /etc/dhcpcd.conf
+	routers=$(echo "static routers=$desired_ip" | cut -d "." -f -3)
+	echo "$routers.1" >> /etc/dhcpcd.conf
+	echo "static domain_name_servers=10.8.0.19 10.8.0.26" >> /etc/dhcpcd.conf
+else
+	echo "interface eth0" >> /etc/dhcpcd.conf
+	echo "static ip_address=$desired_ip/24" >> /etc/dhcpcd.conf
+	routers=$(echo "static routers=$desired_ip" | cut -d "." -f -3)
+	echo "$routers.1" >> /etc/dhcpcd.conf
+	echo "static domain_name_servers=10.8.0.19 10.8.0.26" >> /etc/dhcpcd.conf
+fi
 
 # set contact points up
 curl https://raw.githubusercontent.com/byuoitav/raspi-deployment-microservice/master/image/contacts.service > /usr/lib/systemd/system/contacts.service
