@@ -1,13 +1,13 @@
 package helpers
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -54,7 +54,7 @@ func init() {
 		Key:    aws.String(os.Getenv("AWS_DEPLOYMENT_KEY")),
 	})
 	if err != nil {
-		log.L.Fatalf("failed to get aws deployment key")
+		log.L.Fatalf("failed to get aws deployment key: %v", err)
 	}
 	defer resp.Body.Close()
 	log.L.Infof("Successfully got AWS deployment key.")
@@ -88,15 +88,15 @@ func init() {
 	}
 }
 
-// DeployByHostname deploys to one specific device with the corrosponding hostname
-func DeployByHostname(hostname string) ([]DeployReport, *nerr.E) {
-	var reports []DeployReport
+// DeployByHostname deploys to one specific device with the corresponding hostname
+func DeployByHostname(hostname string) (DeployReport, *nerr.E) {
+	var report DeployReport
 	log.L.Infof("Starting DeployByHostname to %v", hostname)
 
 	// get room from database
 	room, err := db.GetDB().GetRoom(hostname[:strings.LastIndex(hostname, "-")])
 	if err != nil {
-		return reports, nerr.Translate(err).Addf("failed to get room for hostname %v", hostname)
+		return report, nerr.Translate(err).Addf("failed to get room for hostname %v", hostname)
 	}
 
 	log.L.Debugf("Got room %v, looking for hostname %v", room.ID, hostname)
@@ -113,94 +113,39 @@ func DeployByHostname(hostname string) ([]DeployReport, *nerr.E) {
 
 	// if the device wasn't found
 	if len(device.Type.ID) == 0 {
-		return reports, nerr.Create(fmt.Sprintf("failed to find device %v", hostname), reflect.TypeOf("").String())
+		return report, nerr.Create(fmt.Sprintf("failed to find device %v", hostname), reflect.TypeOf("").String())
 	}
 
 	log.L.Debugf("Got device %v", device.ID)
 
-	reports, er := DeployToDevices([]structs.Device{device}, device.Type.ID, room.Designation)
+	report, er := DeployToDevice(device, device.Type.ID, room.Designation)
 	if er != nil {
-		return reports, er.Addf("failed to deploy to device %v", device.ID)
+		return report, er.Addf("failed to deploy to device %v", device.ID)
 	}
 
-	return reports, nil
+	return report, nil
 }
 
-// DeployByTypeAndDesignation deploys to all devices of the given type and designation
-func DeployByTypeAndDesignation(deviceType, designation string) ([]DeployReport, *nerr.E) {
-	var reports []DeployReport
-	log.L.Infof("Deploying by type %v and designation %v", deviceType, designation)
-
-	// TODO create type/designation function in db
-	allDevices, err := db.GetDB().GetDevicesByRoleAndTypeAndDesignation("ControlProcessor", deviceType, designation)
-	if err != nil {
-		return reports, nerr.Translate(err).Addf("failed to get devices by type %v and designation %v", deviceType, designation)
-	}
-
-	log.L.Debugf("Got %v devices matching type %v and designation %v", len(allDevices), deviceType, designation)
-
-	reports, er := DeployToDevices(allDevices, deviceType, designation)
-	if err != nil {
-		return reports, er.Addf("failed to deploy to devices by type %v and designation %v", deviceType, designation)
-	}
-
-	return reports, nil
-}
-
-// DeployByBuildingAndTypeAndDesignation deploys to all devices within the given building of the given type/designation
-func DeployByBuildingAndTypeAndDesignation(building, deviceType, designation string) ([]DeployReport, *nerr.E) {
-	var reports []DeployReport
-	log.L.Infof("Deploying to building %v, with device type %v and designation %v", building, deviceType, designation)
-
-	// TODO create type/designation function in db
-	allDevices, err := db.GetDB().GetDevicesByRoleAndTypeAndDesignation("ControlProcessor", deviceType, designation)
-	if err != nil {
-		return reports, nerr.Translate(err).Addf("failed to get devices by type %v and designation %v", deviceType, designation)
-	}
-
-	log.L.Debugf("Filtering for devices in building %s", building)
-
-	// filter out by building
-	var buildingDevices []structs.Device
-	for i := range allDevices {
-		if strings.EqualFold(allDevices[i].ID[:strings.Index(allDevices[i].ID, "-")], building) {
-			buildingDevices = append(buildingDevices, allDevices[i])
-		}
-	}
-
-	log.L.Debugf("Got %v devices in building %v, with type %v and designation %v", len(buildingDevices), building, deviceType, designation)
-
-	reports, er := DeployToDevices(buildingDevices, deviceType, designation)
-	if err != nil {
-		return reports, er.Addf("failed to deploy to devices in building %v by type %v and designation %v", building, deviceType, designation)
-	}
-
-	return reports, nil
-}
-
-// DeployToDevices takes a slice of devices and gets all the data it needs to deploy
-func DeployToDevices(devices []structs.Device, deviceType, designation string) ([]DeployReport, *nerr.E) {
-	var reports []DeployReport
-	var reportsMu sync.Mutex
+// DeployToDevice takes a slice of devices and gets all the data it needs to deploy
+func DeployToDevice(device structs.Device, deviceType, designation string) (DeployReport, *nerr.E) {
+	var report DeployReport
 	var toScp []file
 	var servicesToDeploy []string
 
-	// get env vars
-	envVars, err := retrieveEnvironmentVariables(deviceType, designation)
-	if err != nil {
-		return reports, nerr.Translate(err).Addf("unable to retrieve environment variables: %v", err)
-	}
-	toScp = append(toScp, file{
-		Path:        envVarsFile,
-		Permissions: 0644,
-		Bytes:       envVars,
-	})
-
 	// get docker compose file
+	log.L.Debugf("In DeployToDevice")
 	dockerCompose, err := RetrieveDockerCompose(deviceType, designation)
 	if err != nil {
-		return reports, nerr.Translate(err).Addf("unable to retrieve docker-compose file: %v", err)
+		return report, nerr.Translate(err).Addf("unable to retrieve docker-compose file: %v", err)
 	}
+	//Replace $SYSTEM_ID with the actual id
+	tmp := fmt.Sprintf("%s", dockerCompose)
+	tmp = strings.ReplaceAll(tmp, "$SYSTEM_ID", device.ID)
+	var byter bytes.Buffer
+	byter.WriteString(tmp)
+	dockerCompose = byter.Bytes()
+
+	//Add the docker compose to the scp files
 	toScp = append(toScp, file{
 		Path:        dockerComposeFile + ".tmp",
 		Permissions: 0644,
@@ -209,9 +154,10 @@ func DeployToDevices(devices []structs.Device, deviceType, designation string) (
 
 	// get files for services
 	for _, service := range services {
-		files, serviceFileExists, err := GetServiceFromS3(service, designation)
+		//files, serviceFileExists, err := GetServiceFromS3(service, designation)
+		files, serviceFileExists, err := GetServiceFromCouch(service, designation, deviceType, device.ID)
 		if err != nil {
-			return reports, nerr.Translate(err).Addf("unable to get service %v", service)
+			return report, nerr.Translate(err).Addf("unable to get service %v", service)
 		}
 
 		if serviceFileExists {
@@ -221,24 +167,9 @@ func DeployToDevices(devices []structs.Device, deviceType, designation string) (
 		toScp = append(toScp, files...)
 	}
 
-	var wg sync.WaitGroup
+	report = Deploy(device.Address, socket.Writer(device.Address), servicesToDeploy, toScp...)
 
-	// deploy to each device
-	for i := range devices {
-		wg.Add(1)
-
-		go func(idx int) {
-			defer wg.Done()
-			report := Deploy(devices[idx].Address, socket.Writer(devices[idx].Address), servicesToDeploy, toScp...)
-
-			reportsMu.Lock()
-			reports = append(reports, report)
-			reportsMu.Unlock()
-		}(i)
-	}
-
-	wg.Wait()
-	return reports, nil
+	return report, nil
 }
 
 // Deploy deploys to a single pi
@@ -320,12 +251,8 @@ func Deploy(address string, output io.Writer, servicesToDeploy []string, files .
 		log.L.Infof("Successfully scp'd files to %s", address)
 
 		// set up env vars
-		fmt.Fprintf(stdin, `echo "export PI_HOSTNAME=\"$(hostname)\"" >> %s`+"\n", envVarsFile)
-		fmt.Fprintf(stdin, `echo "export SYSTEM_ID=\"$(hostname)\"" >> %s`+"\n", envVarsFile)
-		fmt.Fprintf(stdin, `echo "export ROOM_SYSTEM=\"true\"" >> %s`+"\n", envVarsFile)
 		fmt.Fprintf(stdin, `cp -f %s /etc/environment`+"\n", envVarsFile)
 		fmt.Fprintf(stdin, `source /etc/environment`+"\n")
-		fmt.Fprintf(stdin, `cat "%s" | envsubst > %s`+"\n", dockerComposeFile+".tmp", dockerComposeFile)
 
 		// docker stuff
 		fmt.Fprintf(stdin, `docker-compose -f %s pull`+"\n", dockerComposeFile)
@@ -340,7 +267,6 @@ func Deploy(address string, output io.Writer, servicesToDeploy []string, files .
 			serviceFilePath := fmt.Sprintf(`/byu/%s/%s`, service, serviceFile)
 			// systemdFilePath := fmt.Sprintf(`/lib/systemd/system/%s`, serviceFile)
 
-			fmt.Fprintf(stdin, `. /etc/environment && cat %s.tmpl | envsubst > %s`+"\n", serviceFilePath, serviceFilePath)
 			// fmt.Fprintf(stdin, `cp -f %s %s`+"\n", serviceFilePath, systemdFilePath)
 			fmt.Fprintf(stdin, `systemctl daemon-reload`+"\n")
 			fmt.Fprintf(stdin, `systemctl enable %s`+"\n", serviceFilePath)

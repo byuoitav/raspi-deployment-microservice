@@ -22,6 +22,7 @@ func DeployByHostname(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, reports)
 }
 
+/*
 // DeployByTypeAndDesignation handles the echo request to deploy to a type/designation
 func DeployByTypeAndDesignation(ctx echo.Context) error {
 	deviceType := ctx.Param("type")
@@ -50,6 +51,7 @@ func DeployByBuildingAndTypeAndDesignation(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, reports)
 }
+*/
 
 // EnableContacts handles the echo request to enable the contacts service on a specific hostname
 func EnableContacts(context echo.Context) error {

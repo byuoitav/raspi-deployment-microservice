@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"archive/zip"
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +17,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/byuoitav/authmiddleware/bearertoken"
+	"github.com/byuoitav/common/db"
 	"github.com/byuoitav/common/log"
+	"github.com/byuoitav/common/structs"
+	mapset "github.com/deckarep/golang-set"
 )
 
 // NumBytes .
@@ -38,57 +43,178 @@ func init() {
 }
 
 // retrieveEnvironmentVariables gets the environment variables for each Pi as a file to SCP over
-//func retrieveEnvironmentVariables(class, designation string) (string, error) {
-func retrieveEnvironmentVariables(class, designation string) ([]byte, error) {
-	var resp []byte
-
-	//	log.Printf("[helpers] fetching environment variables...")
-
-	classID, desigID, err := GetClassAndDesignationID(class, designation)
+func retrieveEnvironmentVariables(deviceType, designation string) (map[string]string, error) {
+	myMap := make(map[string]string)
+	deviceInfo, err := db.GetDB().GetDeviceDeploymentInfo(deviceType)
 	if err != nil {
-		return resp, fmt.Errorf("invalid class or designation: %s", err.Error())
+		return myMap, err
 	}
-
-	response, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/variables", classID, desigID))
-	if err != nil {
-		return resp, err
-	}
-
-	if response.StatusCode != http.StatusOK {
-		msg, err := ioutil.ReadAll(response.Body)
+	desigDevice := deviceInfo.Designations[designation]
+	for _, service := range desigDevice.Services {
+		resp, err := MakeEnvironmentRequest(service, designation)
 		if err != nil {
-			return resp, fmt.Errorf("non-200 response from pi-designation-microservice: %d, unable to read response: %s", response.StatusCode, err.Error())
+			return myMap, err
 		}
-		return resp, fmt.Errorf("non-200 response from pi-designation-microservice: %d, message: %s", response.StatusCode, string(msg))
-	}
 
-	b, err := ioutil.ReadAll(response.Body)
-	return b, err
+		for k, v := range resp {
+			myMap[k] = v
+		}
+	}
+	for k, v := range desigDevice.EnvironmentVariables {
+		myMap[k] = v
+	}
+	return myMap, nil
 }
 
-// RetrieveDockerCompose .
-func RetrieveDockerCompose(class, designation string) ([]byte, error) {
-	var bytes []byte
+func addMap(a, b map[string]interface{}) error {
+	var s string
+	set := mapset.NewSet(s)
+	for k1 := range a {
+		for k2, v2 := range b {
+			if k1 == k2 {
+				a[k1] = v2
+				set.Add(k1)
+			}
+		}
+	}
+	for k, v := range b {
+		if !set.Contains(k) {
+			a[k] = v
+		}
+	}
+	return nil
+}
 
-	//	log.Printf("[helpers] retrieving docker-compose file for devices of class: %s, designation: %s", class, designation)
+func substituteEnvironment(byter *bytes.Buffer, arrayV []interface{}, service string, tabCount int, envMap map[string]string) error {
+	byter.WriteString("\n")
+	for _, listItem := range arrayV {
+		for i := 0; i < tabCount; i++ {
+			byter.WriteString("   ")
+		}
+		strVersion := listItem.(string)
+		values := strings.Split(strVersion, "=$")
+		str := fmt.Sprintf("  - %s=%s\n", values[0], envMap[values[1]])
+		//		str := fmt.Sprintf("\t- %s=%s\n", values[0], values[1])
+		byter.WriteString(str)
+	}
+	return nil
+}
 
-	//get class and designation IDs
-	classID, desigID, err := GetClassAndDesignationID(class, designation)
+func writeServiceMap(byter *bytes.Buffer, myMap map[string]interface{}, tabCount int, service string, envMap map[string]string) error {
+	for k, v := range myMap {
+		for i := 0; i < tabCount; i++ {
+			byter.WriteString("   ")
+		}
+		s := fmt.Sprintf("%s:", k)
+		byter.WriteString(s)
+		_, ok := v.(string)
+		if ok {
+			str := fmt.Sprintf(" %s\n", v)
+			byter.WriteString(str)
+		}
+		_, ok = v.([]interface{})
+		if ok {
+			//If we have environment variables, do the appropriate substitution
+			arrayV := v.([]interface{})
+			if k == "environment" {
+				substituteEnvironment(byter, arrayV, service, tabCount, envMap)
+			} else {
+				byter.WriteString("\n")
+
+				for _, listItem := range arrayV {
+					for i := 0; i < tabCount; i++ {
+						byter.WriteString("   ")
+					}
+					strVersion := listItem.(string)
+					str := fmt.Sprintf("  - %s\n", strVersion)
+					byter.WriteString(str)
+				}
+			}
+
+		}
+		_, ok = v.(map[string]interface{})
+		if ok {
+			newMap := v.(map[string]interface{})
+			byter.WriteString("\n")
+			writeServiceMap(byter, newMap, (tabCount + 1), service, envMap)
+		}
+	}
+	return nil
+}
+
+func writeMap(byter *bytes.Buffer, myMap map[string]interface{}, tabCount int, designation string, deviceType string) error {
+	for k, v := range myMap {
+		for i := 0; i < tabCount; i++ {
+			byter.WriteString("   ")
+		}
+		s := fmt.Sprintf("%s:", k)
+		byter.WriteString(s)
+		_, ok := v.(string)
+		if ok {
+			str := fmt.Sprintf(" %s\n", v)
+			byter.WriteString(str)
+		}
+		_, ok = v.([]interface{})
+		if ok {
+			arrayV := v.([]interface{})
+			byter.WriteString("\n")
+
+			for _, listItem := range arrayV {
+				for i := 0; i < tabCount; i++ {
+					byter.WriteString("   ")
+				}
+				strVersion := listItem.(string)
+				str := fmt.Sprintf("  - %s\n", strVersion)
+				byter.WriteString(str)
+			}
+		}
+		_, ok = v.(map[string]interface{})
+		if ok {
+			newMap := v.(map[string]interface{})
+			byter.WriteString("\n")
+
+			resp, err := MakeEnvironmentRequest(k, designation)
+			if err != nil {
+				return err
+			}
+			deviceInfo, err := db.GetDB().GetDeviceDeploymentInfo(deviceType)
+			desigDevice := deviceInfo.Designations[designation]
+			for k, v := range desigDevice.EnvironmentVariables {
+				resp[k] = v
+			}
+			writeServiceMap(byter, newMap, (tabCount + 1), k, resp)
+		}
+	}
+	return nil
+}
+
+//RetrieveDockerCompose .
+func RetrieveDockerCompose(deviceType, designation string) ([]byte, error) {
+	var b []byte
+	var byter bytes.Buffer
+	deviceInfo, err := db.GetDB().GetDeviceDeploymentInfo(deviceType)
 	if err != nil {
-		return bytes, fmt.Errorf("invalid class or designation: %s", err.Error())
+		log.L.Warnf("Couldn't get the %s %s out of the database", designation, deviceType)
+		return b, err
 	}
-
-	resp, err := MakeEnvironmentRequest(fmt.Sprintf("/configurations/designations/%d/%d/docker-compose", classID, desigID))
-	if err != nil {
-		return bytes, err
+	desigDevice := deviceInfo.Designations[designation]
+	m := make(map[string]interface{})
+	for _, service := range desigDevice.Services {
+		resp, err := MakeDockerRequest(service, designation)
+		if err != nil {
+			log.L.Warnf("Couldn't get the docker info for %s:%s", service, designation)
+			return b, err
+		}
+		tempM := make(map[string]interface{})
+		tempM[service] = resp
+		addMap(m, tempM)
 	}
+	addMap(m, desigDevice.DockerInfo)
+	byter.WriteString("version: '3'\n")
+	byter.WriteString("services:\n")
+	writeMap(&byter, m, 1, designation, deviceType)
 
-	if resp.StatusCode != http.StatusOK {
-		return bytes, fmt.Errorf("non-200 response from pi-designation-microservice: %d", resp.StatusCode)
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	return b, err
+	return byter.Bytes(), nil
 }
 
 // GetClassAndDesignationID .
@@ -117,29 +243,17 @@ func GetClassAndDesignationID(class, designation string) (int64, int64, error) {
 }
 
 // MakeEnvironmentRequest .
-func MakeEnvironmentRequest(endpoint string) (*http.Response, error) {
-	var client http.Client
+func MakeEnvironmentRequest(serviceID, designation string) (map[string]string, error) {
+	resp, err := db.GetDB().GetDeploymentInfo(serviceID)
+	toReturn := resp.CampusConfig[designation].EnvironmentVariables
+	return toReturn, err
+}
 
-	url := os.Getenv("DESIGNATION_MICROSERVICE_ADDRESS") + endpoint
-
-	//	log.Printf("[helplers] making request against url %s", url)
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return &http.Response{}, fmt.Errorf("unable to request docker-compose or etc/environment file: %s", err.Error())
-	}
-
-	err = SetToken(req)
-	if err != nil {
-		return &http.Response{}, fmt.Errorf("unable to request docker-compose or etc/environment file: %s", err.Error())
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return &http.Response{}, err
-	}
-
-	return resp, nil
+// MakeDockerRequest .
+func MakeDockerRequest(serviceID, designation string) (map[string]interface{}, error) {
+	resp, err := db.GetDB().GetDeploymentInfo(serviceID)
+	toReturn := resp.CampusConfig[designation].DockerInfo
+	return toReturn, err
 }
 
 // SetToken .
@@ -159,6 +273,132 @@ func SetToken(request *http.Request) error {
 	return nil
 }
 
+// GetServiceFromCouch .
+func GetServiceFromCouch(service, designation, deviceType, deviceID string) ([]file, bool, error) {
+	files := []file{}
+	serviceFileExists := false
+	log.L.Infof("Getting files in Couch from %s/%s", designation, service)
+
+	objects, err := GetCouchServiceFiles(service, designation, deviceType, deviceID)
+	if err != nil {
+		return nil, serviceFileExists, fmt.Errorf("unable to download service %s (designation: %s) from couch: %s", service, designation, err)
+	}
+
+	for name, bytes := range objects {
+		file := file{
+			Path:  fmt.Sprintf("/byu/%s/%s", service, name),
+			Bytes: bytes,
+		}
+		log.L.Debugf("Service Name: %s\n", name)
+		if name == service {
+			file.Permissions = 0100
+		} else if name == fmt.Sprintf("%s.service", service) {
+			serviceFileExists = true
+			file.Permissions = 0644
+		} else {
+			file.Permissions = 0644
+		}
+
+		log.L.Debugf("added file %v, permissions %v", file.Path, file.Permissions)
+		files = append(files, file)
+	}
+
+	log.L.Infof("Successfully got %v files.", len(files))
+	return files, serviceFileExists, nil
+}
+
+func serviceTemplateEnvSwap(value string, envMap map[string]string, deviceID string) string {
+	if value == "$SYSTEM_ID" {
+		return deviceID
+	}
+	if strings.Contains(value, "$") {
+		cleanValue := strings.Split(value, "$")
+		return envMap[cleanValue[1]]
+	}
+	return value
+
+}
+
+// I've basically given up on giving good names to these functions
+
+func writeServiceTemplate(byter *bytes.Buffer, serviceConfig structs.ServiceConfig, deviceType, designation, deviceID string) error {
+	envMap, err := retrieveEnvironmentVariables(deviceType, designation)
+	if err != nil {
+		return err
+	}
+	for k, v := range serviceConfig.Data {
+		byter.WriteString(fmt.Sprintf("[%s]\n", k))
+		for key, value := range v {
+			if isEnvironment := strings.Split(key, "="); len(isEnvironment) == 2 {
+				byter.WriteString(fmt.Sprintf("%s=%s\n", key, serviceTemplateEnvSwap(value, envMap, deviceID)))
+			} else {
+				byter.WriteString(fmt.Sprintf("%s=%s\n", key, value))
+			}
+		}
+		byter.WriteString("\n")
+	}
+	return nil
+}
+
+func readZipFile(zf *zip.File) ([]byte, error) {
+	f, err := zf.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return ioutil.ReadAll(f)
+}
+
+// GetCouchServiceFiles .
+func GetCouchServiceFiles(service, designation, deviceType, deviceID string) (map[string][]byte, error) {
+	objects := make(map[string][]byte)
+
+	//Handle Service Template
+	toFill, err := db.GetDB().GetServiceInfo(service)
+	if err != nil {
+		log.L.Warnf("Couldn't get the service data from Couch: %v", err)
+		return objects, err
+	}
+	serviceConfig := toFill.Designations[designation]
+	var byter bytes.Buffer
+	writeServiceTemplate(&byter, serviceConfig, deviceType, designation, deviceID)
+	objects[fmt.Sprintf("%v.service", service)] = byter.Bytes()
+
+	//Handle Binary
+	binary, err := db.GetDB().GetServiceAttachment(service, designation)
+	if err != nil {
+		log.L.Warnf("Couldn't get the binary from couch for %v-%v: %v", service, designation, err)
+		return objects, err
+	}
+	objects[fmt.Sprintf("%v", service)] = binary
+
+	//Handle Zipped Files
+	zippy, err := db.GetDB().GetServiceZip(service, designation)
+	if err != nil {
+		log.L.Warnf("Couldn't get the zip file from couch: %v", err)
+		return objects, err
+	}
+	zipReader, err := zip.NewReader(bytes.NewReader(zippy), int64(len(zippy)))
+	if err != nil {
+		log.L.Warnf("Couldn't open zip reader: %v", err)
+		return objects, err
+	}
+
+	// Read all the files from zip archive
+	for _, zipFile := range zipReader.File {
+		log.L.Infof("Reading file: %v", zipFile.Name)
+		unzippedFileBytes, err := readZipFile(zipFile)
+		if err != nil {
+			log.L.Warnf("Couldn't read zipped file: %v, %v", zipFile.Name, err)
+			continue
+		}
+		objects[zipFile.Name] = unzippedFileBytes
+
+	}
+
+	return objects, nil
+}
+
 // GetServiceFromS3 .
 func GetServiceFromS3(service, designation string) ([]file, bool, error) {
 	files := []file{}
@@ -167,7 +407,7 @@ func GetServiceFromS3(service, designation string) ([]file, bool, error) {
 	log.L.Infof("Getting files in s3 from %s/%s", designation, service)
 	objects, err := GetS3Folder(os.Getenv("AWS_BUCKET_REGION"), os.Getenv("AWS_S3_SERVICES_BUCKET"), fmt.Sprintf("%s/device-monitoring", designation))
 	if err != nil {
-		return nil, serviceFileExists, fmt.Errorf("unable to download s3 service %s (designation: %s): %s", service, designation, err)
+		return nil, serviceFileExists, fmt.Errorf("unable to download  service %s (designation: %s): %s", service, designation, err)
 	}
 
 	for name, bytes := range objects {
@@ -175,7 +415,6 @@ func GetServiceFromS3(service, designation string) ([]file, bool, error) {
 			Path:  fmt.Sprintf("/byu/%s/%s", service, name),
 			Bytes: bytes,
 		}
-
 		if name == service {
 			file.Permissions = 0100
 		} else if name == fmt.Sprintf("%s.service.tmpl", service) {

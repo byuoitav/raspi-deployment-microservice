@@ -13,6 +13,7 @@ import (
 	"github.com/fatih/color"
 )
 
+//GetClassId returns the class id for the class
 func GetClassId(className string) (int64, error) {
 
 	log.Printf("[helpers] getting class ID corresponding to class: %s", className)
@@ -74,6 +75,7 @@ func GetClassId(className string) (int64, error) {
 	return 0, errors.New("class not found") //if we make it this far without finding it, it wasn't there
 }
 
+//GetDesignationId gets the designation id of the given class
 func GetDesignationId(desigName string) (int64, error) {
 
 	log.Printf("[helpers] getting designation ID corresponding to class: %s", desigName)

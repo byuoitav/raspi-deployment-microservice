@@ -27,8 +27,10 @@ func main() {
 	/* secure routes */
 	// deployment
 	secure.GET("/webhook_device/:hostname", handlers.DeployByHostname)
-	secure.GET("/webhook/:type/:designation", handlers.DeployByTypeAndDesignation)
-	secure.GET("/webhook_building/:building/:type/:designation", handlers.DeployByBuildingAndTypeAndDesignation)
+	//Unsupported Now
+	/*	secure.GET("/webhook/:type/:designation", handlers.DeployByTypeAndDesignation)
+		secure.GET("/webhook_building/:building/:type/:designation", handlers.DeployByBuildingAndTypeAndDesignation)
+	*/
 
 	// divider sensor contacts enable/disable
 	secure.GET("/webhook_contacts/enable/:hostname", handlers.EnableContacts)
